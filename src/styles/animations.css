@@ -1,0 +1,155 @@
+/* ═══════════════════════════════════════════════════════
+   PRO-MIX PLUGINS — Animations & Transitions
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Keyframes ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 15px var(--neon-green-glow); }
+  50% { box-shadow: 0 0 30px var(--neon-green-glow), 0 0 60px rgba(0, 255, 136, 0.15); }
+}
+
+@keyframes neonFlicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { text-shadow: 0 0 8px var(--neon-green-glow), 0 0 20px var(--neon-green-glow); }
+  20%, 24%, 55% { text-shadow: none; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes waveform {
+  0%, 100% { height: 15%; }
+  25% { height: 70%; }
+  50% { height: 40%; }
+  75% { height: 85%; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes progressBar {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* ── Utility Classes ── */
+.animate-fade-in { animation: fadeIn var(--duration-normal) var(--ease-out) both; }
+.animate-fade-in-up { animation: fadeInUp var(--duration-slow) var(--ease-out) both; }
+.animate-fade-in-down { animation: fadeInDown var(--duration-slow) var(--ease-out) both; }
+.animate-slide-left { animation: slideInLeft var(--duration-slow) var(--ease-out) both; }
+.animate-slide-right { animation: slideInRight var(--duration-slow) var(--ease-out) both; }
+.animate-scale-in { animation: scaleIn var(--duration-slow) var(--ease-out) both; }
+.animate-glow-pulse { animation: glowPulse 2.5s ease-in-out infinite; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.04) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* ── Stagger Delays ── */
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+.delay-7 { animation-delay: 0.35s; }
+.delay-8 { animation-delay: 0.4s; }
+
+/* ── Hover Effects ── */
+.hover-lift {
+  transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hover-glow-green {
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+.hover-glow-green:hover {
+  box-shadow: var(--shadow-glow-green);
+}
+
+.hover-glow-blue {
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+.hover-glow-blue:hover {
+  box-shadow: var(--shadow-glow-blue);
+}
+
+.hover-glow-orange {
+  transition: box-shadow var(--duration-normal) var(--ease-out);
+}
+.hover-glow-orange:hover {
+  box-shadow: var(--shadow-glow-orange);
+}
+
+.hover-scale {
+  transition: transform var(--duration-fast) var(--ease-spring);
+}
+.hover-scale:hover {
+  transform: scale(1.03);
+}
+
+/* ── Page Transitions ── */
+.page-enter {
+  animation: fadeInUp 0.4s var(--ease-out) both;
+}
+
+.page-exit {
+  animation: fadeIn 0.2s var(--ease-out) reverse both;
+}
+
+/* ── Loading Skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-card-hover) 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}

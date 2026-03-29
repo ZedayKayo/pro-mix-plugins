@@ -1,0 +1,340 @@
+// ═══════════════════════════════════════════════════════
+// PRO-MIX PLUGINS — Global State Store (Supabase + localStorage cache)
+// ═══════════════════════════════════════════════════════
+
+const STORAGE_KEYS = {
+  CART: 'promix_cart',
+  USER: 'promix_user',
+  PURCHASES: 'promix_purchases',
+  THEME: 'promix_theme',
+  CUSTOM_PRODUCTS: 'promix_custom_products',
+  HIDDEN_PRODUCTS: 'promix_hidden_products',
+};
+
+// Import Supabase service
+import { fetchProducts, insertProduct, updateProduct, removeProduct } from '../services/productService.js';
+import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchUserLicenses, fetchSessionProfile, loginUserAuth, registerUserAuth, logoutUserAuth, processSecureCheckout } from '../services/dbService.js';
+import { supabase } from '../lib/supabase.js';
+
+// Supabase is the single source of truth — no static defaults
+
+const listeners = {};
+let memoryInventory = []; // Holds the unified inventory synced from Supabase
+let memoryCart = [];
+let memoryUser = null;
+let memoryPurchases = [];
+let memoryLicenses = [];
+let initDone = false;
+
+function emit(event, data) {
+  if (listeners[event]) {
+    listeners[event].forEach(fn => fn(data));
+  }
+}
+
+export function on(event, callback) {
+  if (!listeners[event]) listeners[event] = [];
+  listeners[event].push(callback);
+  return () => {
+    listeners[event] = listeners[event].filter(fn => fn !== callback);
+  };
+}
+
+// ── Session ──
+function getSessionId() {
+  let sid = localStorage.getItem('promix_session');
+  if (!sid) {
+    sid = 'sess_' + Date.now() + Math.random().toString(36).substring(2);
+    localStorage.setItem('promix_session', sid);
+  }
+  return sid;
+}
+
+// ── Inventory Management (Supabase) ──
+export async function loadInventory() {
+  try {
+    const data = await fetchProducts();
+    // Supabase is the single source of truth — no auto-seeding from static files
+    memoryInventory = data;
+    emit('inventory:updated', memoryInventory);
+  } catch (err) {
+    console.error("Failed to load inventory from Supabase", err);
+  }
+}
+
+export function getInventory() {
+  return memoryInventory;
+}
+
+export async function saveProduct(product) {
+  const isExisting = memoryInventory.some(p => p.id == product.id);
+  
+  if (isExisting) {
+    memoryInventory = memoryInventory.map(p => p.id == product.id ? product : p);
+  } else {
+    memoryInventory = [product, ...memoryInventory];
+  }
+  emit('inventory:updated', memoryInventory);
+
+  try {
+    if (isExisting) {
+      await updateProduct(product);
+    } else {
+      await insertProduct(product);
+    }
+  } catch (err) {
+    console.error("Failed to save product to Supabase", err);
+  }
+}
+
+export async function deleteProduct(productId) {
+  memoryInventory = memoryInventory.filter(p => p.id != productId);
+  removeFromCart(productId);
+  emit('inventory:updated', memoryInventory);
+
+  try {
+    await removeProduct(productId);
+  } catch (err) {
+    console.error("Failed to delete product from Supabase", err);
+  }
+}
+
+// ── Cart ──
+export function getCart() {
+  if (!initDone) {
+    try { memoryCart = JSON.parse(localStorage.getItem(STORAGE_KEYS.CART)) || []; } catch { memoryCart = []; }
+  }
+  return memoryCart;
+}
+
+export function addToCart(product) {
+  const cart = getCart();
+  if (cart.find(item => item.id === product.id)) return false;
+
+  cart.push({
+    id: product.id, name: product.name, slug: product.slug,
+    price: product.salePrice || product.price, originalPrice: product.price,
+    image: product.images[0], category: product.category, cryptoPrices: product.cryptoPrices,
+  });
+  
+  memoryCart = cart;
+  localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
+  
+  const user = getUser();
+  syncUserCart(user ? user.id : getSessionId(), cart, !user).catch(console.error);
+
+  emit('cart:updated', cart);
+  emit('cart:added', product);
+  return true;
+}
+
+export function removeFromCart(productId) {
+  let cart = getCart().filter(item => item.id !== productId);
+  memoryCart = cart;
+  localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
+  
+  const user = getUser();
+  syncUserCart(user ? user.id : getSessionId(), cart, !user).catch(console.error);
+  
+  emit('cart:updated', cart);
+  return cart;
+}
+
+export function clearCart() {
+  memoryCart = [];
+  localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify([]));
+  const user = getUser();
+  syncUserCart(user ? user.id : getSessionId(), [], !user).catch(console.error);
+  emit('cart:updated', []);
+}
+
+export function getCartTotal() {
+  return getCart().reduce((sum, item) => sum + item.price, 0);
+}
+
+export function getCartCount() {
+  return getCart().length;
+}
+
+export function isInCart(productId) {
+  return getCart().some(item => item.id === productId);
+}
+
+// ── User ──
+export function getUser() {
+  if (!initDone && !memoryUser) {
+    try { memoryUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.USER)); } catch { memoryUser = null; }
+  }
+  return memoryUser;
+}
+
+export async function loginUserAsync(email, password) {
+  const userProfile = await loginUserAuth(email, password);
+  return await handleUserHydration(userProfile);
+}
+
+export function loginUser(email, password) {
+  return loginUserAsync(email, password);
+}
+
+export async function registerUserAsync(email, password, name) {
+  const userProfile = await registerUserAuth(email, password, name);
+  return await handleUserHydration(userProfile);
+}
+
+export function registerUser(email, password, name) {
+  return registerUserAsync(email, password, name);
+}
+
+async function handleUserHydration(userProfile) {
+  if (!userProfile) return null;
+  memoryUser = userProfile;
+  localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userProfile));
+  
+  const mergedCart = await linkSessionCartToUser(getSessionId(), userProfile.id);
+  // Re-sync carts and logic
+  const dbCart = mergedCart || await fetchUserCart(userProfile.id, false);
+  if (dbCart) {
+    memoryCart = dbCart;
+    localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(dbCart));
+    emit('cart:updated', dbCart);
+  }
+
+  const orders = await fetchUserOrders(userProfile.id);
+  if (orders) {
+    memoryPurchases = orders;
+    localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(orders));
+    emit('purchases:updated', orders);
+  }
+
+  const licenses = await fetchUserLicenses(userProfile.id);
+  if (licenses) {
+    memoryLicenses = licenses;
+    emit('licenses:updated', licenses);
+  }
+  
+  emit('user:login', userProfile);
+  return userProfile;
+}
+
+export function deductCredits(amount) {
+  // Handled entirely by processSecureCheckout now!
+  return false;
+}
+
+export async function logoutUserAuthAsync() {
+  await logoutUserAuth();
+  memoryUser = null;
+  memoryCart = [];
+  memoryPurchases = [];
+  memoryLicenses = [];
+  localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify([]));
+  localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify([]));
+  emit('user:logout', null);
+  emit('cart:updated', []);
+  emit('purchases:updated', []);
+  emit('licenses:updated', []);
+}
+
+export function logoutUser() {
+  logoutUserAuthAsync();
+}
+
+export function isLoggedIn() {
+  return !!getUser();
+}
+
+// ── Purchases & Licenses ──
+export function getPurchases() {
+  if (!initDone && memoryPurchases.length === 0) {
+    try { memoryPurchases = JSON.parse(localStorage.getItem(STORAGE_KEYS.PURCHASES)) || []; } catch { memoryPurchases = []; }
+  }
+  return memoryPurchases;
+}
+
+export function getLicenses() {
+  return memoryLicenses;
+}
+
+export async function addPurchaseAsync(items, paymentMethod, useCredits) {
+  const user = getUser();
+  if (!user) throw new Error("Must be logged in to purchase");
+
+  const result = await processSecureCheckout(user.id, items, paymentMethod, useCredits);
+  
+  if (result.success) {
+    // Refresh user state
+    await handleUserHydration(user);
+    emit('purchase:completed', result);
+    return result;
+  }
+  throw new Error("Checkout failed");
+}
+
+export function hasPurchased(productId) {
+  return memoryLicenses.some(l => l.product_id === productId);
+}
+
+// ── Theme ──
+export function getTheme() {
+  return localStorage.getItem(STORAGE_KEYS.THEME) || 'dark';
+}
+
+export function setTheme(theme) {
+  localStorage.setItem(STORAGE_KEYS.THEME, theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  emit('theme:changed', theme);
+}
+
+export function toggleTheme() {
+  const current = getTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+  return next;
+}
+
+// ── Init ──
+export async function initStore() {
+  const theme = getTheme();
+  document.documentElement.setAttribute('data-theme', theme);
+  
+  await loadInventory();
+
+  // Load existing state from DB via Auth session
+  const profile = await fetchSessionProfile();
+  if (profile) {
+    try {
+      await handleUserHydration(profile);
+    } catch (e) {
+      console.error("Error hydrating state from Supabase on init", e);
+    }
+  } else {
+    // load anon cart
+    try {
+      const anonCart = await fetchUserCart(getSessionId(), true);
+      if (anonCart && anonCart.length > 0) {
+        memoryCart = anonCart;
+        localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(anonCart));
+      }
+    } catch(e) {}
+  }
+
+  // Set up auth state listener
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN') {
+      const p = await fetchSessionProfile();
+      if (p) await handleUserHydration(p);
+    } else if (event === 'SIGNED_OUT') {
+      logoutUserAuthAsync();
+    }
+  });
+
+  initDone = true;
+  emit('store:ready');
+}
+
+// Trigger initial prep logic on first load immediately
+// (The actual async parts resolve later without blocking)
+const initialTheme = getTheme();
+document.documentElement.setAttribute('data-theme', initialTheme);
