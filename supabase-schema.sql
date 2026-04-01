@@ -211,4 +211,24 @@ CREATE TABLE IF NOT EXISTS public.event_logs (
 ALTER TABLE public.event_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Service roles can manage event logs" ON public.event_logs FOR ALL USING (true);
 
+-- ═══════════════════════════════════════════════════════
+-- 10. Notification Logs Table
+-- Tracks every Telegram notification attempt for admin history.
+-- ═══════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.notification_logs (
+  id SERIAL PRIMARY KEY,
+  session_id TEXT,
+  message_type TEXT,        -- 'new_visitor' | 'page_view' | 'order'
+  page_url TEXT,
+  country TEXT,
+  city TEXT,
+  browser TEXT,
+  os TEXT,
+  telegram_ok BOOLEAN DEFAULT false,
+  error_message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.notification_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service roles can manage notification logs" ON public.notification_logs FOR ALL USING (true);
 

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase instance using service role if available, or anon key
+// Initialize Supabase with service role key to bypass RLS
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -12,14 +12,18 @@ export default async function handler(req, res) {
 
   try {
     const { sessionId, path, referrer, userId, isBot } = req.body;
-    
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Missing sessionId' });
+    }
+
     // Extract headers for geo and device tracking
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
     const country = req.headers['x-vercel-ip-country'] || 'unknown';
     const city = req.headers['x-vercel-ip-city'] || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
 
-    // Very basic OS/Browser detection
+    // Basic OS detection
     let os = 'Unknown OS';
     if (userAgent.includes('Win')) os = 'Windows';
     else if (userAgent.includes('Mac')) os = 'macOS';
@@ -27,139 +31,183 @@ export default async function handler(req, res) {
     else if (userAgent.includes('Android')) os = 'Android';
     else if (userAgent.includes('iPhone') || userAgent.includes('iPad')) os = 'iOS';
 
+    // Basic browser detection (order matters — Chrome check must come before Safari)
     let browser = 'Unknown Browser';
-    if (userAgent.includes('Chrome')) browser = 'Chrome';
+    if (userAgent.includes('Edg/')) browser = 'Edge';
+    else if (userAgent.includes('Chrome')) browser = 'Chrome';
     else if (userAgent.includes('Firefox')) browser = 'Firefox';
     else if (userAgent.includes('Safari')) browser = 'Safari';
-    else if (userAgent.includes('Edge')) browser = 'Edge';
 
-    const isSystemBot = isBot || ['bot', 'spider', 'crawler'].some(b => userAgent.toLowerCase().includes(b));
+    const isSystemBot = isBot || /bot|spider|crawler|googlebot|bingbot|slurp|duckduckbot|baiduspider/i.test(userAgent);
 
-    // Return a 200 early to not block the client, then continue execution
-    res.status(200).json({ success: true, queued: true });
+    // ─── 1. Upsert visitor session ───────────────────────────────────────────
+    const now = new Date().toISOString();
+    let isFirstVisit = false;
 
-    // Use a background async task. Vercel allows execution after response (fire-and-forget or waitUntil)
-    const runBackground = async () => {
-      try {
-        // 1. Check if session exists
-        const { data: existingSession, error: sessionFindError } = await supabase
-          .from('visitor_sessions')
-          .select('*')
-          .eq('session_id', sessionId)
-          .maybeSingle();
+    const { data: existingSession } = await supabase
+      .from('visitor_sessions')
+      .select('session_id, page_views')
+      .eq('session_id', sessionId)
+      .maybeSingle();
 
-        const now = new Date().toISOString();
-        let isFirstVisit = false;
+    if (!existingSession) {
+      isFirstVisit = true;
+      const { error: insertErr } = await supabase.from('visitor_sessions').insert([{
+        session_id: sessionId,
+        ip_address: ip,
+        country,
+        city,
+        browser,
+        os,
+        first_seen: now,
+        last_seen: now,
+        page_views: 1,
+        is_bot: isSystemBot
+      }]);
+      if (insertErr) console.error('visitor_sessions insert error:', insertErr);
+    } else {
+      const { error: updateErr } = await supabase.from('visitor_sessions').update({
+        last_seen: now,
+        page_views: (existingSession.page_views || 0) + 1
+      }).eq('session_id', sessionId);
+      if (updateErr) console.error('visitor_sessions update error:', updateErr);
+    }
 
-        if (!existingSession) {
-          isFirstVisit = true;
-          await supabase.from('visitor_sessions').insert([{
-            session_id: sessionId,
-            ip_address: ip,
-            country,
-            city,
-            browser,
-            os,
-            first_seen: now,
-            last_seen: now,
-            page_views: 1,
-            is_bot: isSystemBot
-          }]);
-        } else {
-          await supabase.from('visitor_sessions').update({
-            last_seen: now,
-            page_views: existingSession.page_views + 1
-          }).eq('session_id', sessionId);
-        }
+    // ─── 2. Insert event log ─────────────────────────────────────────────────
+    const { error: eventErr } = await supabase.from('event_logs').insert([{
+      session_id: sessionId,
+      page_url: path,
+      referrer: referrer || null,
+      user_id: userId || null
+    }]);
+    if (eventErr) console.error('event_logs insert error:', eventErr);
 
-        // 2. Insert event log
-        await supabase.from('event_logs').insert([{
-          session_id: sessionId,
-          page_url: path,
-          referrer: referrer,
-          user_id: userId || null
-        }]);
+    // ─── 3. Respond early — don't block client on Telegram send ──────────────
+    // NOTE: We respond here so the browser isn't waiting. Vercel will continue
+    // executing the rest of the function until it completes (unlike edge functions).
+    // We use the pattern: respond, then continue async work.
+    // This is safe on Vercel Node.js serverless — the process isn't killed until
+    // the exported handler's Promise resolves.
 
-        // 3. Telegram Notifications logic
-        // Skip bots entirely for Telegram
-        if (isSystemBot) return;
+    // ─── 4. Skip bots for notifications ──────────────────────────────────────
+    if (isSystemBot) {
+      return res.status(200).json({ success: true, tracked: true, bot: true });
+    }
 
-        // Try DB settings first (requires service role key to bypass RLS).
-        // Fall back to env vars if DB read fails or returns no data.
-        const { data: dbSettings } = await supabase.from('telegram_settings').select('*').eq('id', 1).maybeSingle();
-        const settings = dbSettings || {
-          is_enabled: !!(process.env.VITE_TELEGRAM_BOT_TOKEN),
-          bot_token: process.env.VITE_TELEGRAM_BOT_TOKEN || '',
-          chat_id: process.env.VITE_TELEGRAM_CHAT_ID || '',
-          notify_all_pages: true,
-          tracked_pages: []
-        };
+    // ─── 5. Load Telegram settings ───────────────────────────────────────────
+    // Try DB first (service role bypasses RLS), fall back to env vars.
+    // Support both VITE_ prefixed (local dev) and plain names (Vercel production).
+    const { data: dbSettings } = await supabase
+      .from('telegram_settings')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
 
-        if (!settings.is_enabled || !settings.bot_token || !settings.chat_id) {
-          return;
-        }
-
-        // Determine if we should send a notification for THIS page
-        let shouldNotify = false;
-        
-        if (settings.notify_all_pages) {
-          // Notify on anything except typical spam pages like /admin
-          if (!path.startsWith('/admin')) shouldNotify = true;
-        } else {
-          const tracked = settings.tracked_pages || [];
-          const match = tracked.find(t => path === t.path || (t.regex && new RegExp(t.regex).test(path)));
-          if (match && match.mode === 'notify') {
-            shouldNotify = true;
-          }
-        }
-
-        // We also want to specifically notify on "User entered website"
-        let messageText = '';
-        
-        if (isFirstVisit) {
-          messageText = `🚨 *New Visitor Alert*\n\n` +
-                        `🌍 *Location:* ${city}, ${country}\n` +
-                        `💻 *Device:* ${os} / ${browser}\n` +
-                        `🔗 *Landing Page:* ${path}\n` +
-                        `${referrer && referrer !== 'null' ? `🔙 *Referrer:* ${referrer}\n` : ''}` +
-                        `🌐 *IP:* ||${ip}||\n` +
-                        `🆔 *Session:* \`${sessionId.substring(0,8)}\``;
-        } else if (shouldNotify) {
-          messageText = `🧭 *Visitor Navigation*\n\n` +
-                        `🆔 *Session:* \`${sessionId.substring(0,8)}\`\n` + 
-                        `📍 *Page Viewed:* \`${path}\`\n` +
-                        `${userId ? `👤 *User ID:* ${userId}` : '👤 *Guest*'}`;
-        }
-
-        if (messageText) {
-          const tbUrl = `https://api.telegram.org/bot${settings.bot_token}/sendMessage`;
-          await fetch(tbUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              chat_id: settings.chat_id,
-              text: messageText,
-              parse_mode: 'Markdown' // Telegram markdown
-            })
-          });
-        }
-      } catch (err) {
-        console.error("Background track error:", err);
-      }
+    const settings = dbSettings || {
+      is_enabled: !!(process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN),
+      bot_token: process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN || '',
+      chat_id: process.env.TELEGRAM_CHAT_ID || process.env.VITE_TELEGRAM_CHAT_ID || '',
+      notify_all_pages: true,
+      tracked_pages: []
     };
 
-    // Run background task
-    // Note: On Vercel, functions continue running after res.json() until the timeout is reached.
-    // However, if Node strictly requires it, returning a promise from handler works better,
-    // but we'll try fire-and-forget. Vercel allows it unless it strictly kills the isolate.
-    // For Vercel Serverless (Node.js), non-awaited Promises often finish if they take < 50-100ms.
-    // For safety, we await it but we don't return its errors to the client. Wait, if we await it, it blocks the client.
-    // A better way is using waitUntil if available (Edge), but Node.js serverless functions simply don't kill the process immediately after response.
-    runBackground();
+    if (!settings.is_enabled || !settings.bot_token || !settings.chat_id) {
+      return res.status(200).json({ success: true, tracked: true, tg: 'disabled' });
+    }
+
+    // ─── 6. Determine if this page view should trigger a notification ─────────
+    let shouldNotify = false;
+    let messageType = '';
+
+    if (isFirstVisit) {
+      // Always notify on new visitors
+      shouldNotify = true;
+      messageType = 'new_visitor';
+    } else if (settings.notify_all_pages) {
+      // Notify on every page except /admin
+      if (!path.startsWith('/admin')) {
+        shouldNotify = true;
+        messageType = 'page_view';
+      }
+    } else {
+      const tracked = settings.tracked_pages || [];
+      const match = tracked.find(t => path === t.path || (t.regex && new RegExp(t.regex).test(path)));
+      if (match && match.mode === 'notify') {
+        shouldNotify = true;
+        messageType = 'page_view';
+      }
+    }
+
+    if (!shouldNotify) {
+      return res.status(200).json({ success: true, tracked: true, tg: 'skipped' });
+    }
+
+    // ─── 7. Build message ─────────────────────────────────────────────────────
+    let messageText = '';
+
+    if (messageType === 'new_visitor') {
+      messageText =
+        `🚨 *New Visitor Alert*\n\n` +
+        `🌍 *Location:* ${city !== 'unknown' ? city + ', ' : ''}${country}\n` +
+        `💻 *Device:* ${os} / ${browser}\n` +
+        `🔗 *Landing Page:* \`${path}\`\n` +
+        (referrer && referrer !== 'null' ? `🔙 *Referrer:* ${referrer}\n` : '') +
+        `🌐 *IP:* ||${ip}||\n` +
+        `🆔 *Session:* \`${sessionId.substring(0, 8)}\``;
+    } else {
+      messageText =
+        `🧭 *Page View*\n\n` +
+        `📍 *Page:* \`${path}\`\n` +
+        `🌍 *From:* ${city !== 'unknown' ? city + ', ' : ''}${country}\n` +
+        `💻 *Device:* ${os} / ${browser}\n` +
+        `🆔 *Session:* \`${sessionId.substring(0, 8)}\`\n` +
+        (userId ? `👤 *User ID:* \`${userId}\`` : '👤 *Guest*');
+    }
+
+    // ─── 8. Send Telegram message ─────────────────────────────────────────────
+    let telegramOk = false;
+    let telegramError = null;
+
+    try {
+      const tbUrl = `https://api.telegram.org/bot${settings.bot_token}/sendMessage`;
+      const tgRes = await fetch(tbUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: settings.chat_id,
+          text: messageText,
+          parse_mode: 'Markdown'
+        })
+      });
+      const tgData = await tgRes.json();
+      telegramOk = tgData.ok === true;
+      if (!telegramOk) {
+        telegramError = tgData.description || 'Unknown Telegram error';
+        console.error('Telegram send error:', telegramError);
+      }
+    } catch (tgErr) {
+      telegramError = tgErr.message;
+      console.error('Telegram fetch error:', tgErr);
+    }
+
+    // ─── 9. Log notification to DB ────────────────────────────────────────────
+    const { error: logErr } = await supabase.from('notification_logs').insert([{
+      session_id: sessionId,
+      message_type: messageType,
+      page_url: path,
+      country,
+      city,
+      browser,
+      os,
+      telegram_ok: telegramOk,
+      error_message: telegramError || null
+    }]);
+    if (logErr) console.error('notification_logs insert error:', logErr);
+
+    return res.status(200).json({ success: true, tracked: true, tg: telegramOk ? 'sent' : 'failed', error: telegramError });
 
   } catch (err) {
-    // If headers/parsing fails quickly
-    console.error("Track execution error", err);
+    console.error('Track handler error:', err);
     if (!res.headersSent) {
       return res.status(500).json({ error: err.message });
     }

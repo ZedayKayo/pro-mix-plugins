@@ -29,6 +29,8 @@ export function renderAdminPanel(params) {
     ordersLoading: false,
     visitors: null,
     visitorsLoading: false,
+    notificationLogs: null,
+    notificationLogsLoading: false,
     botInfo: null,
   };
 
@@ -608,6 +610,7 @@ export function renderAdminPanel(params) {
     // Auto-load data for new tabs
     if (state.activeTab === 'orders' && !state.orders && !state.ordersLoading) loadOrders();
     if (state.activeTab === 'visitors' && !state.visitors && !state.visitorsLoading) loadVisitors();
+    if (state.activeTab === 'visitors' && !state.notificationLogs && !state.notificationLogsLoading) loadNotificationLogs();
   }
 
   // ── ORDERS TAB ───────────────────────────────────────────
@@ -727,6 +730,57 @@ export function renderAdminPanel(params) {
             </div>
           </div>
         </div>
+
+        <!-- NOTIFICATION HISTORY -->
+        <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
+          <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
+            <div>
+              <h3 style="margin:0;">📢 Notification History</h3>
+              <p class="text-xs text-muted" style="margin:4px 0 0 0;">Every Telegram notification attempt, newest first.</p>
+            </div>
+            <button class="btn btn-ghost" id="btn-refresh-notif-logs" style="font-size:0.8rem;">🔄 Refresh</button>
+          </div>
+          ${state.notificationLogsLoading ? `
+            <div style="padding:var(--space-xl); text-align:center; color:var(--text-muted);">⏳ Loading...</div>
+          ` : !state.notificationLogs || state.notificationLogs.length === 0 ? `
+            <div style="padding:var(--space-xl); text-align:center; color:var(--text-muted); font-size:0.875rem;">
+              No notifications logged yet. Notifications appear here once a visitor triggers one.
+            </div>
+          ` : `
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;" class="admin-table">
+              <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.78rem;">
+                <th style="padding:8px 12px;">Type</th>
+                <th style="padding:8px;">Page</th>
+                <th style="padding:8px;">Location</th>
+                <th style="padding:8px;">Device</th>
+                <th style="padding:8px;">Status</th>
+                <th style="padding:8px;">Time</th>
+              </tr></thead>
+              <tbody>
+                ${(state.notificationLogs || []).slice(0, 100).map(log => `
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                    <td style="padding:8px 12px;">
+                      <span style="padding:2px 8px; border-radius:20px; font-size:0.72rem; font-weight:600; white-space:nowrap;
+                        background:${log.message_type === 'new_visitor' ? 'rgba(255,107,43,0.15)' : 'rgba(0,136,255,0.12)'};
+                        color:${log.message_type === 'new_visitor' ? '#ff6b2b' : 'var(--neon-blue)'};
+                      ">${log.message_type === 'new_visitor' ? '🆕 New Visitor' : '🧭 Page View'}</span>
+                    </td>
+                    <td style="padding:8px; font-size:0.78rem; font-family:monospace; color:var(--text-secondary); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeHTML(log.page_url||'')}">\`${sanitizeHTML(log.page_url || '/')}</td>
+                    <td style="padding:8px; font-size:0.8rem;">${sanitizeHTML(log.city && log.city !== 'unknown' ? log.city + ', ' : '')}${sanitizeHTML(log.country || '—')}</td>
+                    <td style="padding:8px; font-size:0.78rem; color:var(--text-secondary);">${sanitizeHTML(log.os || '—')} / ${sanitizeHTML(log.browser || '—')}</td>
+                    <td style="padding:8px;">
+                      ${log.telegram_ok
+                        ? '<span style="color:var(--neon-green); font-size:0.8rem;">✅ Sent</span>'
+                        : `<span style="color:#ff4444; font-size:0.8rem;" title="${sanitizeHTML(log.error_message||'')}">❌ Failed</span>`
+                      }
+                    </td>
+                    <td style="padding:8px; font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">${log.created_at ? new Date(log.created_at).toLocaleString() : '—'}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`}
+        </div>
       </div>`;
   }
 
@@ -752,6 +806,7 @@ export function renderAdminPanel(params) {
     renderPage();
     try {
       const res = await fetch('/api/admin-visitors');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       state.visitors = { sessions: data.sessions || [], topPages: data.topPages || [] };
     } catch (err) {
@@ -759,6 +814,22 @@ export function renderAdminPanel(params) {
       showToast('Failed to load visitors: ' + err.message, 'error');
     } finally {
       state.visitorsLoading = false;
+      renderPage();
+    }
+  }
+
+  async function loadNotificationLogs() {
+    state.notificationLogsLoading = true;
+    try {
+      const res = await fetch('/api/admin-notification-logs');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      state.notificationLogs = data.logs || [];
+    } catch (err) {
+      state.notificationLogs = [];
+      showToast('Failed to load notification history: ' + err.message, 'error');
+    } finally {
+      state.notificationLogsLoading = false;
       renderPage();
     }
   }
@@ -959,6 +1030,7 @@ export function renderAdminPanel(params) {
     // Visitors tab buttons
     document.getElementById('btn-load-visitors')?.addEventListener('click', loadVisitors);
     document.getElementById('btn-refresh-visitors')?.addEventListener('click', () => { state.visitors = null; loadVisitors(); });
+    document.getElementById('btn-refresh-notif-logs')?.addEventListener('click', () => { state.notificationLogs = null; loadNotificationLogs(); });
 
     document.getElementById('ts-test')?.addEventListener('click', async () => {
       const btn = document.getElementById('ts-test');
