@@ -153,3 +153,62 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ═══════════════════════════════════════════════════════
+-- TELEGRAM NOTIFICATIONS SCHEMA
+-- ═══════════════════════════════════════════════════════
+
+-- 7. Telegram Settings Table
+CREATE TABLE IF NOT EXISTS public.telegram_settings (
+  id INT PRIMARY KEY DEFAULT 1,
+  bot_token TEXT,
+  chat_id TEXT,
+  is_enabled BOOLEAN DEFAULT false,
+  notify_all_pages BOOLEAN DEFAULT true,
+  tracked_pages JSONB DEFAULT '[]'::jsonb,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+-- Protect Telegram Settings
+ALTER TABLE public.telegram_settings ENABLE ROW LEVEL SECURITY;
+-- Only authenticated users (admins) can view and update
+CREATE POLICY "Admins can view telegram settings" ON public.telegram_settings FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admins can update telegram settings" ON public.telegram_settings FOR UPDATE TO authenticated USING (true);
+CREATE POLICY "Admins can insert telegram settings" ON public.telegram_settings FOR INSERT TO authenticated WITH CHECK (true);
+
+-- Insert default row if not exists
+INSERT INTO public.telegram_settings (id, is_enabled) VALUES (1, false) ON CONFLICT (id) DO NOTHING;
+
+-- 8. Visitor Sessions Table
+CREATE TABLE IF NOT EXISTS public.visitor_sessions (
+  session_id TEXT PRIMARY KEY,
+  ip_address TEXT,
+  country TEXT,
+  city TEXT,
+  browser TEXT,
+  os TEXT,
+  first_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  page_views INT DEFAULT 1,
+  is_bot BOOLEAN DEFAULT false
+);
+
+-- Allow backend to write without RLS blocking, but public can't read
+ALTER TABLE public.visitor_sessions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service roles can manage visitor sessions" ON public.visitor_sessions FOR ALL USING (true);
+
+-- 9. Event Logs Table
+CREATE TABLE IF NOT EXISTS public.event_logs (
+  id SERIAL PRIMARY KEY,
+  session_id TEXT REFERENCES public.visitor_sessions(session_id),
+  page_url TEXT,
+  referrer TEXT,
+  user_id UUID REFERENCES public.profiles(id) DEFAULT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Allow backend to write
+ALTER TABLE public.event_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service roles can manage event logs" ON public.event_logs FOR ALL USING (true);
+
+

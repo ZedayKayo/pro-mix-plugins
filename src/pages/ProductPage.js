@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import { getProductBySlug, getProducts } from '../data/products.js';
-import { formatPrice, formatCrypto, renderStars, getPluginImage, getCategoryName } from '../core/utils.js';
+import { formatPrice, formatCrypto, renderStars, getPluginImage, getCategoryName, calculateDiscount } from '../core/utils.js';
 import { addToCart, isInCart } from '../core/store.js';
 import { navigate } from '../core/router.js';
 import { showToast } from '../components/Toast.js';
@@ -32,9 +32,22 @@ export function renderProductPage(params) {
   // Generate waveform bars
   const bars = Array.from({ length: 60 }, () => Math.random() * 80 + 10);
 
+  const CAT_GRADIENTS = {
+    eq:         'linear-gradient(135deg,#00ff88 0%,#0090cc 100%)',
+    compressor: 'linear-gradient(135deg,#ff6b2b 0%,#ff3b5c 100%)',
+    reverb:     'linear-gradient(135deg,#00d4ff 0%,#a855f7 100%)',
+    delay:      'linear-gradient(135deg,#a855f7 0%,#ff3b5c 100%)',
+    synth:      'linear-gradient(135deg,#e040fb 0%,#00e5ff 100%)',
+    distortion: 'linear-gradient(135deg,#ff8f5e 0%,#facc15 100%)',
+    mastering:  'linear-gradient(135deg,#00b4d8 0%,#0077b6 100%)',
+    bundle:     'linear-gradient(135deg,#f9c74f 0%,#f3722c 100%)',
+    utility:    'linear-gradient(135deg,#4cc9f0 0%,#4361ee 100%)',
+  };
+  const grad = CAT_GRADIENTS[product.category] || 'linear-gradient(135deg,rgba(255,255,255,0.05),rgba(0,0,0,0.5))';
+
   container.innerHTML = `
     <div class="section">
-      <div class="container">
+      <div class="container container-narrow">
         <!-- Breadcrumb -->
         <div class="product-breadcrumb animate-fade-in">
           <a href="/">Home</a>
@@ -49,7 +62,7 @@ export function renderProductPage(params) {
         <div class="product-detail">
           <!-- LEFT: Gallery -->
           <div class="product-gallery animate-fade-in-up">
-            <div class="product-gallery-main">
+            <div class="product-gallery-main" style="background: ${grad};">
               <img src="${img}" alt="${product.name}" id="gallery-main-img" />
             </div>
             <div class="product-gallery-thumbs">
@@ -80,10 +93,8 @@ export function renderProductPage(params) {
             <div class="product-price-block">
               <div>
                 <div class="product-price-main">${formatPrice(price)}</div>
-                ${product.salePrice ? `<div class="text-sm text-muted flex items-center gap-xs" style="margin-top: 4px;">
-                  <span style="text-decoration: line-through;">${formatPrice(product.price)}</span>
-                  <span style="color: var(--neon-orange); border: 1px solid var(--neon-orange); border-radius: 4px; padding: 2px 6px; font-weight: bold; background: rgba(255, 107, 43, 0.1);">-70% OFF</span>
-                </div>` : ''}
+                ${product.salePrice ? `<span class="original-price" style="text-decoration: line-through; color: var(--text-muted); font-size: 0.8em; margin-left: 8px;">${formatPrice(product.price)}</span>
+          <span class="sale-badge" style="background: rgba(255, 107, 43, 0.1); color: var(--neon-orange); padding: 4px 8px; border-radius: 4px; font-size: 0.6em; vertical-align: middle; margin-left: 8px; border: 1px solid rgba(255,107,43,0.3);">-${calculateDiscount(product.price, product.salePrice)}% OFF</span>` : ''}
               </div>
               <div class="product-crypto-prices">
                 <span class="crypto-price-tag" title="Bitcoin">₿ ${formatCrypto(product.cryptoPrices.BTC, 'BTC')}</span>
@@ -96,7 +107,15 @@ export function renderProductPage(params) {
               <button class="btn btn-primary btn-lg" id="product-add-cart" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
                 ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
               </button>
-              <button class="btn btn-secondary btn-lg" id="product-buy-crypto">₿ Buy with Crypto</button>
+              <button class="btn" style="background: rgba(247, 147, 26, 0.1); border: 1px solid rgba(247, 147, 26, 0.3); color: #f7931a;" id="product-buy-crypto">
+              ⚡ Instant Access — Pay with Crypto
+            </button>
+            </div>
+            
+            <div class="product-trust-badges" style="display:flex; justify-content:space-between; margin-bottom:var(--space-xl); font-size:12px; color:var(--text-muted); border-top:1px solid var(--border-primary); padding-top:var(--space-md);">
+              <span>🔒 Secure Payment</span>
+              <span>⚡ Instant Delivery</span>
+              <span>🔄 Lifetime Updates</span>
             </div>
 
             <!-- Audio Demo -->
@@ -107,71 +126,79 @@ export function renderProductPage(params) {
                   <span>Audio Demo</span>
                 </div>
                 <div class="audio-player-controls">
-                  <button class="play-btn" id="demo-play-btn">▶</button>
                   <div class="audio-progress-wrapper">
-                    <div class="audio-waveform" id="audio-waveform">
+                    <div class="audio-waveform" id="audio-waveform" style="opacity: 0.5;">
                       ${bars.map((h, i) => `<div class="waveform-bar" style="height:${h}%" data-bar="${i}"></div>`).join('')}
                     </div>
-                    <div class="audio-time">
-                      <span id="audio-current">0:00</span>
-                      <span id="audio-duration">2:30</span>
+                    <div class="audio-time" style="justify-content: center;">
+                      <span style="color: var(--text-tertiary); font-family: var(--font-display); letter-spacing: 1px; font-size: 11px; text-transform: uppercase;">Audio Preview Coming Soon</span>
                     </div>
-                  </div>
-                  <div class="volume-control">
-                    <span>🔊</span>
-                    <input type="range" class="daw-slider volume-slider" min="0" max="100" value="80" />
                   </div>
                 </div>
               </div>
             ` : ''}
 
-            <!-- Description -->
-            <div style="margin-bottom: var(--space-xl);">
-              <h4 style="margin-bottom: var(--space-sm);">Description</h4>
-              <p>${product.description}</p>
-            </div>
+          </div> <!-- /product-info -->
+        </div> <!-- /product-detail -->
 
-            <!-- Features -->
-            <div class="product-features">
-              <h4>Key Features</h4>
-              <div class="feature-list">
-                ${product.features.map(f => `<div class="feature-item">${f}</div>`).join('')}
+        <!-- FULL WIDTH BOTTOM SECTION (Tabs) -->
+        <div class="product-bottom-section animate-fade-in-up delay-3" style="margin-top: var(--space-3xl);">
+          <!-- Tabs Container -->
+          <div class="product-tabs-container" style="margin-top: 0; border-top: none; padding-top: 0;">
+            <div class="product-tabs-nav">
+                <button class="product-tab active" data-tab="desc">Description</button>
+                <button class="product-tab" data-tab="features">Key Features</button>
+                <button class="product-tab" data-tab="specs">Specs & Reqs</button>
               </div>
-            </div>
 
-            <!-- DAW Compatibility -->
-            <div style="margin-bottom: var(--space-xl);">
-              <h4 style="margin-bottom: var(--space-sm);">DAW Compatibility</h4>
-              <div class="product-daw-compat">
-                ${product.dawCompat.map(d => {
-                  const dawNames = { 'fl-studio': 'FL Studio', ableton: 'Ableton', 'pro-tools': 'Pro Tools', logic: 'Logic Pro', cubase: 'Cubase', reaper: 'Reaper', 'studio-one': 'Studio One' };
-                  return `<span class="tag">${dawNames[d] || d}</span>`;
-                }).join('')}
+              <!-- Tab: Description -->
+              <div class="product-tab-content active" id="tab-desc">
+                <p style="line-height: 1.7; color: var(--text-secondary);">${product.description}</p>
               </div>
-            </div>
 
-            <!-- Specs -->
-            <div class="product-specs">
-              <h4 style="margin-bottom: var(--space-sm);">Specifications</h4>
-              <table class="specs-table">
-                ${Object.entries(product.specs).map(([k, v]) => `
-                  <tr><td>${k}</td><td>${v}</td></tr>
-                `).join('')}
-              </table>
-            </div>
+              <!-- Tab: Features -->
+              <div class="product-tab-content" id="tab-features">
+                <div class="feature-list" style="margin-top: 0;">
+                  ${product.features.map(f => `<div class="feature-item">${f}</div>`).join('')}
+                </div>
+              </div>
 
-            <!-- System Requirements -->
-            <div style="margin-bottom: var(--space-xl);">
-              <h4 style="margin-bottom: var(--space-sm);">System Requirements</h4>
-              <table class="specs-table">
-                <tr><td>Operating System</td><td>${product.systemReqs.os}</td></tr>
-                <tr><td>RAM</td><td>${product.systemReqs.ram}</td></tr>
-                <tr><td>Disk Space</td><td>${product.systemReqs.disk}</td></tr>
-                <tr><td>Processor</td><td>${product.systemReqs.cpu}</td></tr>
-              </table>
-            </div>
-          </div>
-        </div>
+              <!-- Tab: Specs & Reqs -->
+              <div class="product-tab-content" id="tab-specs">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-xl);">
+                  
+                  <div>
+                    <h4 style="margin-bottom: var(--space-sm); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Specifications</h4>
+                    <table class="specs-table" style="margin-bottom: var(--space-lg);">
+                      ${Object.entries(product.specs)
+                        .filter(([k]) => !['source_url', 'download_mac', 'download_win', 'magnet'].includes(k.toLowerCase()))
+                        .map(([k, v]) => `<tr><td>${k}</td><td style="word-break: break-word;">${v}</td></tr>`)
+                        .join('')}
+                    </table>
+                    
+                    <h4 style="margin-bottom: var(--space-sm); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">DAW Compatibility</h4>
+                    <div class="product-daw-compat">
+                      ${product.dawCompat.map(d => {
+                        const dawNames = { 'fl-studio': 'FL Studio', ableton: 'Ableton', 'pro-tools': 'Pro Tools', logic: 'Logic Pro', cubase: 'Cubase', reaper: 'Reaper', 'studio-one': 'Studio One' };
+                        return `<span class="tag">${dawNames[d] || d}</span>`;
+                      }).join('')}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style="margin-bottom: var(--space-sm); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">System Requirements</h4>
+                    <table class="specs-table">
+                      <tr><td>OS</td><td>${product.systemReqs.os}</td></tr>
+                      <tr><td>RAM</td><td>${product.systemReqs.ram}</td></tr>
+                      <tr><td>Disk</td><td>${product.systemReqs.disk}</td></tr>
+                      <tr><td>CPU</td><td>${product.systemReqs.cpu}</td></tr>
+                    </table>
+                  </div>
+
+                </div>
+              </div>
+            </div> <!-- /product-tabs-container -->
+          </div> <!-- /product-bottom-section -->
 
         <!-- RELATED PLUGINS -->
         ${related.length > 0 ? `
@@ -186,26 +213,63 @@ export function renderProductPage(params) {
         ` : ''}
       </div>
     </div>
+    
+    <!-- STICKY MOBILE BUY BAR -->
+    <div class="sticky-buy-bar" id="sticky-buy-bar">
+      <div class="sticky-buy-info">
+        <span class="sticky-buy-name" style="font-weight:600; font-size:14px;">${product.name}</span>
+        <span class="sticky-buy-price" style="font-family:var(--font-mono); color:var(--neon-green); font-size:14px;">${formatPrice(price)}</span>
+      </div>
+      <button class="btn btn-primary btn-sm" id="sticky-add-cart" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
+        ${inCart ? '✓ Added' : '🛒 Add'}
+      </button>
+    </div>
   `;
 
   // Events
   const addCartBtn = document.getElementById('product-add-cart');
-  if (addCartBtn && !inCart) {
-    addCartBtn.addEventListener('click', () => {
+  const stickyAddBtn = document.getElementById('sticky-add-cart');
+  
+  if (!inCart) {
+    const handleAdd = () => {
       const added = addToCart(product);
       if (added) {
         showToast(`${product.name} added to cart!`, 'success');
-        addCartBtn.textContent = '✓ In Cart';
-        addCartBtn.disabled = true;
-        addCartBtn.style.opacity = '0.5';
+        if (addCartBtn) {
+          addCartBtn.textContent = '✓ In Cart';
+          addCartBtn.disabled = true;
+          addCartBtn.style.opacity = '0.5';
+        }
+        if (stickyAddBtn) {
+          stickyAddBtn.textContent = '✓ Added';
+          stickyAddBtn.disabled = true;
+          stickyAddBtn.style.opacity = '0.5';
+        }
       }
-    });
+    };
+    if (addCartBtn) addCartBtn.addEventListener('click', handleAdd);
+    if (stickyAddBtn) stickyAddBtn.addEventListener('click', handleAdd);
   }
 
   document.getElementById('product-buy-crypto')?.addEventListener('click', () => {
     if (!isInCart(product.id)) addToCart(product);
     navigate('/checkout');
   });
+
+  // Sticky Bar Visibility Observer
+  const stickyBar = document.getElementById('sticky-buy-bar');
+  if (stickyBar && addCartBtn) {
+    const observer = new IntersectionObserver((entries) => {
+      // Show sticky bar only if original button is completely out of view
+      const isVisible = entries[0].isIntersecting;
+      if (!isVisible && window.innerWidth <= 768) {
+        stickyBar.classList.add('visible');
+      } else {
+        stickyBar.classList.remove('visible');
+      }
+    }, { threshold: 0 });
+    observer.observe(addCartBtn);
+  }
 
   // Audio player simulation
   initAudioPlayer();
@@ -267,6 +331,23 @@ export function renderProductPage(params) {
       });
     });
   }
+
+  // Tabs logic
+  const tabs = document.querySelectorAll('.product-tab');
+  const contents = document.querySelectorAll('.product-tab-content');
+  
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Remove active from all
+      tabs.forEach(t => t.classList.remove('active'));
+      contents.forEach(c => c.classList.remove('active'));
+      
+      // Add active to clicked
+      tab.classList.add('active');
+      const target = document.getElementById(`tab-${tab.dataset.tab}`);
+      if (target) target.classList.add('active');
+    });
+  });
 }
 
 function initAudioPlayer() {

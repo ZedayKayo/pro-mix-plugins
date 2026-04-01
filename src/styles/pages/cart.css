@@ -1,0 +1,122 @@
+/* ══════════════ CART PAGE ══════════════ */
+
+.cart-layout {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 80px 1fr auto auto;
+  gap: var(--space-md);
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--duration-fast);
+}
+.cart-item:hover {
+  border-color: var(--border-hover);
+}
+.cart-item-image {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--bg-tertiary);
+}
+.cart-item-info h4 {
+  font-size: var(--text-md);
+  margin-bottom: 2px;
+}
+.cart-item-info p {
+  font-size: var(--text-xs);
+}
+.cart-item-price {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--neon-green);
+}
+.cart-item-remove {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 59, 92, 0.08);
+  border: 1px solid rgba(255, 59, 92, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--neon-red);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  font-size: 14px;
+}
+.cart-item-remove:hover {
+  background: rgba(255, 59, 92, 0.15);
+  border-color: var(--neon-red);
+}
+
+.cart-empty {
+  text-align: center;
+  padding: var(--space-4xl) var(--space-xl);
+}
+.cart-empty-icon {
+  font-size: 64px;
+  margin-bottom: var(--space-lg);
+  opacity: 0.3;
+}
+.cart-empty h3 {
+  margin-bottom: var(--space-sm);
+}
+
+.order-summary {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-lg));
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.order-summary h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.order-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+.order-line.total {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-primary);
+  margin-top: var(--space-md);
+}
+.order-line.total span:last-child {
+  color: var(--neon-green);
+}
+
+.promo-input {
+  display: flex;
+  gap: var(--space-xs);
+  margin: var(--space-lg) 0;
+}
+.promo-input .input { flex: 1; }

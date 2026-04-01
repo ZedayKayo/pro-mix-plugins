@@ -13,10 +13,10 @@ export function renderFooter() {
             </a>
             <p>Professional audio plugins crafted for producers, engineers, and artists. Pushing the boundaries of digital sound since 2023.</p>
             <div class="footer-social">
-              <a href="#" title="Twitter / X">𝕏</a>
-              <a href="#" title="YouTube">▶</a>
-              <a href="#" title="Discord">💬</a>
-              <a href="#" title="Instagram">📷</a>
+              <a href="#" title="Twitter / X" aria-label="Twitter">𝕏</a>
+              <a href="#" title="YouTube" aria-label="YouTube">▶</a>
+              <a href="#" title="Discord" aria-label="Discord">💬</a>
+              <a href="#" title="Instagram" aria-label="Instagram">📷</a>
             </div>
           </div>
 
@@ -32,8 +32,6 @@ export function renderFooter() {
 
           <div class="footer-col">
             <h5>Support</h5>
-            <a href="#">Documentation</a>
-            <a href="#">Installation Guide</a>
             <a href="/faq">FAQ</a>
             <a href="/contact">Contact Us</a>
             <a href="/support">Support Center</a>
@@ -43,10 +41,7 @@ export function renderFooter() {
           <div class="footer-col">
             <h5>Company</h5>
             <a href="/about">About Us</a>
-            <a href="#">Careers</a>
-            <a href="#">Terms of Service</a>
-            <a href="#">Privacy Policy</a>
-            <a href="/refund">Refund Policy</a>
+            <a href="/refunds">Refund Policy</a>
           </div>
         </div>
 

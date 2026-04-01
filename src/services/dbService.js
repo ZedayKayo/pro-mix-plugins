@@ -7,6 +7,14 @@ export const loginUserAuth = async (email, password) => {
   return await fetchUserProfile(data.user.id);
 };
 
+export const loginWithGoogleAuth = async () => {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}/dashboard` }
+  });
+  if (error) throw error;
+};
+
 export const registerUserAuth = async (email, password, name) => {
   const { data, error } = await supabase.auth.signUp({
     email, password, options: { data: { name } }
@@ -19,6 +27,13 @@ export const registerUserAuth = async (email, password, name) => {
 
 export const logoutUserAuth = async () => {
   const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+};
+
+export const resetPasswordAuth = async (email) => {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/login`,
+  });
   if (error) throw error;
 };
 
@@ -103,6 +118,19 @@ export const processSecureCheckout = async (userId, items, paymentMethod, useCre
     p_use_credits: useCredits
   });
   
+  if (error) throw error;
+  return data;
+};
+
+// ── TELEGRAM SETTINGS ──
+export const fetchTelegramSettings = async () => {
+  const { data, error } = await supabase.from('telegram_settings').select('*').eq('id', 1).maybeSingle();
+  if (error) console.error("Error fetching telegram settings:", error);
+  return data || null;
+};
+
+export const updateTelegramSettings = async (settings) => {
+  const { data, error } = await supabase.from('telegram_settings').update({ ...settings, updated_at: new Date().toISOString() }).eq('id', 1);
   if (error) throw error;
   return data;
 };

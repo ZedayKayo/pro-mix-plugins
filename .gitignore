@@ -11,9 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-.env.*
-!.env.example
+
 .gemini/
 _tmp/
 .vercel
@@ -29,3 +27,5 @@ _tmp/
 *.njsproj
 *.sln
 *.sw?
+
+.vercel

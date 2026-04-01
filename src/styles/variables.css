@@ -6,13 +6,13 @@
 :root {
   /* ── Core Palette ── */
   --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-tertiary: #1a1a28;
-  --bg-card: #16161f;
-  --bg-card-hover: #1e1e2e;
-  --bg-surface: #1c1c2a;
-  --bg-input: #13131d;
-  --bg-overlay: rgba(0, 0, 0, 0.75);
+  --bg-secondary: #111116;
+  --bg-tertiary: #16161c;
+  --bg-card: #0d0d12;
+  --bg-card-hover: #14141a;
+  --bg-surface: #101015;
+  --bg-input: #0e0e13;
+  --bg-overlay: rgba(0, 0, 0, 0.85);
 
   /* ── Neon Accent Colors ── */
   --neon-green: #00ff88;
@@ -37,11 +37,11 @@
   --neon-red-glow: rgba(255, 59, 92, 0.3);
 
   /* ── Text Colors ── */
-  --text-primary: #eaeaf0;
-  --text-secondary: #9898b0;
-  --text-tertiary: #6a6a82;
-  --text-muted: #4a4a64;
-  --text-inverse: #0a0a0f;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-muted: #52525b;
+  --text-inverse: #000000;
 
   /* ── Border Colors ── */
   --border-primary: rgba(255, 255, 255, 0.06);
@@ -51,12 +51,12 @@
 
   /* ── Gradients ── */
   --gradient-hero: linear-gradient(135deg, #0a0a0f 0%, #1a1030 50%, #0a0a0f 100%);
-  --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+  --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%);
   --gradient-green: linear-gradient(135deg, #00ff88, #00cc6a);
   --gradient-orange: linear-gradient(135deg, #ff6b2b, #ff8f5e);
   --gradient-blue: linear-gradient(135deg, #00d4ff, #0090cc);
   --gradient-neon-mix: linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #a855f7 100%);
-  --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+  --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%);
 
   /* ── Spacing ── */
   --space-2xs: 4px;
@@ -72,9 +72,9 @@
   /* ── Typography ── */
   --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-display: 'Outfit', 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
 
-  --text-xs: 0.7rem;
+  --text-xs: 0.75rem;
   --text-sm: 0.8rem;
   --text-base: 0.95rem;
   --text-md: 1.05rem;
@@ -129,8 +129,8 @@
   /* ── Layout ── */
   --header-height: 68px;
   --sidebar-width: 280px;
-  --max-width: 1320px;
-  --content-width: 1080px;
+  --max-width: 1160px;
+  --content-width: 960px;
 }
 
 /* ── Light Mode Overrides ── */

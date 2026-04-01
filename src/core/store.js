@@ -13,7 +13,7 @@ const STORAGE_KEYS = {
 
 // Import Supabase service
 import { fetchProducts, insertProduct, updateProduct, removeProduct } from '../services/productService.js';
-import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchUserLicenses, fetchSessionProfile, loginUserAuth, registerUserAuth, logoutUserAuth, processSecureCheckout } from '../services/dbService.js';
+import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchUserLicenses, fetchSessionProfile, loginUserAuth, loginWithGoogleAuth, registerUserAuth, logoutUserAuth, resetPasswordAuth, processSecureCheckout } from '../services/dbService.js';
 import { supabase } from '../lib/supabase.js';
 
 // Supabase is the single source of truth — no static defaults
@@ -177,6 +177,10 @@ export function loginUser(email, password) {
   return loginUserAsync(email, password);
 }
 
+export async function loginWithGoogleUser() {
+  return await loginWithGoogleAuth();
+}
+
 export async function registerUserAsync(email, password, name) {
   const userProfile = await registerUserAuth(email, password, name);
   return await handleUserHydration(userProfile);
@@ -184,6 +188,10 @@ export async function registerUserAsync(email, password, name) {
 
 export function registerUser(email, password, name) {
   return registerUserAsync(email, password, name);
+}
+
+export async function resetPasswordUser(email) {
+  return await resetPasswordAuth(email);
 }
 
 async function handleUserHydration(userProfile) {
@@ -222,8 +230,8 @@ export function deductCredits(amount) {
   return false;
 }
 
-export async function logoutUserAuthAsync() {
-  await logoutUserAuth();
+export function clearLocalUser() {
+  if (!memoryUser) return; // Prevent redundant executions
   memoryUser = null;
   memoryCart = [];
   memoryPurchases = [];
@@ -237,6 +245,15 @@ export async function logoutUserAuthAsync() {
   emit('licenses:updated', []);
 }
 
+export async function logoutUserAuthAsync() {
+  try {
+    await logoutUserAuth();
+  } catch (err) {
+    console.warn("Supabase signout logic fallback:", err);
+  }
+  clearLocalUser();
+}
+
 export function logoutUser() {
   logoutUserAuthAsync();
 }
@@ -244,6 +261,13 @@ export function logoutUser() {
 export function isLoggedIn() {
   return !!getUser();
 }
+
+export function isAdmin() {
+  const user = getUser();
+  if (!user) return false;
+  return user.role === 'admin' || user.is_admin === true;
+}
+
 
 // ── Purchases & Licenses ──
 export function getPurchases() {
@@ -326,7 +350,7 @@ export async function initStore() {
       const p = await fetchSessionProfile();
       if (p) await handleUserHydration(p);
     } else if (event === 'SIGNED_OUT') {
-      logoutUserAuthAsync();
+      clearLocalUser();
     }
   });
 

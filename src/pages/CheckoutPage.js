@@ -163,8 +163,9 @@ export function renderCheckoutPage() {
 
                 <!-- Confirm Payment -->
                 <button class="btn btn-primary" id="simulate-payment-btn" style="width:100%;">
-                  ${useCredits ? '🎁 Complete Order with Credits' : '✅ I Have Paid (Pending Verification)'}
+                  ${useCredits ? '🎁 Complete Order with Credits' : '✅ I Have Paid (Verify Transaction)'}
                 </button>
+                <div id="checkout-status-msg" style="margin-top: var(--space-md); text-align: center; display: none;"></div>
               </div>
             </div>
           </div>
@@ -204,15 +205,16 @@ export function renderCheckoutPage() {
 
     // Simulate payment
     document.getElementById('simulate-payment-btn')?.addEventListener('click', () => {
-      const statusEl = document.getElementById('payment-status');
       const simBtn = document.getElementById('simulate-payment-btn');
+      const statusMsg = document.getElementById('checkout-status-msg');
       
       simBtn.disabled = true;
       simBtn.textContent = 'Processing...';
       
-      if (statusEl) {
-        statusEl.className = 'payment-status waiting';
-        statusEl.innerHTML = '<span class="spinner"></span> Confirming transaction...';
+      if (statusMsg) {
+        statusMsg.style.display = 'block';
+        statusMsg.className = 'payment-status waiting';
+        statusMsg.innerHTML = '<span class="spinner"></span> Confirming transaction...';
       }
 
       setTimeout(async () => {
@@ -220,43 +222,52 @@ export function renderCheckoutPage() {
           const result = await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
           clearCart();
 
-          if (statusEl) {
-            statusEl.style.display = 'block';
-            statusEl.className = 'payment-status confirmed';
-            statusEl.innerHTML = useCredits ? '✓ Order Confirmed!' : '🕒 Awaiting Verification';
-          }
-
-          showToast(useCredits ? 'Order complete! Your plugins are ready.' : 'Payment submitted! Waiting for manual admin confirmation.', 'success');
-
-          // Show success state
-          setTimeout(() => {
-            container.innerHTML = `
-              <div class="section" style="text-align:center; padding: var(--space-4xl);">
-                <div style="font-size:64px; margin-bottom: var(--space-lg);">🎉</div>
-                <h2 style="color: var(--neon-green);">${useCredits ? 'Order Successful!' : 'Payment Submitted!'}</h2>
-                <p style="margin: var(--space-md) 0; max-width:450px; margin-inline:auto;">
-                  ${useCredits ? 'Your plugins have been unlocked.' : 'Your order is now pending. Once the network confirms the transaction, your plugins will be unlocked.'} Visit your dashboard to view order status.
-                </p>
-                <div class="flex justify-center gap-md" style="margin-top: var(--space-xl);">
-                  <button class="btn btn-primary btn-lg" id="go-dashboard">Go to Dashboard</button>
-                  <button class="btn btn-secondary btn-lg" id="go-store">Continue Shopping</button>
-                </div>
+          if (statusMsg) {
+            statusMsg.className = 'payment-status confirmed';
+            statusMsg.innerHTML = useCredits ? '✓ Order Confirmed!' : '🕒 Awaiting Block Confirmation';
+            
+            // Add instructions below the widget instead of wiping it
+            const successOverlay = document.createElement('div');
+            successOverlay.className = 'animate-fade-in-up delay-1';
+            successOverlay.style.padding = 'var(--space-xl)';
+            successOverlay.style.textAlign = 'center';
+            successOverlay.style.background = 'var(--bg-card)';
+            successOverlay.style.border = '1px solid var(--border-primary)';
+            successOverlay.style.borderRadius = 'var(--radius-xl)';
+            successOverlay.style.marginTop = 'var(--space-lg)';
+            
+            successOverlay.innerHTML = `
+              <div style="font-size:48px; margin-bottom: var(--space-md);">🎉</div>
+              <h3 style="color: var(--neon-green); margin-bottom: var(--space-md);">
+                ${useCredits ? 'Success! Instant Access Unlocked.' : 'Your order is secure. Send crypto to unlock access instantly.'}
+              </h3>
+              <p class="text-secondary" style="margin-bottom: var(--space-lg);">
+                ${useCredits ? 'Your plugins are ready.' : 'Once the network confirms the transaction, your plugins will be available.'}
+                Visit your dashboard to view the status.
+              </p>
+              <div class="flex justify-center gap-md">
+                <button class="btn btn-primary" id="go-dashboard-btn">Go to Dashboard</button>
               </div>
             `;
-
-            document.getElementById('go-dashboard')?.addEventListener('click', () => navigate('/dashboard'));
-            document.getElementById('go-store')?.addEventListener('click', () => navigate('/store'));
-          }, 1500);
-        } catch (err) {
-          showToast(err.message || 'Checkout failed', 'error');
-          simBtn.disabled = false;
-          simBtn.textContent = useCredits ? '🎁 Complete Order with Credits' : '✅ I Have Paid (Pending Verification)';
-          if (statusEl) {
-            statusEl.className = 'payment-status';
-            statusEl.innerHTML = '';
+            
+            // Insert it after the widget widget
+            document.querySelector('.crypto-payment-widget').after(successOverlay);
+            
+            document.getElementById('go-dashboard-btn')?.addEventListener('click', () => navigate('/dashboard'));
+            
+            // Hide the simulate button completely now that it's done
+            simBtn.style.display = 'none';
           }
+
+          showToast(useCredits ? 'Order complete! Your plugins are ready.' : 'Order submitted! Dashboard updated.', 'success');
+
+        } catch (err) {
+          showToast(err.message || 'Payment failed', 'error');
+          simBtn.disabled = false;
+          simBtn.textContent = 'Try Again';
+          if (statusMsg) statusMsg.style.display = 'none';
         }
-      }, 1500);
+      }, 1500); // Network simulation
     });
   }
 

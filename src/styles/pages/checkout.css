@@ -1,0 +1,158 @@
+/* ══════════════ CHECKOUT PAGE ══════════════ */
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: 1fr 420px;
+  gap: var(--space-2xl);
+  align-items: start;
+}
+
+.crypto-payment-widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+}
+
+.crypto-tabs {
+  display: flex;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-xl);
+  padding: 4px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.crypto-tab {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  text-align: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  border: none;
+  background: transparent;
+  transition: all var(--duration-fast);
+}
+.crypto-tab:hover {
+  color: var(--text-primary);
+}
+.crypto-tab.active {
+  background: var(--bg-card);
+  color: var(--neon-green);
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-code-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.qr-code-box {
+  width: 200px;
+  height: 200px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px var(--neon-green-glow);
+}
+
+.wallet-address-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.wallet-address {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.copy-btn {
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--neon-green-subtle);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--neon-green);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+  white-space: nowrap;
+}
+.copy-btn:hover {
+  background: var(--neon-green);
+  color: var(--text-inverse);
+}
+
+.payment-amount {
+  text-align: center;
+  padding: var(--space-lg);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+.payment-amount .label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: var(--space-2xs);
+}
+.payment-amount .amount {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-bold);
+  color: var(--neon-green);
+}
+.payment-amount .usd {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+.payment-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+.payment-status.waiting {
+  background: var(--neon-orange-subtle);
+  color: var(--neon-orange);
+  border: 1px solid rgba(255, 107, 43, 0.2);
+}
+.payment-status.confirmed {
+  background: var(--neon-green-subtle);
+  color: var(--neon-green);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+}
+
+.payment-status .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: rotate 0.8s linear infinite;
+}

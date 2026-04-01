@@ -2,9 +2,30 @@
 // PRO-MIX PLUGINS — SPA Router (History API)
 // ═══════════════════════════════════════════════════════
 
+import { fetchSessionProfile } from '../services/dbService.js';
+import { isLoggedIn } from './store.js';
+
 const routes = {};
 let currentPage = null;
 let pageContainer = null;
+let debounceTrackTimeout = null;
+
+// UUID Generator for reliable Session IDs
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function getVisitorSessionId() {
+  let sid = sessionStorage.getItem('visitor_session_id');
+  if (!sid) {
+    sid = generateUUID();
+    sessionStorage.setItem('visitor_session_id', sid);
+  }
+  return sid;
+}
 
 export function registerRoute(path, handler) {
   routes[path] = handler;
@@ -29,6 +50,24 @@ export function initRouter(containerSelector) {
     const { handler, params } = matchRoute(path);
 
     if (handler) {
+      // Toggle global header/footer visibility for full-screen immersive auth page
+      const headerContainer = document.getElementById('header-container');
+      const footerContainer = document.getElementById('footer-container');
+      
+      if (path === '/login' || path === '/register' || path === '/forgot-password') {
+        if (isLoggedIn()) {
+          navigate('/dashboard');
+          return;
+        }
+        if (headerContainer) headerContainer.style.display = 'none';
+        if (footerContainer) footerContainer.style.display = 'none';
+        if (pageContainer) pageContainer.style.marginTop = '0';
+      } else {
+        if (headerContainer) headerContainer.style.display = '';
+        if (footerContainer) footerContainer.style.display = '';
+        if (pageContainer) pageContainer.style.marginTop = '';
+      }
+
       // Page transition
       if (pageContainer) {
         pageContainer.classList.remove('page-enter');
@@ -50,6 +89,29 @@ export function initRouter(containerSelector) {
           link.classList.remove('active');
         }
       });
+
+      // Track Visitor Navigation
+      clearTimeout(debounceTrackTimeout);
+      debounceTrackTimeout = setTimeout(async () => {
+        try {
+          const profile = await fetchSessionProfile();
+          const sid = getVisitorSessionId();
+          const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
+
+          // We don't need to block rendering for this
+          fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sessionId: sid,
+              path: window.location.pathname,
+              referrer: document.referrer || null,
+              userId: profile?.id || null,
+              isBot
+            })
+          }).catch(err => { /* fail silently, it's just analytics */ });
+        } catch (e) {}
+      }, 500); // 500ms debounce
 
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });

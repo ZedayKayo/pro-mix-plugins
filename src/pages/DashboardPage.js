@@ -2,7 +2,7 @@
 // PRO-MIX PLUGINS — Dashboard Page
 // ═══════════════════════════════════════════════════════
 
-import { getUser, getPurchases, getLicenses, logoutUser, isLoggedIn } from '../core/store.js';
+import { getUser, getPurchases, getLicenses, logoutUserAuthAsync, isLoggedIn } from '../core/store.js';
 import { formatPrice, timeAgo, getPluginImage } from '../core/utils.js';
 import { navigate } from '../core/router.js';
 import { showToast } from '../components/Toast.js';
@@ -48,8 +48,14 @@ export function renderDashboardPage() {
         </div>
       </div>`;
 
-    document.getElementById('logout-btn')?.addEventListener('click', () => {
-      logoutUser(); showToast('Signed out', 'info'); navigate('/');
+    document.getElementById('logout-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('logout-btn');
+      if (btn) { btn.innerText = 'Signing out...'; btn.disabled = true; }
+      try {
+        await logoutUserAuthAsync();
+      } catch (err) {}
+      showToast('Signed out', 'info'); 
+      navigate('/');
     });
     
     document.querySelectorAll('#dashboard-tabs .dashboard-tab').forEach(t => {

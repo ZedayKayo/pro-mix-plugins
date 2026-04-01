@@ -72,6 +72,12 @@ export function renderCartPage() {
                   <button class="btn btn-ghost">Apply</button>
                 </div>
 
+                <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:var(--space-md);">
+                  <span>🔒 Secure</span>
+                  <span>⚡ Instant Delivery</span>
+                  <span>🔄 Guarantee</span>
+                </div>
+
                 <button class="btn btn-primary" id="checkout-btn" style="width:100%;">
                   Proceed to Checkout
                 </button>

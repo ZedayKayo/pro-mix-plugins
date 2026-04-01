@@ -5,6 +5,7 @@
 import { allPlugins, bundlesDB } from './index.js';
 
 export const categories = [
+  { id: 'bundle', name: 'Bundles', icon: '📦' },
   { id: 'eq', name: 'Equalizer', icon: '🎚️' },
   { id: 'compressor', name: 'Compressor', icon: '🔊' },
   { id: 'reverb', name: 'Reverb', icon: '🎵' },
@@ -12,7 +13,6 @@ export const categories = [
   { id: 'synth', name: 'Synthesizer', icon: '🎹' },
   { id: 'distortion', name: 'Distortion/Sat', icon: '⚡' },
   { id: 'mastering', name: 'Mastering', icon: '💿' },
-  { id: 'bundle', name: 'Bundles', icon: '📦' },
   { id: 'utility', name: 'Utility/Other', icon: '🔧' },
 ];
 
@@ -239,5 +239,13 @@ export function filterProducts({ category, brand, type, daw, priceRange, search,
   if (sort === 'rating') r.sort((a, b) => b.rating - a.rating);
   if (sort === 'newest') r.sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
   if (sort === 'name') r.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Default hoisting: always show bundles at the very top of the grid.
+  r.sort((a, b) => {
+    if (a.category === 'bundle' && b.category !== 'bundle') return -1;
+    if (b.category === 'bundle' && a.category !== 'bundle') return 1;
+    return 0;
+  });
+
   return r;
 }
