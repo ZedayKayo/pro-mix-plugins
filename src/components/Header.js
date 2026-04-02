@@ -28,39 +28,7 @@ export function renderHeader() {
         <nav class="header-nav" id="header-nav" aria-label="Main navigation">
           <a href="/">Home</a>
           
-          <div class="store-nav-wrapper">
-            <a href="/store">Store</a>
-            <div class="megamenu-panel">
-              <a href="/store?category=bundle" class="megamenu-item">
-                <div class="mm-icon">📦</div>
-                <div class="mm-text">
-                  <h4>Bundles</h4>
-                  <p>Our best value collections</p>
-                </div>
-              </a>
-              <a href="/store?category=synth" class="megamenu-item">
-                <div class="mm-icon">🎹</div>
-                <div class="mm-text">
-                  <h4>Synthesizers</h4>
-                  <p>Virtual analog & wavetable</p>
-                </div>
-              </a>
-              <a href="/store?category=eq" class="megamenu-item">
-                <div class="mm-icon">🎚️</div>
-                <div class="mm-text">
-                  <h4>Equalizers</h4>
-                  <p>Precision mix tools</p>
-                </div>
-              </a>
-              <a href="/store?category=mastering" class="megamenu-item">
-                <div class="mm-icon">💿</div>
-                <div class="mm-text">
-                  <h4>Mastering</h4>
-                  <p>Finish your tracks</p>
-                </div>
-              </a>
-            </div>
-          </div>
+          <a href="/store">Plugins</a>
 
           <a href="/compare">Compare</a>
           <a href="/dashboard">Dashboard</a>
@@ -79,7 +47,7 @@ export function renderHeader() {
           
           ${loggedIn ? `
             <div class="user-credits" title="Your Credit Balance" style="display:flex; align-items:center; gap:4px; font-weight:600; font-size:14px; padding:0 12px; background:var(--bg-tertiary); border:1px solid var(--border-primary); border-radius:var(--radius-full); height:38px; color:var(--neon-green);">
-              <span id="header-credits-display">🎁 ${getUser().credits || 0}</span>
+              <span id="header-credits-display">💵 $${getUser().credits ?? 0}</span>
             </div>
           ` : ''}
 
@@ -106,7 +74,7 @@ export function renderHeader() {
       </div>
       <div class="mobile-menu-links">
         <a href="/" class="mobile-nav-link">Home</a>
-        <a href="/store" class="mobile-nav-link">Store</a>
+        <a href="/store" class="mobile-nav-link">Plugins</a>
         <a href="/compare" class="mobile-nav-link">Compare</a>
         <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
         ${admin ? `<a href="/admin" class="mobile-nav-link" style="color: var(--neon-orange);">Admin</a>` : ''}
@@ -218,7 +186,7 @@ export function initHeaderEvents() {
     on('user:updated', (user) => {
       const creditDisplay = document.getElementById('header-credits-display');
       if (creditDisplay && user) {
-        creditDisplay.innerHTML = `🎁 ${user.credits || 0} Credits`;
+        creditDisplay.innerHTML = `💵 $${user.credits ?? 0}`;
       }
     });
 

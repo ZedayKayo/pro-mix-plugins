@@ -51,10 +51,10 @@ export function renderDashboardPage() {
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
       const btn = document.getElementById('logout-btn');
       if (btn) { btn.innerText = 'Signing out...'; btn.disabled = true; }
-      try {
-        await logoutUserAuthAsync();
-      } catch (err) {}
-      showToast('Signed out', 'info'); 
+      // Don't await — navigate immediately so the button can never get stuck.
+      // logoutUserAuthAsync has its own 4s timeout guard in store.js.
+      logoutUserAuthAsync().catch(() => {});
+      showToast('Signed out', 'info');
       navigate('/');
     });
     

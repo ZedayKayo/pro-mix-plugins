@@ -246,10 +246,17 @@ export function clearLocalUser() {
 }
 
 export async function logoutUserAuthAsync() {
+  // Race Supabase signOut against a 4s timeout.
+  // If Supabase hangs (network issue, stale session), we force-clear locally
+  // and let onAuthStateChange clean up when connectivity returns.
   try {
-    await logoutUserAuth();
+    await Promise.race([
+      logoutUserAuth(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('signout timeout')), 4000))
+    ]);
   } catch (err) {
-    console.warn("Supabase signout logic fallback:", err);
+    // Timeout or network error — clear locally anyway so the user isn't stuck
+    console.warn('Supabase signout fallback (forced clear):', err.message);
   }
   clearLocalUser();
 }

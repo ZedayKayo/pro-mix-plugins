@@ -69,8 +69,8 @@ export function renderCheckoutPage() {
                 ${availableCredits > 0 ? `
                 <div class="flex items-center justify-between" style="padding: var(--space-md) 0; border-bottom: 1px solid var(--border-primary);">
                   <div>
-                    <div style="font-weight: var(--weight-semibold);">Your Credits Balance: 🎁 ${availableCredits}</div>
-                    <div class="text-xs text-muted">1 Credit = $1 USD</div>
+                    <div style="font-weight: var(--weight-semibold);">Store Credit Balance: 💵 $${availableCredits}</div>
+                    <div class="text-xs text-muted">$1 credit = $1 USD off your order</div>
                   </div>
                   ${canCoverWithCredits ? `
                     <label class="toggle-switch">
@@ -137,8 +137,8 @@ export function renderCheckoutPage() {
                 <!-- Payment Amount -->
                 <div class="payment-amount">
                   <div class="label">${useCredits ? 'Credits to Use' : 'Amount to Send'}</div>
-                  <div class="amount">${useCredits ? `${cartTotal} Credits` : formatCrypto(finalCryptoTotal, selectedCoin)}</div>
-                  <div class="usd">${useCredits ? '0 Balance Due' : `≈ ${finalTotalStr}`}</div>
+                  <div class="amount">${useCredits ? `$${cartTotal} Credit` : formatCrypto(finalCryptoTotal, selectedCoin)}</div>
+                  <div class="usd">${useCredits ? '$0 Balance Due' : `≈ ${finalTotalStr}`}</div>
                 </div>
 
                 ${!useCredits ? `

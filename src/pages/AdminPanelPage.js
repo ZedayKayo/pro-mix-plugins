@@ -723,7 +723,7 @@ export function renderAdminPanel(params) {
                       </td>
                       <td style="padding:10px 8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(u.email || '—')}</td>
                       <td style="padding:10px 8px;">
-                        <span style="padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;background:rgba(168,85,247,0.15);color:var(--neon-purple);">${u.credits ?? 0} cr</span>
+                        <span style="padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;background:rgba(168,85,247,0.15);color:var(--neon-purple);">$${u.credits ?? 0}</span>
                       </td>
                       <td style="padding:10px 8px; font-size:0.85rem; color:var(--neon-blue); font-weight:600;">${u.orderCount || 0}</td>
                       <td style="padding:10px 8px; font-weight:bold; color:var(--neon-green);">${formatPrice(u.totalSpent || 0)}</td>
