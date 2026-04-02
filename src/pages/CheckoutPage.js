@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Checkout Page (Crypto Payment)
+// PRO-MIX PLUGINS — Checkout Page (Crypto Primary + Card Secondary)
 // ═══════════════════════════════════════════════════════
 
 import { getCart, getCartTotal, clearCart, addPurchaseAsync, isLoggedIn, getUser } from '../core/store.js';
@@ -26,17 +26,17 @@ export function renderCheckoutPage() {
 
   let selectedCoin = 'BTC';
   let useCredits = false;
+  let nudgeModalVisible = false;
 
   function render() {
     const user = getUser();
     const availableCredits = user ? (user.credits || 0) : 0;
     const cartTotal = getCartTotal();
     const canCoverWithCredits = availableCredits >= cartTotal;
-    
-    // If we have enough credits, provide the option to use them
+
     let finalTotalStr = formatPrice(cartTotal);
     let finalCryptoTotal = cart.reduce((sum, item) => sum + (item.cryptoPrices?.[selectedCoin] || 0), 0);
-    
+
     if (useCredits) {
       finalTotalStr = formatPrice(0);
       finalCryptoTotal = 0;
@@ -52,7 +52,7 @@ export function renderCheckoutPage() {
           <h1 style="margin-bottom: var(--space-xl); font-size: var(--text-2xl);">Checkout</h1>
 
           <div class="checkout-layout">
-            <!-- LEFT: Order Review -->
+            <!-- LEFT: Order Review + Instructions -->
             <div class="animate-fade-in-up">
               <div class="card" style="padding: var(--space-lg); margin-bottom: var(--space-xl);">
                 <h3 style="margin-bottom: var(--space-lg);">Order Review</h3>
@@ -65,7 +65,7 @@ export function renderCheckoutPage() {
                     <div style="font-weight: var(--weight-bold); color: var(--neon-green);">${formatPrice(item.price)}</div>
                   </div>
                 `).join('')}
-                
+
                 ${availableCredits > 0 ? `
                 <div class="flex items-center justify-between" style="padding: var(--space-md) 0; border-bottom: 1px solid var(--border-primary);">
                   <div>
@@ -92,7 +92,7 @@ export function renderCheckoutPage() {
               <!-- Payment Instructions -->
               ${!useCredits ? `
               <div class="card" style="padding: var(--space-lg);">
-                <h4 style="margin-bottom: var(--space-md);">How to Pay</h4>
+                <h4 style="margin-bottom: var(--space-md);">How to Pay with Crypto</h4>
                 <div style="display:flex;flex-direction:column;gap:var(--space-sm);">
                   ${instructions.steps.map((step, i) => `
                     <div class="flex items-center gap-sm">
@@ -110,18 +110,19 @@ export function renderCheckoutPage() {
               <div class="card" style="padding: var(--space-lg); text-align: center;">
                 <h4 style="margin-bottom: var(--space-md);">Pay with Credits</h4>
                 <p class="text-secondary" style="margin-bottom: var(--space-lg);">You are fully covering this purchase with your ProMix credits!</p>
-                <div class="payment-status waiting" style="margin-top: var(--space-lg);" id="payment-status" style="display:none;">
-                  <span class="spinner"></span>
-                  Processing credits...
-                </div>
               </div>
               `}
             </div>
 
-            <!-- RIGHT: Crypto Payment Widget -->
+            <!-- RIGHT: Payment Method Selector -->
             <div class="animate-fade-in-up delay-2">
-              <div class="crypto-payment-widget">
-                <h3 style="margin-bottom: var(--space-md); text-align:center;">${useCredits ? 'Complete Order' : 'Pay with Crypto'}</h3>
+
+              <!-- OPTION A: Crypto (Primary) -->
+              <div class="payment-method-card payment-method-primary" id="payment-option-crypto">
+                <div class="payment-method-header">
+                  <div class="payment-method-badge-recommended">⚡ RECOMMENDED</div>
+                  <h3 class="payment-method-title">${useCredits ? 'Complete with Credits' : 'Pay with Crypto'}</h3>
+                </div>
 
                 ${!useCredits ? `
                 <!-- Coin Tabs -->
@@ -144,9 +145,7 @@ export function renderCheckoutPage() {
                 ${!useCredits ? `
                 <!-- QR Code -->
                 <div class="qr-code-wrapper">
-                  <div class="qr-code-box" id="qr-code-box">
-                    ${qrSVG}
-                  </div>
+                  <div class="qr-code-box" id="qr-code-box">${qrSVG}</div>
                 </div>
 
                 <!-- Wallet Address -->
@@ -161,20 +160,93 @@ export function renderCheckoutPage() {
                 </div>
                 ` : ''}
 
+                <!-- Benefits -->
+                <div class="crypto-benefits">
+                  <div class="crypto-benefit-item">✅ <span>Instant payment</span></div>
+                  <div class="crypto-benefit-item">✅ <span>No verification required</span></div>
+                  <div class="crypto-benefit-item">✅ <span>Zero extra fees</span></div>
+                  <div class="crypto-benefit-item">✅ <span>Fastest delivery</span></div>
+                </div>
+
                 <!-- Confirm Payment -->
                 <button class="btn btn-primary" id="simulate-payment-btn" style="width:100%;">
                   ${useCredits ? '🎁 Complete Order with Credits' : '✅ I Have Paid (Verify Transaction)'}
                 </button>
                 <div id="checkout-status-msg" style="margin-top: var(--space-md); text-align: center; display: none;"></div>
               </div>
+
+              <!-- OPTION B: Card (Secondary) -->
+              <div class="payment-method-card payment-method-secondary" id="payment-option-card">
+                <div class="payment-method-header-secondary">
+                  <div class="payment-method-card-icon">💳</div>
+                  <div>
+                    <h4 class="payment-method-title-secondary">Pay with Card</h4>
+                    <p class="payment-method-subtitle">For users without crypto</p>
+                  </div>
+                </div>
+
+                <div class="card-warnings">
+                  <div class="card-warning-item">⚠️ <span>May require identity verification (KYC)</span></div>
+                  <div class="card-warning-item">⚠️ <span>Processing fee: ~4.9% added to total</span></div>
+                  <div class="card-warning-item">⚠️ <span>Some banks decline crypto purchases</span></div>
+                  <div class="card-warning-item">⚠️ <span>Slower than direct crypto payment</span></div>
+                </div>
+
+                <button class="btn-card-method" id="open-card-checkout">
+                  Continue with Card
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Nudge Modal -->
+      ${nudgeModalVisible ? `
+      <div class="nudge-modal-overlay" id="nudge-overlay">
+        <div class="nudge-modal" id="nudge-modal">
+          <div class="nudge-modal-icon">⚡</div>
+          <h3 class="nudge-modal-title">Crypto is faster & cheaper</h3>
+          <p class="nudge-modal-body">
+            Direct crypto payments are instant, have <strong>zero extra fees</strong>, and require no identity verification.
+            Card payments add ~4.9% fees and may require KYC.
+          </p>
+          
+          <div class="nudge-comparison">
+            <div class="nudge-col nudge-col-crypto">
+              <div class="nudge-col-title">🟢 Pay with Crypto</div>
+              <div class="nudge-col-item">✅ No extra fees</div>
+              <div class="nudge-col-item">✅ No verification</div>
+              <div class="nudge-col-item">✅ Instant access</div>
+            </div>
+            <div class="nudge-col nudge-col-card">
+              <div class="nudge-col-title">🟡 Pay with Card</div>
+              <div class="nudge-col-item">⚠️ +4.9% fee</div>
+              <div class="nudge-col-item">⚠️ KYC may apply</div>
+              <div class="nudge-col-item">⚠️ Slower delivery</div>
+            </div>
+          </div>
+
+          <div class="nudge-modal-actions">
+            <button class="btn btn-primary" id="nudge-go-back" style="width:100%;">
+              ← Go Back (Recommended)
+            </button>
+            <button class="btn btn-ghost nudge-continue-btn" id="nudge-continue-card">
+              Continue with Card
+            </button>
+          </div>
+        </div>
+      </div>
+      ` : ''}
     `;
 
-    // Events
-    // Toggle credits
+    attachEvents();
+  }
+
+  function attachEvents() {
+    // Credits toggle
     document.getElementById('use-credits-toggle')?.addEventListener('change', (e) => {
       useCredits = e.target.checked;
       render();
@@ -198,19 +270,43 @@ export function renderCheckoutPage() {
           const btn = document.getElementById('copy-address-btn');
           if (btn) btn.textContent = 'Copy';
         }, 2000);
-      }).catch(() => {
-        showToast('Failed to copy', 'error');
-      });
+      }).catch(() => showToast('Failed to copy', 'error'));
     });
 
-    // Simulate payment
+    // Card button → show nudge
+    document.getElementById('open-card-checkout')?.addEventListener('click', () => {
+      nudgeModalVisible = true;
+      render();
+    });
+
+    // Nudge — go back
+    document.getElementById('nudge-go-back')?.addEventListener('click', () => {
+      nudgeModalVisible = false;
+      render();
+    });
+
+    // Close on overlay click
+    document.getElementById('nudge-overlay')?.addEventListener('click', (e) => {
+      if (e.target === document.getElementById('nudge-overlay')) {
+        nudgeModalVisible = false;
+        render();
+      }
+    });
+
+    // Nudge — continue with card
+    document.getElementById('nudge-continue-card')?.addEventListener('click', () => {
+      nudgeModalVisible = false;
+      navigate('/checkout/card');
+    });
+
+    // Verify crypto payment
     document.getElementById('simulate-payment-btn')?.addEventListener('click', () => {
       const simBtn = document.getElementById('simulate-payment-btn');
       const statusMsg = document.getElementById('checkout-status-msg');
-      
+
       simBtn.disabled = true;
       simBtn.textContent = 'Processing...';
-      
+
       if (statusMsg) {
         statusMsg.style.display = 'block';
         statusMsg.className = 'payment-status waiting';
@@ -219,23 +315,16 @@ export function renderCheckoutPage() {
 
       setTimeout(async () => {
         try {
-          const result = await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
+          await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
           clearCart();
 
           if (statusMsg) {
             statusMsg.className = 'payment-status confirmed';
             statusMsg.innerHTML = useCredits ? '✓ Order Confirmed!' : '🕒 Awaiting Block Confirmation';
-            
-            // Add instructions below the widget instead of wiping it
+
             const successOverlay = document.createElement('div');
             successOverlay.className = 'animate-fade-in-up delay-1';
-            successOverlay.style.padding = 'var(--space-xl)';
-            successOverlay.style.textAlign = 'center';
-            successOverlay.style.background = 'var(--bg-card)';
-            successOverlay.style.border = '1px solid var(--border-primary)';
-            successOverlay.style.borderRadius = 'var(--radius-xl)';
-            successOverlay.style.marginTop = 'var(--space-lg)';
-            
+            successOverlay.style.cssText = 'padding:var(--space-xl);text-align:center;background:var(--bg-card);border:1px solid var(--border-primary);border-radius:var(--radius-xl);margin-top:var(--space-lg);';
             successOverlay.innerHTML = `
               <div style="font-size:48px; margin-bottom: var(--space-md);">🎉</div>
               <h3 style="color: var(--neon-green); margin-bottom: var(--space-md);">
@@ -249,25 +338,20 @@ export function renderCheckoutPage() {
                 <button class="btn btn-primary" id="go-dashboard-btn">Go to Dashboard</button>
               </div>
             `;
-            
-            // Insert it after the widget widget
-            document.querySelector('.crypto-payment-widget').after(successOverlay);
-            
+
+            document.querySelector('.crypto-payment-widget, .payment-method-primary')?.after(successOverlay);
             document.getElementById('go-dashboard-btn')?.addEventListener('click', () => navigate('/dashboard'));
-            
-            // Hide the simulate button completely now that it's done
             simBtn.style.display = 'none';
           }
 
           showToast(useCredits ? 'Order complete! Your plugins are ready.' : 'Order submitted! Dashboard updated.', 'success');
-
         } catch (err) {
           showToast(err.message || 'Payment failed', 'error');
           simBtn.disabled = false;
-          simBtn.textContent = 'Try Again';
+          simBtn.textContent = '✅ I Have Paid (Verify Transaction)';
           if (statusMsg) statusMsg.style.display = 'none';
         }
-      }, 1500); // Network simulation
+      }, 1500);
     });
   }
 

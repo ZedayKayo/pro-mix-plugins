@@ -156,3 +156,258 @@
   border-radius: 50%;
   animation: rotate 0.8s linear infinite;
 }
+
+/* ════════════════════════════════════
+   DUAL PAYMENT METHOD CARDS
+   ════════════════════════════════════ */
+
+.payment-method-card {
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-lg);
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+/* Primary — Crypto */
+.payment-method-primary {
+  background: var(--bg-card);
+  border: 2px solid var(--neon-green);
+  box-shadow: 0 0 32px rgba(0, 255, 136, 0.08), 0 0 0 1px rgba(0, 255, 136, 0.05);
+  position: relative;
+}
+
+.payment-method-badge-recommended {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--neon-green);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+}
+
+.payment-method-header {
+  margin-bottom: var(--space-md);
+}
+
+.payment-method-title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  margin: 0;
+}
+
+/* Secondary — Card */
+.payment-method-secondary {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  opacity: 0.88;
+}
+
+.payment-method-secondary:hover {
+  opacity: 1;
+  border-color: var(--border-hover);
+}
+
+.payment-method-header-secondary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.payment-method-card-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.payment-method-title-secondary {
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  margin: 0 0 2px;
+  color: var(--text-secondary);
+}
+
+.payment-method-subtitle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Crypto benefit badges */
+.crypto-benefits {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: var(--space-lg);
+  margin-top: var(--space-md);
+}
+
+.crypto-benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding: 6px 10px;
+  background: var(--neon-green-subtle);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,255,136,0.12);
+}
+
+.crypto-benefit-item span { color: var(--text-primary); font-weight: var(--weight-medium); }
+
+/* Card warnings */
+.card-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: var(--space-md);
+}
+
+.card-warning-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+.card-warning-item span { color: var(--text-secondary); }
+
+/* Card CTA button */
+.btn-card-method {
+  width: 100%;
+  padding: var(--space-sm) var(--space-lg);
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  transition: all var(--duration-fast) var(--ease-out);
+  font-family: var(--font-primary);
+}
+
+.btn-card-method:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+/* ════════════════════════════════════
+   NUDGE MODAL
+   ════════════════════════════════════ */
+
+.nudge-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  animation: fadeIn var(--duration-fast) var(--ease-out);
+  padding: var(--space-lg);
+}
+
+.nudge-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  max-width: 460px;
+  width: 100%;
+  animation: scaleIn var(--duration-normal) var(--ease-out);
+  text-align: center;
+}
+
+.nudge-modal-icon {
+  font-size: 48px;
+  margin-bottom: var(--space-md);
+}
+
+.nudge-modal-title {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  margin-bottom: var(--space-sm);
+}
+
+.nudge-modal-body {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-xl);
+}
+
+.nudge-modal-body strong { color: var(--neon-green); }
+
+/* Comparison grid */
+.nudge-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+  text-align: left;
+}
+
+.nudge-col {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nudge-col-crypto {
+  background: var(--neon-green-subtle);
+  border: 1px solid rgba(0,255,136,0.2);
+}
+
+.nudge-col-card {
+  background: rgba(255, 180, 0, 0.06);
+  border: 1px solid rgba(255, 180, 0, 0.18);
+}
+
+.nudge-col-title {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nudge-col-item {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.nudge-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.nudge-continue-btn {
+  font-size: var(--text-xs) !important;
+  color: var(--text-muted) !important;
+  border-color: var(--border-primary) !important;
+}
+
+.nudge-continue-btn:hover {
+  color: var(--text-secondary) !important;
+}
+

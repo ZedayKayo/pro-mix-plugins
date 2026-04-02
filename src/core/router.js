@@ -54,14 +54,15 @@ export function initRouter(containerSelector) {
       const headerContainer = document.getElementById('header-container');
       const footerContainer = document.getElementById('footer-container');
       
-      if (path === '/login' || path === '/register' || path === '/forgot-password') {
-        if (isLoggedIn()) {
+      if (path === '/login' || path === '/register' || path === '/forgot-password' || path === '/checkout/card') {
+        if ((path === '/login' || path === '/register' || path === '/forgot-password') && isLoggedIn()) {
           navigate('/dashboard');
           return;
         }
         if (headerContainer) headerContainer.style.display = 'none';
         if (footerContainer) footerContainer.style.display = 'none';
         if (pageContainer) pageContainer.style.marginTop = '0';
+
       } else {
         if (headerContainer) headerContainer.style.display = '';
         if (footerContainer) footerContainer.style.display = '';

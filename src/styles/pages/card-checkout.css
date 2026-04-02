@@ -1,0 +1,1219 @@
+/* ═══════════════════════════════════════════════════════
+   PRO-MIX PLUGINS — Mock Stripe Card Checkout Styles
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Wrapper ── */
+.scp-wrapper {
+  min-height: 100vh;
+  background: #f6f9fc;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.scp-header {
+  background: #fff;
+  border-bottom: 1px solid #e3e8ef;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.scp-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scp-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scp-brand-logo {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #0a0a0f, #1a1030);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scp-brand-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #1a1a2e;
+  letter-spacing: -0.3px;
+}
+
+.scp-secure-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #5b6e82;
+  background: #f0f4f8;
+  padding: 6px 12px;
+  border-radius: 100px;
+}
+
+/* ── Step Bar ── */
+.scp-steps {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 24px 16px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.scp-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9aa5b4;
+  transition: color 0.2s;
+}
+
+.scp-step.active { color: #635bff; }
+.scp-step.done   { color: #00b37d; }
+
+.scp-step-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e3e8ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #9aa5b4;
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+
+.scp-step.active .scp-step-dot {
+  background: #635bff;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(99,91,255,0.15);
+}
+
+.scp-step.done .scp-step-dot {
+  background: #00b37d;
+  color: #fff;
+}
+
+.scp-step-line {
+  flex: 1;
+  height: 2px;
+  background: #e3e8ef;
+  margin: 0 8px;
+  transition: background 0.3s;
+  min-width: 20px;
+}
+
+.scp-step-line.done { background: #00b37d; }
+
+/* ── Body ── */
+.scp-body {
+  flex: 1;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+/* ── Layout ── */
+.scp-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 32px;
+  align-items: start;
+}
+
+/* ── Form Column ── */
+.scp-form-col { min-width: 0; }
+
+.scp-form-section {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.scp-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.scp-section-num {
+  width: 28px;
+  height: 28px;
+  background: #0a0a0f;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.scp-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+/* ── Fields ── */
+.scp-field {
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.scp-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b6e82;
+  margin-bottom: 7px;
+  letter-spacing: 0.2px;
+}
+
+.scp-input {
+  width: 100%;
+  padding: 13px 16px;
+  background: #fff;
+  border: 1.5px solid #d4dbe7;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: #1a1a2e;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  transition: all 0.18s;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.scp-input::placeholder { color: #b0bec9; }
+.scp-input:focus {
+  border-color: #635bff;
+  box-shadow: 0 0 0 3px rgba(99,91,255,0.12);
+}
+
+.scp-input-error {
+  border-color: #e53e3e !important;
+  box-shadow: 0 0 0 3px rgba(229,62,62,0.1) !important;
+}
+
+.scp-error {
+  font-size: 0.75rem;
+  color: #e53e3e;
+  margin-top: 5px;
+  font-weight: 500;
+  min-height: 16px;
+}
+
+.scp-field-hint {
+  font-size: 0.72rem;
+  color: #9aa5b4;
+  margin-top: 5px;
+}
+
+.scp-test-hint code {
+  background: #f0f4f8;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  color: #635bff;
+}
+
+/* ── Card Number ── */
+.scp-card-input-wrap {
+  position: relative;
+}
+
+.scp-card-number-input {
+  padding-right: 60px;
+  font-family: 'JetBrains Mono', monospace, var(--font-mono, monospace);
+  letter-spacing: 1px;
+}
+
+.scp-card-type-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* ── Row 2 ── */
+.scp-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Card Brands ── */
+.scp-card-brands {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.scp-card-brand {
+  padding: 6px 10px;
+  border: 1.5px solid #e3e8ef;
+  border-radius: 8px;
+  opacity: 0.4;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  background: #fafbfc;
+}
+
+.scp-card-brand.active {
+  opacity: 1;
+  border-color: #635bff;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(99,91,255,0.1);
+}
+
+/* ── CVV Tooltip ── */
+.scp-cvv-tooltip {
+  color: #9aa5b4;
+  cursor: help;
+  position: relative;
+}
+
+.scp-cvv-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 400;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+  letter-spacing: 0;
+}
+
+.scp-cvv-tooltip:hover::after { opacity: 1; }
+
+/* ── Select ── */
+.scp-select-wrap {
+  position: relative;
+}
+
+.scp-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  padding-right: 40px;
+}
+
+.scp-select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9aa5b4;
+  pointer-events: none;
+}
+
+/* ── Checkbox ── */
+.scp-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #5b6e82;
+  font-weight: 500;
+  user-select: none;
+}
+
+.scp-checkbox-row input[type="checkbox"] { display: none; }
+
+.scp-checkbox-custom {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d4dbe7;
+  border-radius: 5px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.scp-checkbox-row input:checked + .scp-checkbox-custom {
+  background: #635bff;
+  border-color: #635bff;
+}
+
+.scp-checkbox-row input:checked + .scp-checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* ── Buttons ── */
+.scp-btn-primary {
+  width: 100%;
+  padding: 15px 24px;
+  background: #635bff;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.2px;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+}
+
+.scp-btn-primary:hover {
+  background: #5147e8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99,91,255,0.35);
+}
+
+.scp-btn-primary:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.scp-btn-ready { animation: scp-pulse 1s infinite; }
+
+.scp-btn-pay {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(135deg, #00b37d, #00955f);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  box-shadow: 0 4px 16px rgba(0,179,125,0.3);
+}
+
+.scp-btn-pay:hover {
+  background: linear-gradient(135deg, #00c98d, #00a76a);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0,179,125,0.4);
+}
+
+.scp-btn-ghost {
+  width: 100%;
+  padding: 13px 24px;
+  background: transparent;
+  color: #5b6e82;
+  border: 1.5px solid #d4dbe7;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  text-align: center;
+  text-decoration: none;
+}
+
+.scp-btn-ghost:hover {
+  background: #f6f9fc;
+  border-color: #b0bec9;
+}
+
+.scp-btn-cancel {
+  width: 100%;
+  padding: 11px;
+  background: transparent;
+  border: none;
+  color: #9aa5b4;
+  font-size: 0.83rem;
+  cursor: pointer;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  transition: color 0.15s;
+  margin-top: 8px;
+}
+
+.scp-btn-cancel:hover { color: #e53e3e; }
+
+/* ── Back link ── */
+.scp-back-row {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.scp-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: #9aa5b4;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-primary, 'Inter', sans-serif);
+  transition: color 0.15s;
+  text-decoration: none;
+}
+
+.scp-back-link:hover { color: #635bff; }
+
+/* ── Misc form ── */
+.scp-link {
+  color: #635bff;
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+
+.scp-link:hover { opacity: 0.8; }
+
+.scp-divider-text {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9aa5b4;
+  margin: -4px 0 20px;
+}
+
+.scp-pay-now-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  margin-bottom: 16px;
+  border-top: 1px solid #e3e8ef;
+  border-bottom: 1px solid #e3e8ef;
+}
+
+.scp-pay-label {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: #5b6e82;
+}
+
+.scp-pay-amount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+.scp-pay-notice {
+  font-size: 0.75rem;
+  color: #9aa5b4;
+  text-align: center;
+  margin-top: 12px;
+  line-height: 1.6;
+}
+
+/* ── Sidebar ── */
+.scp-sidebar { min-width: 0; }
+
+.scp-sidebar-inner {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 16px;
+  padding: 28px;
+  position: sticky;
+  top: 100px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.scp-summary-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9aa5b4;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 20px;
+}
+
+.scp-summary-items { display: flex; flex-direction: column; gap: 16px; }
+
+.scp-summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scp-summary-item-img {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.scp-summary-item-img img {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e3e8ef;
+}
+
+.scp-summary-item-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0a0a0f, #1a1030);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border: 1px solid #2a2a3e;
+}
+
+.scp-summary-item-qty {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: #1a1a2e;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scp-summary-item-info { flex: 1; min-width: 0; }
+
+.scp-summary-item-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scp-summary-item-type {
+  font-size: 0.72rem;
+  color: #9aa5b4;
+  margin-top: 2px;
+}
+
+.scp-summary-item-price {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  flex-shrink: 0;
+}
+
+.scp-summary-divider {
+  height: 1px;
+  background: #e3e8ef;
+  margin: 16px 0;
+}
+
+.scp-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #5b6e82;
+  margin-bottom: 8px;
+}
+
+.scp-fee-warning {
+  color: #e07a1a;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.scp-summary-total {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  border-top: 1px solid #e3e8ef;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+.scp-summary-secure {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #9aa5b4;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f4f8;
+}
+
+.scp-crypto-nudge {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(0,255,136,0.08), rgba(0,212,255,0.06));
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.scp-crypto-nudge-link {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #00955f;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.scp-crypto-nudge-link:hover { color: #00b37d; }
+
+/* ── 3DS Styles ── */
+.scp-3ds-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  min-height: 60vh;
+}
+
+.scp-3ds-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,10,20,0.7);
+  backdrop-filter: blur(6px);
+  z-index: -1;
+}
+
+.scp-3ds-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,0,0,0.08);
+  max-width: 720px;
+  width: 100%;
+  animation: scp-modal-in 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes scp-modal-in {
+  from { opacity: 0; transform: scale(0.94) translateY(16px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+/* 3DS Left Panel */
+.scp-3ds-left {
+  background: linear-gradient(160deg, #0a0a1a 0%, #1a1040 50%, #0a1a0a 100%);
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.scp-3ds-merchant-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scp-brand-logo-lg {
+  width: 48px;
+  height: 48px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.scp-3ds-merchant-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.scp-3ds-merchant-amount {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #00ff88;
+  margin-top: 2px;
+}
+
+/* Fake card */
+.scp-3ds-card-preview {
+  background: linear-gradient(135deg, #1a1a3e 0%, #2d1f6e 100%);
+  border-radius: 14px;
+  padding: 20px;
+  height: 140px;
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.scp-3ds-card-chip {
+  width: 32px;
+  height: 24px;
+  background: linear-gradient(135deg, #d4a647, #f5d47a);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+.scp-3ds-card-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 12px;
+}
+
+.scp-3ds-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.6);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.scp-3ds-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 16px;
+}
+
+/* 3DS Right Panel */
+.scp-3ds-right {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.scp-3ds-bank-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e3e8ef;
+}
+
+.scp-3ds-bank-logo {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #1a56db, #3b82f6);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.scp-3ds-bank-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.scp-3ds-bank-subtitle {
+  font-size: 0.75rem;
+  color: #9aa5b4;
+  margin-top: 2px;
+}
+
+.scp-3ds-desc {
+  font-size: 0.85rem;
+  color: #5b6e82;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.scp-3ds-desc strong { color: #1a1a2e; }
+
+/* OTP Inputs */
+.scp-otp-inputs {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.scp-otp-digit {
+  width: 48px;
+  height: 52px;
+  border: 2px solid #d4dbe7;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all 0.15s;
+  outline: none;
+  background: #fff;
+}
+
+.scp-otp-digit:focus {
+  border-color: #635bff;
+  box-shadow: 0 0 0 3px rgba(99,91,255,0.12);
+}
+
+.scp-otp-digit:not(:placeholder-shown) {
+  border-color: #00b37d;
+  background: #f0fdf8;
+}
+
+.scp-3ds-hint {
+  font-size: 0.7rem;
+  color: #b0bec9;
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.scp-3ds-resend {
+  font-size: 0.8rem;
+  color: #9aa5b4;
+  margin-bottom: 20px;
+}
+
+.scp-link-btn {
+  background: none;
+  border: none;
+  color: #635bff;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  transition: opacity 0.15s;
+}
+
+.scp-link-btn:hover { opacity: 0.75; }
+
+.scp-3ds-otp-wrap { margin-bottom: 4px; }
+
+/* ── Result ── */
+.scp-result-wrapper {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+/* Success icon */
+.scp-success-icon-wrap {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 32px;
+}
+
+.scp-success-ring {
+  position: absolute;
+  border-radius: 50%;
+  animation: scp-ring-expand 1s ease-out forwards;
+}
+
+.scp-success-ring-1 {
+  inset: -8px;
+  background: rgba(0,179,125,0.12);
+  animation-delay: 0.2s;
+}
+
+.scp-success-ring-2 {
+  inset: -16px;
+  background: rgba(0,179,125,0.06);
+  animation-delay: 0.4s;
+}
+
+@keyframes scp-ring-expand {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.scp-success-check {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #00b37d, #00955f);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scp-check-pop 0.5s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes scp-check-pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.scp-check-path {
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: scp-draw-check 0.5s ease 0.3s forwards;
+}
+
+@keyframes scp-draw-check {
+  to { stroke-dashoffset: 0; }
+}
+
+.scp-result-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 8px;
+}
+
+.scp-result-subtitle {
+  font-size: 0.9rem;
+  color: #5b6e82;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+/* Receipt */
+.scp-receipt-card {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.scp-receipt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e3e8ef;
+}
+
+.scp-receipt-ref {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: #9aa5b4;
+  font-weight: 600;
+  background: #f6f9fc;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.scp-receipt-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #5b6e82;
+  padding: 6px 0;
+}
+
+.scp-receipt-divider {
+  height: 1px;
+  background: #e3e8ef;
+  margin: 8px 0;
+}
+
+.scp-receipt-total {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  padding: 10px 0;
+}
+
+.scp-result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.scp-order-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 16px;
+  background: rgba(99,91,255,0.06);
+  border: 1px solid rgba(99,91,255,0.15);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  color: #5b6e82;
+  text-align: left;
+  line-height: 1.6;
+}
+
+/* Decline */
+.scp-decline-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  animation: scp-shake-once 0.5s ease 0.2s;
+}
+
+@keyframes scp-shake-once {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+
+.scp-decline-title { color: #c0392b !important; }
+
+.scp-decline-reason {
+  display: inline-block;
+  background: rgba(229,62,62,0.08);
+  color: #e53e3e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 14px;
+  border-radius: 100px;
+  border: 1px solid rgba(229,62,62,0.2);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.scp-decline-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.scp-decline-help {
+  font-size: 0.8rem;
+  color: #9aa5b4;
+}
+
+/* ── Spinner ── */
+.scp-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: scp-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes scp-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scp-pulse {
+  0%,100% { box-shadow: 0 6px 20px rgba(99,91,255,0.35); }
+  50% { box-shadow: 0 6px 28px rgba(99,91,255,0.55); }
+}
+
+/* ── Shake animation ── */
+@keyframes scp-shake {
+  0%,100% { transform: translateX(0); }
+  15%  { transform: translateX(-6px); }
+  30%  { transform: translateX(6px); }
+  45%  { transform: translateX(-4px); }
+  60%  { transform: translateX(4px); }
+  75%  { transform: translateX(-2px); }
+}
+
+.scp-shake { animation: scp-shake 0.5s ease; }
+
+/* ── Order summary mobile (hidden on desktop) ── */
+.scp-order-summary-mobile { display: none; }
+
+/* ── Responsive ── */
+@media (max-width: 800px) {
+  .scp-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .scp-sidebar {
+    order: -1;
+  }
+
+  .scp-sidebar-inner {
+    position: static;
+  }
+
+  .scp-3ds-container {
+    grid-template-columns: 1fr;
+  }
+
+  .scp-3ds-left { display: none; }
+
+  .scp-3ds-wrapper { padding: 20px 16px; }
+
+  .scp-steps { gap: 4px; }
+  .scp-step span { display: none; }
+  .scp-step-line { min-width: 12px; }
+
+  .scp-form-section { padding: 24px 20px; }
+  .scp-body { padding: 20px 16px 48px; }
+  .scp-otp-inputs { gap: 6px; }
+  .scp-otp-digit { width: 40px; height: 44px; }
+}
+
+@media (max-width: 500px) {
+  .scp-card-brands { flex-wrap: wrap; }
+  .scp-row-2 { grid-template-columns: 1fr; }
+}
