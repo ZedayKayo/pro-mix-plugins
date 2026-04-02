@@ -213,23 +213,11 @@ export function renderProductPage(params) {
         ` : ''}
       </div>
     </div>
-    
-    <!-- STICKY MOBILE BUY BAR -->
-    <div class="sticky-buy-bar" id="sticky-buy-bar">
-      <div class="sticky-buy-info">
-        <span class="sticky-buy-name" style="font-weight:600; font-size:14px;">${product.name}</span>
-        <span class="sticky-buy-price" style="font-family:var(--font-mono); color:var(--neon-green); font-size:14px;">${formatPrice(price)}</span>
-      </div>
-      <button class="btn btn-primary btn-sm" id="sticky-add-cart" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
-        ${inCart ? '✓ Added' : '🛒 Add'}
-      </button>
-    </div>
   `;
 
   // Events
   const addCartBtn = document.getElementById('product-add-cart');
-  const stickyAddBtn = document.getElementById('sticky-add-cart');
-  
+
   if (!inCart) {
     const handleAdd = () => {
       const added = addToCart(product);
@@ -240,15 +228,9 @@ export function renderProductPage(params) {
           addCartBtn.disabled = true;
           addCartBtn.style.opacity = '0.5';
         }
-        if (stickyAddBtn) {
-          stickyAddBtn.textContent = '✓ Added';
-          stickyAddBtn.disabled = true;
-          stickyAddBtn.style.opacity = '0.5';
-        }
       }
     };
     if (addCartBtn) addCartBtn.addEventListener('click', handleAdd);
-    if (stickyAddBtn) stickyAddBtn.addEventListener('click', handleAdd);
   }
 
   document.getElementById('product-buy-crypto')?.addEventListener('click', () => {
@@ -256,20 +238,6 @@ export function renderProductPage(params) {
     navigate('/checkout');
   });
 
-  // Sticky Bar Visibility Observer
-  const stickyBar = document.getElementById('sticky-buy-bar');
-  if (stickyBar && addCartBtn) {
-    const observer = new IntersectionObserver((entries) => {
-      // Show sticky bar only if original button is completely out of view
-      const isVisible = entries[0].isIntersecting;
-      if (!isVisible && window.innerWidth <= 768) {
-        stickyBar.classList.add('visible');
-      } else {
-        stickyBar.classList.remove('visible');
-      }
-    }, { threshold: 0 });
-    observer.observe(addCartBtn);
-  }
 
   // Audio player simulation
   initAudioPlayer();
