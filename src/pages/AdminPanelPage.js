@@ -27,6 +27,8 @@ export function renderAdminPanel(params) {
     telegramSettings: null,
     orders: null,
     ordersLoading: false,
+    users: null,
+    usersLoading: false,
     visitors: null,
     visitorsLoading: false,
     notificationLogs: null,
@@ -449,6 +451,7 @@ export function renderAdminPanel(params) {
               <div style="display:flex; gap:var(--space-xs); margin-top:var(--space-md); flex-wrap:wrap;">
                 <button class="btn ${state.activeTab === 'inventory' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="inventory" style="padding:6px 14px; font-size:0.875rem;">📦 Inventory</button>
                 <button class="btn ${state.activeTab === 'orders' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="orders" style="padding:6px 14px; font-size:0.875rem;">📋 Orders</button>
+                <button class="btn ${state.activeTab === 'users' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="users" style="padding:6px 14px; font-size:0.875rem;">👤 Users</button>
                 <button class="btn ${state.activeTab === 'visitors' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="visitors" style="padding:6px 14px; font-size:0.875rem;">👥 Visitors</button>
                 <button class="btn ${state.activeTab === 'telegram' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="telegram" style="padding:6px 14px; font-size:0.875rem;">🤖 Telegram</button>
               </div>
@@ -518,6 +521,8 @@ export function renderAdminPanel(params) {
           ` : ''}
 
           ${state.activeTab === 'orders' ? renderOrdersTab() : ''}
+
+          ${state.activeTab === 'users' ? renderUsersTab() : ''}
 
           ${state.activeTab === 'visitors' ? renderVisitorsTab() : ''}
 
@@ -609,6 +614,7 @@ export function renderAdminPanel(params) {
     attachEvents();
     // Auto-load data for new tabs
     if (state.activeTab === 'orders' && !state.orders && !state.ordersLoading) loadOrders();
+    if (state.activeTab === 'users' && !state.users && !state.usersLoading) loadUsers();
     if (state.activeTab === 'visitors' && !state.visitors && !state.visitorsLoading) loadVisitors();
     if (state.activeTab === 'visitors' && !state.notificationLogs && !state.notificationLogsLoading) loadNotificationLogs();
   }
@@ -666,6 +672,69 @@ export function renderAdminPanel(params) {
           </div>`}
         </div>
         ${pendingCount > 0 ? `<div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,107,43,0.3);"><h4 style="margin:0 0 8px 0; color:#ff6b2b;">⚠️ ${pendingCount} Pending Order(s) Need Verification</h4><p class="text-sm text-secondary" style="margin:0;">Once crypto/bank payment is confirmed, update the order status to <strong>completed</strong> in Supabase to generate licenses.</p></div>` : ''}
+      </div>`;
+  }
+
+  // ── USERS TAB ─────────────────────────────────────────────
+  function renderUsersTab() {
+    if (state.usersLoading) {
+      return `<div class="glass-panel" style="padding:var(--space-3xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><div style="font-size:2rem;">⏳</div><p class="text-muted" style="margin-top:var(--space-md);">Loading users...</p></div>`;
+    }
+    if (!state.users) {
+      return `<div class="glass-panel" style="padding:var(--space-xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><button class="btn btn-primary" id="btn-load-users">Load Users</button></div>`;
+    }
+    const users = state.users;
+    const totalCredits = users.reduce((a, u) => a + (u.credits || 0), 0);
+    const totalRevenue = users.reduce((a, u) => a + (u.totalSpent || 0), 0);
+    return `
+      <div style="margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--space-md);">
+          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Users</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${users.length}</div></div>
+          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Revenue</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-green);">${formatPrice(totalRevenue)}</div></div>
+          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Credits Issued</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-purple);">${totalCredits}</div></div>
+          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">With Orders</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-orange);">${users.filter(u => u.orderCount > 0).length}</div></div>
+        </div>
+        <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
+          <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
+            <h3 style="margin:0;">Registered Users</h3>
+            <button class="btn btn-ghost" id="btn-refresh-users" style="font-size:0.8rem;">🔄 Refresh</button>
+          </div>
+          ${users.length === 0
+            ? `<div style="padding:var(--space-3xl); text-align:center; color:var(--text-muted);">No users registered yet.</div>`
+            : `<div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse;" class="admin-table">
+                <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.8rem;">
+                  <th style="padding:10px 16px;">User</th>
+                  <th style="padding:10px 8px;">Email</th>
+                  <th style="padding:10px 8px;">Credits</th>
+                  <th style="padding:10px 8px;">Orders</th>
+                  <th style="padding:10px 8px;">Total Spent</th>
+                  <th style="padding:10px 8px;">Last Order</th>
+                  <th style="padding:10px 8px;">Joined</th>
+                </tr></thead>
+                <tbody>
+                  ${users.map(u => `
+                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                      <td style="padding:10px 16px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-blue),var(--neon-purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0;">${sanitizeHTML((u.name||u.email||'?')[0].toUpperCase())}</div>
+                          <div style="font-weight:500;font-size:0.875rem;">${sanitizeHTML(u.name || '(no name)')}</div>
+                        </div>
+                      </td>
+                      <td style="padding:10px 8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(u.email || '—')}</td>
+                      <td style="padding:10px 8px;">
+                        <span style="padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;background:rgba(168,85,247,0.15);color:var(--neon-purple);">${u.credits ?? 0} cr</span>
+                      </td>
+                      <td style="padding:10px 8px; font-size:0.85rem; color:var(--neon-blue); font-weight:600;">${u.orderCount || 0}</td>
+                      <td style="padding:10px 8px; font-weight:bold; color:var(--neon-green);">${formatPrice(u.totalSpent || 0)}</td>
+                      <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${u.lastOrder ? new Date(u.lastOrder).toLocaleDateString() : '—'}</td>
+                      <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>`
+          }
+        </div>
       </div>`;
   }
 
@@ -797,6 +866,23 @@ export function renderAdminPanel(params) {
       showToast('Failed to load orders: ' + err.message, 'error');
     } finally {
       state.ordersLoading = false;
+      renderPage();
+    }
+  }
+
+  async function loadUsers() {
+    state.usersLoading = true;
+    renderPage();
+    try {
+      const res = await fetch('/api/admin-users');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      state.users = data.users || [];
+    } catch (err) {
+      state.users = [];
+      showToast('Failed to load users: ' + err.message, 'error');
+    } finally {
+      state.usersLoading = false;
       renderPage();
     }
   }
@@ -1026,6 +1112,10 @@ export function renderAdminPanel(params) {
     // Orders tab buttons
     document.getElementById('btn-load-orders')?.addEventListener('click', loadOrders);
     document.getElementById('btn-refresh-orders')?.addEventListener('click', () => { state.orders = null; loadOrders(); });
+
+    // Users tab buttons
+    document.getElementById('btn-load-users')?.addEventListener('click', loadUsers);
+    document.getElementById('btn-refresh-users')?.addEventListener('click', () => { state.users = null; loadUsers(); });
 
     // Visitors tab buttons
     document.getElementById('btn-load-visitors')?.addEventListener('click', loadVisitors);
