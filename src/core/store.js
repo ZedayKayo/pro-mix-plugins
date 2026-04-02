@@ -13,17 +13,16 @@ const STORAGE_KEYS = {
 
 // Import Supabase service
 import { fetchProducts, insertProduct, updateProduct, removeProduct } from '../services/productService.js';
-import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchUserLicenses, fetchSessionProfile, loginUserAuth, loginWithGoogleAuth, registerUserAuth, logoutUserAuth, resetPasswordAuth, processSecureCheckout } from '../services/dbService.js';
+import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchSessionProfile, loginUserAuth, loginWithGoogleAuth, registerUserAuth, logoutUserAuth, resetPasswordAuth, processSecureCheckout } from '../services/dbService.js';
 import { supabase } from '../lib/supabase.js';
 
 // Supabase is the single source of truth — no static defaults
 
 const listeners = {};
-let memoryInventory = []; // Holds the unified inventory synced from Supabase
+let memoryInventory = [];
 let memoryCart = [];
 let memoryUser = null;
 let memoryPurchases = [];
-let memoryLicenses = [];
 let initDone = false;
 
 function emit(event, data) {
@@ -198,9 +197,8 @@ async function handleUserHydration(userProfile) {
   if (!userProfile) return null;
   memoryUser = userProfile;
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userProfile));
-  
+
   const mergedCart = await linkSessionCartToUser(getSessionId(), userProfile.id);
-  // Re-sync carts and logic
   const dbCart = mergedCart || await fetchUserCart(userProfile.id, false);
   if (dbCart) {
     memoryCart = dbCart;
@@ -215,12 +213,6 @@ async function handleUserHydration(userProfile) {
     emit('purchases:updated', orders);
   }
 
-  const licenses = await fetchUserLicenses(userProfile.id);
-  if (licenses) {
-    memoryLicenses = licenses;
-    emit('licenses:updated', licenses);
-  }
-  
   emit('user:login', userProfile);
   return userProfile;
 }
@@ -231,18 +223,16 @@ export function deductCredits(amount) {
 }
 
 export function clearLocalUser() {
-  if (!memoryUser) return; // Prevent redundant executions
+  if (!memoryUser) return;
   memoryUser = null;
   memoryCart = [];
   memoryPurchases = [];
-  memoryLicenses = [];
   localStorage.removeItem(STORAGE_KEYS.USER);
   localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify([]));
   localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify([]));
   emit('user:logout', null);
   emit('cart:updated', []);
   emit('purchases:updated', []);
-  emit('licenses:updated', []);
 }
 
 export async function logoutUserAuthAsync() {
@@ -285,7 +275,7 @@ export function getPurchases() {
 }
 
 export function getLicenses() {
-  return memoryLicenses;
+  return [];
 }
 
 export async function addPurchaseAsync(items, paymentMethod, useCredits) {

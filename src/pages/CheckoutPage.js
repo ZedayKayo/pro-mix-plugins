@@ -3,7 +3,7 @@
 // Payment Method Selection: Crypto vs Card (separate premium cards)
 // ═══════════════════════════════════════════════════════
 
-import { getCart, getCartTotal, clearCart, addPurchaseAsync, getUser } from '../core/store.js';
+import { getCart, getCartTotal, clearCart, addPurchaseAsync, getUser, isLoggedIn } from '../core/store.js';
 import { formatPrice, formatCrypto } from '../core/utils.js';
 import { wallets, supportedCoins, generateQRCodeSVG, getPaymentInstructions } from '../data/crypto.js';
 import { navigate } from '../core/router.js';
@@ -23,6 +23,12 @@ export function renderCheckoutPage() {
         <a href="/store" class="btn btn-primary">Browse Store</a>
       </div>
     `;
+    return;
+  }
+
+  // Login gate
+  if (!isLoggedIn()) {
+    navigate('/login');
     return;
   }
 
@@ -500,9 +506,9 @@ export function renderCheckoutPage() {
       render();
     });
 
-    // Go to full card checkout
+    // Go to full card checkout — COMING SOON
     document.getElementById('go-to-card-checkout')?.addEventListener('click', () => {
-      navigate('/checkout/card');
+      showToast('Card payments coming soon! Use crypto or store credits for now.', 'info');
     });
 
     // Coin tabs
@@ -532,7 +538,6 @@ export function renderCheckoutPage() {
     document.getElementById('simulate-payment-btn')?.addEventListener('click', () => {
       const simBtn = document.getElementById('simulate-payment-btn');
       const statusMsg = document.getElementById('checkout-status-msg');
-      const cartTotal = getCartTotal();
       simBtn.disabled = true;
       simBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border-width:2px;display:inline-block;margin-right:8px;"></span> Processing...';
       if (statusMsg) {
@@ -542,38 +547,26 @@ export function renderCheckoutPage() {
       }
       setTimeout(async () => {
         try {
-          const result = await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
-          const purchasedCart = [...cart]; // snapshot before clearCart
+          await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
+          const purchasedCart = [...cart];
           clearCart();
 
           if (statusMsg) {
             statusMsg.className = 'payment-status confirmed';
-            statusMsg.innerHTML = useCredits ? '✓ Order Confirmed!' : '🕒 Awaiting Block Confirmation';
+            statusMsg.innerHTML = useCredits ? '✓ Order Confirmed!' : '🕐 Awaiting Block Confirmation';
           }
 
-          // Build per-item download cards
-          const itemCards = purchasedCart.map(item => {
-            const licenseKey = result?.licenses?.find?.(l => l.product_id === item.id)?.serial_key || null;
-            const dlAvailable = useCredits; // only instant for credits; crypto pending admin verification
-            return `
-              <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:12px;padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-sm);">
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap;">
-                  <div>
-                    <div style="font-weight:600;font-size:0.95rem;">${item.name}</div>
-                    ${licenseKey ? `
-                      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-                        <code style="font-size:0.78rem;background:rgba(0,0,0,0.4);padding:3px 10px;border-radius:6px;letter-spacing:1px;color:var(--neon-green);">${licenseKey}</code>
-                        <button class="co-copy-key-btn" data-key="${licenseKey}" style="font-size:0.72rem;padding:2px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.05);color:var(--text-muted);cursor:pointer;">Copy</button>
-                      </div>
-                    ` : `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">License key generates after payment confirmation</div>`}
-                  </div>
-                  ${dlAvailable
-                    ? `<a href="/dashboard" class="btn btn-primary btn-sm" style="white-space:nowrap;">⬇ Download</a>`
-                    : `<span style="font-size:0.8rem;color:var(--neon-orange);white-space:nowrap;">⏳ Pending</span>`
-                  }
-                </div>
-              </div>`;
-          }).join('');
+          const itemCards = purchasedCart.map(item => `
+            <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:12px;padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-sm);display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap;">
+              <div>
+                <div style="font-weight:600;font-size:0.95rem;">${item.name}</div>
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">${useCredits ? '⚡ Access unlocked instantly' : '⏳ Available after payment confirmation'}</div>
+              </div>
+              ${useCredits
+                ? `<a href="/dashboard" class="btn btn-primary btn-sm" style="white-space:nowrap;">⬇ Get Download</a>`
+                : `<span style="font-size:0.8rem;color:var(--neon-orange);white-space:nowrap;">⏳ Pending</span>`
+              }
+            </div>`).join('');
 
           const successEl = document.createElement('div');
           successEl.className = 'co-success-banner animate-fade-in-up';
@@ -584,35 +577,26 @@ export function renderCheckoutPage() {
             </h3>
             <p class="text-secondary text-sm" style="margin-bottom:var(--space-lg);">
               ${useCredits
-                ? 'Your plugins are ready. Download them below or from your dashboard.'
-                : 'Send the exact crypto amount. Once we verify your transaction, your downloads will appear in your dashboard.'}
+                ? 'Your downloads are ready. Go to your dashboard to access them.'
+                : 'Send the exact crypto amount shown. Once we verify your transaction, your downloads will be unlocked in your dashboard.'}
             </p>
             <div style="margin-bottom:var(--space-lg);">${itemCards}</div>
             <button class="btn btn-primary" id="go-dashboard-btn" style="width:100%;">Go to My Dashboard →</button>
           `;
           const widget = document.querySelector('.co-crypto-widget') || document.querySelector('.co-credits-only-card');
           widget?.after(successEl);
-
-          // Wire copy buttons
-          successEl.querySelectorAll('.co-copy-key-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-              navigator.clipboard?.writeText(btn.dataset.key).then(() => {
-                btn.textContent = 'Copied!';
-                setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
-              });
-            });
-          });
-
           document.getElementById('go-dashboard-btn')?.addEventListener('click', () => navigate('/dashboard'));
           simBtn.style.display = 'none';
-          showToast(useCredits ? '🎉 Order complete! Downloads ready.' : '📨 Order submitted! Check dashboard after confirmation.', 'success');
+          showToast(useCredits ? '🎉 Order complete! Downloads ready.' : '📨 Order submitted! Check your dashboard after confirmation.', 'success');
         } catch (err) {
-          showToast(err.message || 'Payment failed', 'error');
-          simBtn.disabled = false;
-          simBtn.textContent = '✅ I\'ve Sent the Payment';
+          showToast(err.message || 'Payment failed. Please try again.', 'error');
+          if (simBtn) {
+            simBtn.disabled = false;
+            simBtn.innerHTML = useCredits ? '🎁 Complete Order with Credits' : '✅ I\'ve Sent the Payment';
+          }
           if (statusMsg) statusMsg.style.display = 'none';
         }
-      }, 1500);
+      }, 1200);
     });
   }
 

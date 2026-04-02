@@ -99,28 +99,58 @@ export const linkSessionCartToUser = async (sessionId, userId) => {
 // ── ORDERS & LICENSES ──
 export const fetchUserOrders = async (userId) => {
   const { data, error } = await supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false });
-  if (error) { console.error("Error fetching orders:", error); return []; }
+  if (error) { console.error('Error fetching orders:', error); return []; }
   return data;
 };
 
-export const fetchUserLicenses = async (userId) => {
-  const { data, error } = await supabase.from('licenses').select('*, products(name, images)').eq('user_id', userId).order('created_at', { ascending: false });
-  if (error) { console.error("Error fetching licenses:", error); return []; }
-  return data;
-};
 
-// Instead of insertOrder, we use the secure RPC checkout checkout_cart
+// Direct order insert — no RPC, no license keys (we sell digital downloads, not licensed software)
 export const processSecureCheckout = async (userId, items, paymentMethod, useCredits) => {
-  const { data, error } = await supabase.rpc('checkout_cart', {
-    p_user_id: userId,
-    p_items: items,
-    p_payment_method: paymentMethod,
-    p_use_credits: useCredits
-  });
-  
-  if (error) throw error;
-  return data;
+  // Calculate total from item prices
+  const total = items.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+  let finalTotal = total;
+
+  // Deduct credits if used (1 credit = $1)
+  if (useCredits) {
+    const { data: profile, error: profileErr } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (profileErr) throw profileErr;
+
+    const credits = profile?.credits || 0;
+    if (credits < total) throw new Error('Not enough credits to cover this order.');
+
+    // Deduct credits
+    const { error: deductErr } = await supabase
+      .from('profiles')
+      .update({ credits: credits - total })
+      .eq('id', userId);
+
+    if (deductErr) throw deductErr;
+    finalTotal = 0;
+  }
+
+  // Insert order
+  const { data: order, error: orderErr } = await supabase
+    .from('orders')
+    .insert([{
+      user_id: userId,
+      total: finalTotal,
+      payment_method: paymentMethod,
+      status: useCredits ? 'completed' : 'pending',
+      items: items.map(i => ({ id: i.id, name: i.name, price: i.price }))
+    }])
+    .select()
+    .single();
+
+  if (orderErr) throw orderErr;
+
+  return { success: true, order_id: order.id, total_charged: finalTotal };
 };
+
 
 // ── TELEGRAM SETTINGS ──
 export const fetchTelegramSettings = async () => {
