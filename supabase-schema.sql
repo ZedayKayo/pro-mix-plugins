@@ -3,12 +3,14 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Run this entire file in Supabase SQL Editor to set up or re-create the DB.
 -- Safe to re-run: uses CREATE TABLE IF NOT EXISTS + CREATE OR REPLACE everywhere.
--- Last updated: 2026-04-02
+-- Last updated: 2026-04-03
 -- Changes tracked:
 --   2026-03-xx  Initial schema (products, profiles, carts, orders, licenses)
 --   2026-04-01  Added telegram_settings, visitor_sessions, event_logs
 --   2026-04-01  Added notification_logs table
 --   2026-04-02  Changed default credits: 50 → 20 (1 credit = $1 USD)
+--   2026-04-03  Added payment_type, fee_amount, card_last4 to orders table
+--               Updated checkout_cart RPC: accepts p_payment_type, p_fee_amount, p_card_last4
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +60,10 @@ CREATE TABLE IF NOT EXISTS public.products (
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 -- Anyone can read products
+DROP POLICY IF EXISTS "Allow public read access"        ON public.products;
+DROP POLICY IF EXISTS "Allow authenticated insert"      ON public.products;
+DROP POLICY IF EXISTS "Allow authenticated update"      ON public.products;
+DROP POLICY IF EXISTS "Allow authenticated delete"      ON public.products;
 CREATE POLICY "Allow public read access"        ON public.products FOR SELECT USING (true);
 -- Only authenticated users (admin) can write
 CREATE POLICY "Allow authenticated insert"      ON public.products FOR INSERT TO authenticated WITH CHECK (true);
@@ -77,8 +83,13 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 );
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own profile"   ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile"   ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+-- Grants needed so the anon/authenticated Supabase keys can run SELECT/UPDATE allowed by RLS
+GRANT SELECT, UPDATE ON public.profiles TO authenticated;
+GRANT SELECT           ON public.profiles TO anon;
 
 -- Trigger: auto-create profile row when a new auth user signs up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -107,6 +118,15 @@ CREATE TABLE IF NOT EXISTS public.user_carts (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+ALTER TABLE public.user_carts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage own cart"     ON public.user_carts;
+DROP POLICY IF EXISTS "Anonymous session cart access" ON public.user_carts;
+-- Authenticated users manage their own cart row
+CREATE POLICY "Users can manage own cart"     ON public.user_carts FOR ALL USING (auth.uid() = user_id);
+-- Anonymous carts are keyed by session_id (no auth.uid required)
+CREATE POLICY "Anonymous session cart access" ON public.user_carts FOR ALL USING (session_id IS NOT NULL);
+-- Grant table-level permission so anon/authenticated keys can access rows allowed by RLS
+GRANT ALL ON public.user_carts TO anon, authenticated;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 4. ORDERS TABLE
@@ -115,14 +135,37 @@ CREATE TABLE IF NOT EXISTS public.orders (
   id             UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id        UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
   total          NUMERIC(10, 2) NOT NULL,
-  payment_method TEXT NOT NULL,           -- 'credits' | 'BTC' | 'ETH' | 'USDT'
+  payment_method TEXT NOT NULL,           -- specific method: 'BTC' | 'ETH' | 'USDT' | 'card' | 'credits'
+  payment_type   TEXT DEFAULT 'crypto',   -- category: 'crypto' | 'card' | 'credits'
+  fee_amount     NUMERIC(10, 2) DEFAULT 0, -- 0 for crypto/credits; ~4.9% for card
+  card_last4     TEXT,                    -- last 4 digits of card (card payments only)
   status         TEXT DEFAULT 'pending',  -- 'pending' | 'completed'
   items          JSONB NOT NULL,
   created_at     TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own orders" ON public.orders FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can view own orders"   ON public.orders;
+DROP POLICY IF EXISTS "Users can insert own orders" ON public.orders;
+-- Users can read their own orders
+CREATE POLICY "Users can view own orders"   ON public.orders FOR SELECT USING (auth.uid() = user_id);
+-- Users can create their own orders (used by processSecureCheckout client-side)
+CREATE POLICY "Users can insert own orders" ON public.orders FOR INSERT WITH CHECK (auth.uid() = user_id);
+GRANT SELECT, INSERT ON public.orders TO authenticated;
+
+-- Add new columns to existing orders table (safe for re-runs)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='payment_type') THEN
+    ALTER TABLE public.orders ADD COLUMN payment_type TEXT DEFAULT 'crypto';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='fee_amount') THEN
+    ALTER TABLE public.orders ADD COLUMN fee_amount NUMERIC(10,2) DEFAULT 0;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='card_last4') THEN
+    ALTER TABLE public.orders ADD COLUMN card_last4 TEXT;
+  END IF;
+END $$;
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -138,6 +181,7 @@ CREATE TABLE IF NOT EXISTS public.licenses (
 );
 
 ALTER TABLE public.licenses ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view own licenses" ON public.licenses;
 CREATE POLICY "Users can view own licenses" ON public.licenses FOR SELECT USING (auth.uid() = user_id);
 
 
@@ -164,7 +208,10 @@ CREATE OR REPLACE FUNCTION public.checkout_cart(
   p_user_id        UUID,
   p_items          JSONB,
   p_payment_method TEXT,
-  p_use_credits    BOOLEAN
+  p_use_credits    BOOLEAN,
+  p_payment_type   TEXT    DEFAULT 'crypto',  -- 'crypto' | 'card' | 'credits'
+  p_fee_amount     NUMERIC DEFAULT 0,         -- card processing fee (4.9% for card)
+  p_card_last4     TEXT    DEFAULT NULL       -- last 4 digits (card only)
 ) RETURNS JSONB AS $$
 DECLARE
   v_total             NUMERIC := 0;
@@ -174,7 +221,14 @@ DECLARE
   v_user_credits      INTEGER;
   v_remaining_credits INTEGER;
   v_serial            TEXT;
+  v_payment_type      TEXT;
 BEGIN
+  -- Derive payment_type from use_credits flag if not supplied
+  v_payment_type := CASE
+    WHEN p_use_credits THEN 'credits'
+    ELSE COALESCE(p_payment_type, 'crypto')
+  END;
+
   -- Re-calculate total from DB prices (never trust client-sent prices)
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
   LOOP
@@ -198,17 +252,24 @@ BEGIN
     END IF;
   END IF;
 
-  -- Create order record
-  INSERT INTO public.orders (user_id, total, payment_method, status, items)
+  -- Create order record with full payment metadata
+  INSERT INTO public.orders (
+    user_id, total, payment_method, payment_type, fee_amount, card_last4, status, items
+  )
   VALUES (
-    p_user_id, v_total, p_payment_method,
-    CASE WHEN p_use_credits THEN 'completed' ELSE 'pending' END,
+    p_user_id,
+    v_total,
+    p_payment_method,
+    v_payment_type,
+    COALESCE(p_fee_amount, 0),
+    p_card_last4,
+    CASE WHEN p_use_credits OR v_payment_type = 'card' THEN 'completed' ELSE 'pending' END,
     p_items
   )
   RETURNING id INTO v_order_id;
 
-  -- Generate license keys (only for credit/instant payments)
-  IF p_use_credits THEN
+  -- Generate license keys (credits = instant; card = instant; crypto = pending admin approval)
+  IF p_use_credits OR v_payment_type = 'card' THEN
     FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
     LOOP
       v_serial := 'PMX-' ||
@@ -226,7 +287,9 @@ BEGIN
   RETURN json_build_object(
     'success',       true,
     'order_id',      v_order_id,
-    'total_charged', v_total
+    'total_charged', v_total,
+    'payment_type',  v_payment_type,
+    'fee_amount',    COALESCE(p_fee_amount, 0)
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -248,6 +311,9 @@ CREATE TABLE IF NOT EXISTS public.telegram_settings (
 
 ALTER TABLE public.telegram_settings ENABLE ROW LEVEL SECURITY;
 -- Only authenticated users (admin) can read/write
+DROP POLICY IF EXISTS "Admins can view telegram settings"   ON public.telegram_settings;
+DROP POLICY IF EXISTS "Admins can update telegram settings" ON public.telegram_settings;
+DROP POLICY IF EXISTS "Admins can insert telegram settings" ON public.telegram_settings;
 CREATE POLICY "Admins can view telegram settings"   ON public.telegram_settings FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Admins can update telegram settings" ON public.telegram_settings FOR UPDATE TO authenticated USING (true);
 CREATE POLICY "Admins can insert telegram settings" ON public.telegram_settings FOR INSERT TO authenticated WITH CHECK (true);
@@ -276,6 +342,7 @@ CREATE TABLE IF NOT EXISTS public.visitor_sessions (
 
 ALTER TABLE public.visitor_sessions ENABLE ROW LEVEL SECURITY;
 -- Service role (API) has full access; anon/public have none
+DROP POLICY IF EXISTS "Service roles can manage visitor sessions" ON public.visitor_sessions;
 CREATE POLICY "Service roles can manage visitor sessions"
   ON public.visitor_sessions FOR ALL USING (true);
 
@@ -293,6 +360,7 @@ CREATE TABLE IF NOT EXISTS public.event_logs (
 );
 
 ALTER TABLE public.event_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service roles can manage event logs" ON public.event_logs;
 CREATE POLICY "Service roles can manage event logs"
   ON public.event_logs FOR ALL USING (true);
 
@@ -316,5 +384,6 @@ CREATE TABLE IF NOT EXISTS public.notification_logs (
 );
 
 ALTER TABLE public.notification_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Service roles can manage notification logs" ON public.notification_logs;
 CREATE POLICY "Service roles can manage notification logs"
   ON public.notification_logs FOR ALL USING (true);
