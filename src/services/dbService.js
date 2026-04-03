@@ -109,6 +109,8 @@ export const processSecureCheckout = async (userId, items, paymentMethod, useCre
   // Calculate total from item prices
   const total = items.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
   let finalTotal = total;
+  // credits column is INTEGER — round total up to nearest whole dollar
+  const totalInt = Math.ceil(total);
 
   // Deduct credits if used (1 credit = $1)
   if (useCredits) {
@@ -120,20 +122,20 @@ export const processSecureCheckout = async (userId, items, paymentMethod, useCre
 
     if (profileErr) throw profileErr;
 
-    const credits = profile?.credits || 0;
-    if (credits < total) throw new Error('Not enough credits to cover this order.');
+    const credits = profile?.credits ?? 0;
+    if (credits < totalInt) throw new Error(`Not enough credits. You have $${credits} but need $${totalInt}.`);
 
-    // Deduct credits
+    // Deduct — result is always an integer since both are integers
     const { error: deductErr } = await supabase
       .from('profiles')
-      .update({ credits: credits - total })
+      .update({ credits: credits - totalInt })
       .eq('id', userId);
 
     if (deductErr) throw deductErr;
     finalTotal = 0;
   }
 
-  // Insert order
+  // Insert order (total stored as NUMERIC so we use original float precision)
   const { data: order, error: orderErr } = await supabase
     .from('orders')
     .insert([{
