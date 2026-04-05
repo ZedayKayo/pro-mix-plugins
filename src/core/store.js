@@ -15,6 +15,7 @@ const STORAGE_KEYS = {
 import { fetchProducts, insertProduct, updateProduct, removeProduct } from '../services/productService.js';
 import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchSessionProfile, loginUserAuth, loginWithGoogleAuth, registerUserAuth, logoutUserAuth, resetPasswordAuth, processSecureCheckout } from '../services/dbService.js';
 import { supabase } from '../lib/supabase.js';
+import { loadDiscount } from '../services/discountService.js';
 
 // Supabase is the single source of truth — no static defaults
 
@@ -67,7 +68,9 @@ export function getInventory() {
 
 export async function saveProduct(product) {
   const isExisting = memoryInventory.some(p => p.id == product.id);
-  
+  // Snapshot for rollback — capture the original product before overwriting
+  const originalProduct = isExisting ? memoryInventory.find(p => p.id == product.id) : null;
+
   if (isExisting) {
     memoryInventory = memoryInventory.map(p => p.id == product.id ? product : p);
   } else {
@@ -83,10 +86,23 @@ export async function saveProduct(product) {
     }
   } catch (err) {
     console.error("Failed to save product to Supabase", err);
+    // Rollback the optimistic update — restore prior state for both create and edit
+    if (isExisting && originalProduct) {
+      // Edit failed — restore the original product data
+      memoryInventory = memoryInventory.map(p => p.id == product.id ? originalProduct : p);
+    } else if (!isExisting) {
+      // Create failed — remove the optimistically added product
+      memoryInventory = memoryInventory.filter(p => p.id != product.id);
+    }
+    emit('inventory:updated', memoryInventory);
+    throw err;
   }
 }
 
 export async function deleteProduct(productId) {
+  // Snapshot for rollback in case Supabase delete fails
+  const snapshot = [...memoryInventory];
+
   memoryInventory = memoryInventory.filter(p => p.id != productId);
   removeFromCart(productId);
   emit('inventory:updated', memoryInventory);
@@ -95,6 +111,10 @@ export async function deleteProduct(productId) {
     await removeProduct(productId);
   } catch (err) {
     console.error("Failed to delete product from Supabase", err);
+    // Rollback the optimistic removal so UI stays in sync with DB
+    memoryInventory = snapshot;
+    emit('inventory:updated', memoryInventory);
+    throw err; // propagate so the admin panel can show an error toast
   }
 }
 
@@ -280,21 +300,37 @@ export function getLicenses() {
 
 export async function addPurchaseAsync(items, paymentMethod, useCredits) {
   const user = getUser();
-  if (!user) throw new Error("Must be logged in to purchase");
+  if (!user) throw new Error('Must be logged in to purchase');
 
   const result = await processSecureCheckout(user.id, items, paymentMethod, useCredits);
-  
+
   if (result.success) {
-    // Refresh user state
-    await handleUserHydration(user);
+    // Re-fetch fresh profile from Supabase so credits balance is immediately accurate
+    const freshProfile = await fetchSessionProfile();
+    if (freshProfile) {
+      memoryUser = freshProfile;
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(freshProfile));
+      emit('user:updated', freshProfile);  // updates header credit badge instantly
+    }
+
+    // Refresh orders list
+    const orders = await fetchUserOrders(user.id);
+    if (orders) {
+      memoryPurchases = orders;
+      localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(orders));
+      emit('purchases:updated', orders);
+    }
+
     emit('purchase:completed', result);
     return result;
   }
-  throw new Error("Checkout failed");
+  throw new Error('Checkout failed');
 }
 
 export function hasPurchased(productId) {
-  return memoryLicenses.some(l => l.product_id === productId);
+  return memoryPurchases.some(p =>
+    (p.items || []).some(i => i.id === productId)
+  );
 }
 
 // ── Theme ──
@@ -319,7 +355,10 @@ export function toggleTheme() {
 export async function initStore() {
   const theme = getTheme();
   document.documentElement.setAttribute('data-theme', theme);
-  
+
+  // Load discount % first so all pricing calculations are correct
+  await loadDiscount();
+
   await loadInventory();
 
   // Load existing state from DB via Auth session

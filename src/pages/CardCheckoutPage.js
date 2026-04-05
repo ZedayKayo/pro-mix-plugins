@@ -260,6 +260,33 @@ function renderContactStep(cart, total) {
   `;
 }
 
+// ── Express Pay Mock Buttons ─────────────────────────────────────────────
+function renderExpressPayButtons() {
+  return `
+    <div class="scp-express-pay">
+      <div class="scp-express-label">Express checkout</div>
+      <div class="scp-express-btns">
+        <button class="scp-express-btn scp-express-apple" id="scp-apple-pay" type="button">
+          <svg width="16" height="16" viewBox="0 0 814 1000" fill="currentColor">
+            <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105-37.5-155.5-105.5C218 739.8 167 623.1 167 512c0-174.4 116.1-299.8 286.1-299.8 80.5 0 142.5 40.5 190.8 40.5 45.6-.5 117.9-42.8 210.3-42.8zm-175-109.8c-4.2 18.6-11.3 35.4-22.4 50.6C778.5 302.8 746 329.2 707.4 329.2c-5.1 0-10.3-.6-15.4-1.2-2.3-22-2.3-44.7 5.5-65.7 9.7-35.4 28-72.2 57.6-96.8 14.5-11.9 36.4-24.2 53.7-29.7 3.2 17.9 3.2 35.9 0 53.8z"/>
+          </svg>
+          Apple Pay
+        </button>
+        <button class="scp-express-btn scp-express-google" id="scp-google-pay" type="button">
+          <svg width="18" height="18" viewBox="0 0 48 48">
+            <path fill="#4285F4" d="M24 9.5c3.5 0 6.5 1.2 9 3.3l6.8-6.8C35.7 2.6 30.2 0 24 0 14.7 0 6.7 5.5 2.7 13.5l7.9 6.1C12.3 13.8 17.7 9.5 24 9.5z"/>
+            <path fill="#34A853" d="M46.5 24.5c0-1.5-.1-3-.4-4.5H24v8.5h12.7c-.5 3-2.2 5.5-4.6 7.2l7.2 5.6C43.2 37.5 46.5 31.5 46.5 24.5z"/>
+            <path fill="#FBBC05" d="M10.6 28.1C10 26.5 9.7 24.8 9.7 23s.5-3.5 1.1-5.1L2.9 11.8C1.1 15.4 0 19.6 0 24s1.1 8.6 2.9 12.2l7.7-8.1z"/>
+            <path fill="#EA4335" d="M24 48c6.2 0 11.5-2 15.4-5.5l-7.2-5.6c-2.1 1.4-4.7 2.2-8.2 2.2-6.3 0-11.7-4.3-13.5-10.1l-7.9 6.1C6.7 42.5 14.7 48 24 48z"/>
+          </svg>
+          Google Pay
+        </button>
+      </div>
+      <div class="scp-express-divider"><span>or pay with card</span></div>
+    </div>
+  `;
+}
+
 // ─── Step 2: Card Details ──────────────────────────────────────────────────
 function renderCardStep(cart, total) {
   const cardType = detectCardType(formData.cardNumber);
@@ -271,6 +298,7 @@ function renderCardStep(cart, total) {
             <span class="scp-section-num">2</span>
             <h2 class="scp-section-title">Payment details</h2>
           </div>
+          ${renderExpressPayButtons()}
 
           <div class="scp-card-brands">
             <div class="scp-card-brand ${cardType === 'visa' ? 'active' : ''}">
@@ -430,11 +458,29 @@ function renderBillingStep(cart, total) {
 
           <button class="scp-btn-pay" id="scp-next-3">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6l-8-4z" fill="currentColor" opacity="0.6"/></svg>
-            Pay ${formatPrice(total)}
+            Pay ${formatPrice(total * 1.049)}
           </button>
           <p class="scp-pay-notice">
             By confirming payment, you agree to our <a href="/refunds" class="scp-link">refund policy</a>.
           </p>
+          <div class="scp-trust-badges">
+            <div class="scp-trust-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6l-8-4z" fill="#00b37d"/></svg>
+              SSL Secured
+            </div>
+            <div class="scp-trust-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="11" width="18" height="11" rx="2" stroke="#635bff" stroke-width="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#635bff" stroke-width="2"/></svg>
+              PCI DSS
+            </div>
+            <div class="scp-trust-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#f7931a" stroke-width="2"/><path d="M12 8v4l3 3" stroke="#f7931a" stroke-width="2" stroke-linecap="round"/></svg>
+              3D Secure
+            </div>
+            <div class="scp-trust-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M9 12l2 2 4-4" stroke="#00b37d" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="10" stroke="#00b37d" stroke-width="2"/></svg>
+              Verified
+            </div>
+          </div>
           <div class="scp-back-row">
             <button class="scp-back-link" id="scp-back-2">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -457,6 +503,13 @@ function render3DSStep(total) {
   return `
     <div class="scp-3ds-wrapper animate-fade-in-up">
       <div class="scp-3ds-backdrop"></div>
+
+      <!-- Pulsing security ring backdrop -->
+      <div class="scp-3ds-security-pulse">
+        <div class="scp-3ds-pulse-ring r1"></div>
+        <div class="scp-3ds-pulse-ring r2"></div>
+        <div class="scp-3ds-pulse-ring r3"></div>
+      </div>
       
       <div class="scp-3ds-container">
         <!-- Left: Security Frame -->
@@ -485,6 +538,18 @@ function render3DSStep(total) {
           <div class="scp-3ds-badge">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6l-8-4z" fill="currentColor"/></svg>
             Secured by 3D Secure 2.0
+          </div>
+
+          <div class="scp-3ds-network-logos">
+            <div class="scp-3ds-net-logo" title="Verified by Visa">
+              <svg viewBox="0 0 780 500" width="36" height="23"><rect width="780" height="500" rx="40" fill="#1A1F71"/><text x="390" y="320" text-anchor="middle" font-family="Arial" font-size="200" font-weight="900" fill="#fff" letter-spacing="-8">VISA</text></svg>
+            </div>
+            <div class="scp-3ds-net-logo" title="Mastercard Identity Check">
+              <svg viewBox="0 0 131.4 86" width="36" height="23"><rect width="131.4" height="86" rx="5" fill="#252525"/><circle cx="45.7" cy="43" r="27.9" fill="#EB001B"/><circle cx="85.7" cy="43" r="27.9" fill="#F79E1B"/><path d="M65.7 20.8a27.9 27.9 0 0 1 0 44.4 27.9 27.9 0 0 1 0-44.4z" fill="#FF5F00"/></svg>
+            </div>
+            <div class="scp-3ds-net-logo" title="AmEx SafeKey">
+              <svg viewBox="0 0 131.4 86" width="36" height="23"><rect width="131.4" height="86" rx="5" fill="#2E77BC"/><text x="65.7" y="56" text-anchor="middle" font-family="Arial" font-size="22" font-weight="900" fill="#fff" letter-spacing="2">AMEX</text></svg>
+            </div>
           </div>
         </div>
 

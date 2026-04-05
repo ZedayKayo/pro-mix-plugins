@@ -1,5 +1,0 @@
--- ⚠️  THIS FILE IS DEPRECATED — DO NOT USE
--- ─────────────────────────────────────────────────────────────────────────────
--- The canonical, up-to-date schema is in: supabase-schema.sql
--- That file contains ALL tables, policies, triggers, and RPCs.
--- ─────────────────────────────────────────────────────────────────────────────

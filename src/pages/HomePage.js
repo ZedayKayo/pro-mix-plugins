@@ -7,12 +7,14 @@ import { renderProductCard, initProductCardEvents } from '../components/ProductC
 import { initQuickViewModal } from '../components/QuickViewModal.js';
 import { formatPrice, getPluginImage, sanitizeHTML } from '../core/utils.js';
 import { navigate } from '../core/router.js';
+import { getDiscountPct } from '../services/discountService.js';
 
 export function renderHomePage() {
   const featured = getFeaturedProducts();
   const trending  = getTrendingProducts();
   const latest    = getNewProducts();
   const container = document.getElementById('page-content');
+  const discountPct = getDiscountPct();
 
   container.innerHTML = `
 
@@ -39,7 +41,7 @@ export function renderHomePage() {
             </h1>
 
             <p class="hp-subheadline">
-              Access the world's most powerful audio plugins — EQs, compressors, reverbs, synthesizers — at up to 70% off retail. Pay with crypto. Download instantly.
+              Access the world's most powerful audio plugins — EQs, compressors, reverbs, synthesizers — at up to ${discountPct}% off retail. Pay with crypto. Download instantly.
             </p>
 
             <div class="hp-trust-row">
@@ -63,7 +65,7 @@ export function renderHomePage() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </button>
               <button class="hp-btn-secondary" id="hero-bundle-btn">
-                View Bundles — Save 70%
+                View Bundles — Save ${discountPct}%
               </button>
             </div>
           </div>
@@ -76,7 +78,7 @@ export function renderHomePage() {
             </div>
             <div class="hp-hero-stats">
               <div class="hp-stat">
-                <div class="hp-stat-val">70%</div>
+                <div class="hp-stat-val">${discountPct}%</div>
                 <div class="hp-stat-label">Off Retail</div>
               </div>
               <div class="hp-stat-sep"></div>
@@ -211,7 +213,7 @@ export function renderHomePage() {
             <div class="hp-feature-icon" style="--fi-color: rgba(168,85,247,0.12); --fi-stroke: var(--neon-purple)">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             </div>
-            <h4>Up to 70% Off</h4>
+            <h4>Up to ${discountPct}% Off</h4>
             <p>Our pricing model gives independent producers access to industry-standard tools at a fraction of retail cost. Always.</p>
           </div>
           <div class="hp-feature animate-fade-in-up delay-4">

@@ -8,8 +8,10 @@ import { navigate } from '../core/router.js';
 import { formatPrice, sanitizeHTML } from '../core/utils.js';
 import { showToast } from '../components/Toast.js';
 import { autoFillPluginData } from '../services/aiService.js';
-import { clearAllProducts } from '../services/productService.js';
+import { clearAllProducts, insertProduct, bulkInsertProducts } from '../services/productService.js';
+import { SEED_PRODUCTS } from '../data/seed-products.js';
 import { fetchTelegramSettings, updateTelegramSettings } from '../services/dbService.js';
+import { getDiscountPct, saveDiscount, loadDiscount, bulkUpdateSalePrices } from '../services/discountService.js';
 
 export function renderAdminPanel(params) {
   if (!isAdmin()) {
@@ -34,6 +36,7 @@ export function renderAdminPanel(params) {
     notificationLogs: null,
     notificationLogsLoading: false,
     botInfo: null,
+    discountPct: getDiscountPct(), // live discount %
   };
 
   // Pre-fetch telegram settings ONCE
@@ -111,13 +114,22 @@ export function renderAdminPanel(params) {
                 <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">DAWs (comma-separated)</label>
                 <input type="text" class="input" id="f-daw" placeholder="fl-studio, ableton, logic" />
               </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Image URLs (one per line) *</label>
-                <textarea class="input" id="f-image" rows="3" placeholder="https://image1.jpg\\nhttps://image2.jpg" required></textarea>
-                <div style="margin-top: 4px;">
-                  <label for="f-image-upload" style="cursor: pointer; color: var(--neon-blue); font-size: 0.8em; text-decoration: underline;">Or upload multiple image files</label>
+              <div id="image-manager" style="grid-column: span 2;">
+                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Images *</label>
+                
+                <div style="display:flex; gap:8px; margin-bottom:8px;">
+                  <input type="text" class="input" id="f-image-add-url" placeholder="Paste image URL..." style="flex:1;" />
+                  <button type="button" class="btn btn-ghost" id="btn-add-img-url" style="padding:0 12px; font-size:0.8rem; white-space:nowrap; border:1px solid var(--border-primary);">+ Add URL</button>
+                  <label for="f-image-upload" class="btn btn-ghost" style="padding:0 12px; font-size:0.8rem; cursor:pointer; margin:0; white-space:nowrap; display:flex; align-items:center; border:1px solid var(--border-primary);" title="Upload Files">📁 Upload</label>
                   <input type="file" id="f-image-upload" accept="image/*" multiple style="display: none;" />
                 </div>
+
+                <textarea id="f-image" style="display:none;"></textarea>
+                
+                <div id="image-preview-strip" style="display:flex; gap:8px; flex-wrap:wrap; min-height:80px; padding:12px; background:rgba(0,0,0,0.2); border-radius:var(--radius-md); border:1px dashed var(--border-primary);">
+                  <!-- previews rendered here -->
+                </div>
+                <div class="text-xs text-muted" style="margin-top:6px;">Drag and drop to reorder. The first image is the main cover.</div>
               </div>
               <div>
                 <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Video Demo URL</label>
@@ -136,7 +148,7 @@ export function renderAdminPanel(params) {
                 <input type="number" class="input" id="f-price" min="0" step="0.01" required />
               </div>
               <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (-70%) *</label>
+                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (−<span id="modal-discount-label">${state.discountPct}</span>% OFF) *</label>
                 <input type="number" class="input" id="f-saleprice" min="0" step="0.01" required />
               </div>
             </div>
@@ -226,11 +238,92 @@ export function renderAdminPanel(params) {
     // Cancel button
     modalEl.querySelector('#modal-cancel')?.addEventListener('click', closeModal);
 
-    // MSRP → auto-calc sale price
+    // Global renderer for the image preview strip
+    window.renderImagePreviewStrip = function() {
+      const el = document.getElementById('f-image');
+      if (!el) return;
+      const raw = el.value.trim();
+      const images = raw ? raw.split('\n').map(s=>s.trim()).filter(Boolean) : []; // DO NOT split by comma; breaks base64
+      const strip = document.getElementById('image-preview-strip');
+      if (!strip) return;
+      strip.innerHTML = '';
+      
+      if (images.length === 0) {
+        strip.innerHTML = '<span class="text-sm text-muted" style="margin:auto;">No images added yet.</span>';
+        return;
+      }
+      
+      images.forEach((imgSrc, idx) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'position:relative; width:80px; height:80px; border-radius:8px; overflow:hidden; border:2px solid transparent; cursor:grab; background:#0a0a0f; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s ease;';
+        if (idx === 0) item.style.borderColor = 'var(--neon-green)'; // Highlight first as main
+        item.title = idx === 0 ? 'Main Cover Image' : 'Gallery Image';
+        item.draggable = true;
+        
+        item.innerHTML = `
+          <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" onerror="this.src='https://placehold.co/400x400/1a1a2e/ff4444?text=Error'" />
+          <button type="button" class="img-delete-btn" style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.7); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:22px; height:22px; font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">✕</button>
+          ${idx===0 ? `<div style="position:absolute; bottom:0; left:0; right:0; background:var(--neon-green); color:#000; font-size:10px; font-weight:bold; text-align:center; padding:2px 0;">MAIN</div>` : ''}
+        `;
+        
+        // Drag events
+        item.addEventListener('dragstart', (e) => {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', idx);
+          item.style.opacity = '0.5';
+        });
+        item.addEventListener('dragend', () => item.style.opacity = '1');
+        item.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; item.style.border = '2px dashed var(--neon-blue)'; });
+        item.addEventListener('dragleave', () => item.style.border = (idx===0 ? '2px solid var(--neon-green)' : '2px solid transparent'));
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+          const toIdx = idx;
+          if (fromIdx !== toIdx) {
+            const arr = [...images];
+            const [moved] = arr.splice(fromIdx, 1);
+            arr.splice(toIdx, 0, moved);
+            document.getElementById('f-image').value = arr.join('\n');
+            window.renderImagePreviewStrip();
+          }
+        });
+        
+        // Delete event
+        item.querySelector('.img-delete-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const arr = [...images];
+          arr.splice(idx, 1);
+          document.getElementById('f-image').value = arr.join('\n');
+          window.renderImagePreviewStrip();
+        });
+        
+        // Hover effects
+        item.querySelector('.img-delete-btn').addEventListener('mouseenter', function() { this.style.background = '#ff4444'; });
+        item.querySelector('.img-delete-btn').addEventListener('mouseleave', function() { this.style.background = 'rgba(0,0,0,0.7)'; });
+        
+        strip.appendChild(item);
+      });
+    };
+
+    // Add Image URL Manual Button
+    modalEl.querySelector('#btn-add-img-url')?.addEventListener('click', () => {
+      const input = document.getElementById('f-image-add-url');
+      const val = input.value.trim();
+      if (val) {
+        const el = document.getElementById('f-image');
+        const cur = el.value.trim();
+        el.value = cur ? cur + '\n' + val : val;
+        input.value = '';
+        window.renderImagePreviewStrip();
+      }
+    });
+
+    // MSRP → auto-calc sale price (uses live discount %)
     modalEl.querySelector('#f-price')?.addEventListener('input', (e) => {
       const msrp = parseFloat(e.target.value);
       if (!isNaN(msrp)) {
-        document.getElementById('f-saleprice').value = (msrp * 0.3).toFixed(2);
+        const mult = (100 - state.discountPct) / 100;
+        document.getElementById('f-saleprice').value = (msrp * mult).toFixed(2);
       }
     });
 
@@ -284,6 +377,7 @@ export function renderAdminPanel(params) {
         // Append new strings to the bottom of the list
         const newLines = base64Strings.join('\n');
         el.value = cur ? cur + '\n' + newLines : newLines;
+        window.renderImagePreviewStrip();
         
       } catch (err) {
         showToast('❌ Failed to process images.', 'error');
@@ -323,13 +417,15 @@ export function renderAdminPanel(params) {
         } else if (data.image) { // Fallback to old format
           document.getElementById('f-image').value = data.image;
         }
+        window.renderImagePreviewStrip();
         if (data.videoDemo) document.getElementById('f-video').value = data.videoDemo;
         if (data.productPage) document.getElementById('f-url').value = data.productPage;
         if (inputVal.startsWith('http')) document.getElementById('f-sourceurl').value = inputVal;
         
         if (data.price) {
           document.getElementById('f-price').value = data.price;
-          document.getElementById('f-saleprice').value = (data.price * 0.3).toFixed(2);
+          const mult = (100 - state.discountPct) / 100;
+          document.getElementById('f-saleprice').value = (data.price * mult).toFixed(2);
         }
         if (data.shortDesc) document.getElementById('f-desc').value = data.shortDesc;
         if (data.description) document.getElementById('f-fulldesc').value = data.description;
@@ -361,8 +457,7 @@ export function renderAdminPanel(params) {
       }
     });
 
-    // Form submit — single listener, reads state at submission time
-    modalEl.querySelector('#product-form')?.addEventListener('submit', (e) => {
+    modalEl.querySelector('#product-form')?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const isEditing = !!state.editingProduct;
@@ -423,9 +518,40 @@ export function renderAdminPanel(params) {
         isNew: document.getElementById('f-isnew').checked,
       };
 
-      saveProduct(productToSave);
-      showToast(isEditing ? '✅ Product Updated!' : '✅ Product Added!', 'success');
-      closeModal();
+      const btn = document.getElementById('modal-submit');
+      const originalText = btn.textContent;
+      // Mark the modal as busy so inventory:updated can't destroy it mid-save
+      const modal = document.getElementById('product-modal');
+      if (modal) modal.dataset.saving = '1';
+      try {
+        btn.disabled = true;
+        btn.textContent = '⏳ Saving...';
+
+        // Race against a 20s timeout — prevents button getting permanently stuck
+        // if the Supabase connection drops or stalls mid-request
+        const saveTimeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(
+            'Save timed out (20s). Check your network or Supabase connection and try again.'
+          )), 20000)
+        );
+        await Promise.race([saveProduct(productToSave), saveTimeout]);
+
+        showToast(isEditing ? '✅ Product Updated!' : '✅ Product Added!', 'success');
+        closeModal();
+      } catch (err) {
+        console.error("Save product UI catch:", err);
+        showToast('❌ ' + (err.message || 'Failed to save — Unknown error'), 'error');
+      } finally {
+        // Clear busy flag
+        const modalEl = document.getElementById('product-modal');
+        if (modalEl) delete modalEl.dataset.saving;
+        // Re-fetch btn in case DOM was touched; re-enable it
+        const freshBtn = document.getElementById('modal-submit');
+        if (freshBtn) {
+          freshBtn.disabled = false;
+          freshBtn.textContent = originalText;
+        }
+      }
     });
 
     return modalEl;
@@ -454,6 +580,7 @@ export function renderAdminPanel(params) {
                 <button class="btn ${state.activeTab === 'users' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="users" style="padding:6px 14px; font-size:0.875rem;">👤 Users</button>
                 <button class="btn ${state.activeTab === 'visitors' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="visitors" style="padding:6px 14px; font-size:0.875rem;">👥 Visitors</button>
                 <button class="btn ${state.activeTab === 'telegram' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="telegram" style="padding:6px 14px; font-size:0.875rem;">🤖 Telegram</button>
+                <button class="btn ${state.activeTab === 'settings' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="settings" style="padding:6px 14px; font-size:0.875rem;">⚙️ Settings</button>
               </div>
             </div>
             ${state.activeTab === 'inventory' ? `<button class="btn btn-primary" id="admin-add-product" style="font-size:1rem;">+ Add New Product</button>` : ''}
@@ -464,15 +591,15 @@ export function renderAdminPanel(params) {
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:var(--space-md); margin-bottom:var(--space-3xl);">
             <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);">
               <div class="text-sm text-muted" style="margin-bottom:var(--space-xs);">Total Products</div>
-              <div style="font-size:2rem; font-weight:bold; color:var(--neon-green);">${stats.total}</div>
+              <div id="stat-total" style="font-size:2rem; font-weight:bold; color:var(--neon-green);">${stats.total}</div>
             </div>
             <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);">
               <div class="text-sm text-muted" style="margin-bottom:var(--space-xs);">Bundles Active</div>
-              <div style="font-size:2rem; font-weight:bold; color:var(--neon-blue);">${stats.bundles}</div>
+              <div id="stat-bundles" style="font-size:2rem; font-weight:bold; color:var(--neon-blue);">${stats.bundles}</div>
             </div>
             <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);">
               <div class="text-sm text-muted" style="margin-bottom:var(--space-xs);">Total Value (MSRP)</div>
-              <div style="font-size:2rem; font-weight:bold; color:var(--neon-orange);">${formatPrice(stats.value)}</div>
+              <div id="stat-value" style="font-size:2rem; font-weight:bold; color:var(--neon-orange);">${formatPrice(stats.value)}</div>
             </div>
           </div>
 
@@ -506,12 +633,26 @@ export function renderAdminPanel(params) {
             </div>
           </div>
 
+          <!-- RESTORE ZONE -->
+          <div class="glass-panel" style="border-radius:var(--radius-lg); border:1px solid rgba(0,255,136,0.25); margin-top:var(--space-xl); padding:var(--space-lg);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-lg);">
+              <div>
+                <h4 style="margin:0 0 4px 0; color:var(--neon-green);">&#128260; Restore Missing Products</h4>
+                <p class="text-xs text-secondary" style="margin:0;">Re-adds all catalogue plugins that are missing from Supabase. Safe to run — existing products are never touched or duplicated.</p>
+              </div>
+              <button class="btn" id="admin-restore-products" style="background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.4); color:var(--neon-green); white-space:nowrap; flex-shrink:0;">
+                &#10227; Restore Products
+              </button>
+            </div>
+            <div id="restore-status" style="display:none; margin-top:var(--space-md); font-size:var(--text-sm); color:var(--text-secondary);"></div>
+          </div>
+
           <!-- DANGER ZONE -->
-          <div class="glass-panel" style="border-radius:var(--radius-lg); border:1px solid rgba(255,68,68,0.3); margin-top:var(--space-xl); padding:var(--space-lg);">
+          <div class="glass-panel" style="border-radius:var(--radius-lg); border:1px solid rgba(255,68,68,0.3); margin-top:var(--space-md); padding:var(--space-lg);">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div>
                 <h4 style="margin:0 0 4px 0; color:#ff4444;">&#9888; Danger Zone</h4>
-                <p class="text-xs text-secondary" style="margin:0;">Permanently remove all products from the Supabase database. This cannot be undone.</p>
+                <p class="text-xs text-secondary" style="margin:0;">Permanently remove ALL products from Supabase. This cannot be undone — use Restore above to recover.</p>
               </div>
               <button class="btn" id="admin-clear-all" style="background:rgba(255,68,68,0.1); border:1px solid rgba(255,68,68,0.4); color:#ff4444; white-space:nowrap;">
                 &#128465; Delete All Products
@@ -525,6 +666,8 @@ export function renderAdminPanel(params) {
           ${state.activeTab === 'users' ? renderUsersTab() : ''}
 
           ${state.activeTab === 'visitors' ? renderVisitorsTab() : ''}
+
+          ${state.activeTab === 'settings' ? renderSettingsTab() : ''}
 
           ${state.activeTab === 'telegram' ? `
           <div style="max-width:860px; margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
@@ -606,8 +749,8 @@ export function renderAdminPanel(params) {
       </div>
     `;
 
-    // Ensure modal is in DOM (attached to body, not re-created)
-    ensureModal();
+    // Modal is NOT recreated here — ensureModal() is called only inside openModal()
+    // so a renderPage() triggered by a tab switch can never destroy an in-progress save.
     if (state.activeTab === 'inventory') {
       renderTable();
     }
@@ -853,6 +996,84 @@ export function renderAdminPanel(params) {
       </div>`;
   }
 
+  // ── SETTINGS TAB ──────────────────────────────────────────
+  function renderSettingsTab() {
+    const pct = state.discountPct;
+    const payPct = 100 - pct;
+    const exampleSale = (100 * payPct / 100).toFixed(2);
+    return `
+      <div style="max-width:680px; margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
+
+        <!-- DISCOUNT CARD -->
+        <div class="glass-panel" style="padding:var(--space-xl); border-radius:var(--radius-lg); border:1px solid rgba(0,255,136,0.15);">
+          <h3 style="margin:0 0 4px 0;">🏷️ Global Discount Setting</h3>
+          <p class="text-sm text-secondary" style="margin:0 0 var(--space-xl) 0;">
+            This single value controls the sale price of <strong>every product</strong> in the store.
+            Changing it instantly recalculates all prices on the storefront.
+          </p>
+
+          <!-- Live Preview Badge -->
+          <div style="display:flex; align-items:center; justify-content:center; margin-bottom:var(--space-xl);">
+            <div style="text-align:center; padding:var(--space-xl) var(--space-2xl); background:linear-gradient(135deg,rgba(0,255,136,0.08),rgba(0,212,255,0.05)); border:1px solid rgba(0,255,136,0.25); border-radius:var(--radius-xl);">
+              <div id="discount-preview-pct" style="font-size:4rem; font-weight:900; color:var(--neon-green); line-height:1; font-variant-numeric:tabular-nums;">${pct}%</div>
+              <div style="color:var(--text-secondary); font-size:0.9rem; margin-top:6px;">OFF Retail Price</div>
+              <div style="color:var(--text-muted); font-size:0.78rem; margin-top:4px;">Customers pay <strong style="color:var(--neon-blue);" id="discount-preview-pay">${payPct}%</strong> of MSRP</div>
+            </div>
+          </div>
+
+          <!-- Slider -->
+          <div style="margin-bottom:var(--space-lg);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-sm);">
+              <label style="font-weight:600; font-size:0.95rem;">Discount Percentage</label>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <input type="number" id="discount-input" min="1" max="99" value="${pct}"
+                  style="width:70px; text-align:center; font-size:1.1rem; font-weight:700; padding:4px 8px;"
+                  class="input" />
+                <span style="color:var(--text-muted); font-size:0.9rem;">%</span>
+              </div>
+            </div>
+            <input type="range" id="discount-slider" min="1" max="99" value="${pct}"
+              style="width:100%; height:6px; appearance:none; -webkit-appearance:none; background:linear-gradient(to right, var(--neon-green) 0%, var(--neon-green) ${pct}%, rgba(255,255,255,0.1) ${pct}%, rgba(255,255,255,0.1) 100%); border-radius:3px; cursor:pointer; outline:none;"
+            />
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
+              <span>1%</span>
+              <span>50%</span>
+              <span>99%</span>
+            </div>
+          </div>
+
+          <!-- Example calculation -->
+          <div style="padding:var(--space-md); background:rgba(0,0,0,0.2); border-radius:var(--radius-md); margin-bottom:var(--space-lg);">
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">💡 Example calculation</div>
+            <div style="display:flex; justify-content:space-between; font-size:0.875rem;">
+              <span>Plugin MSRP: <strong>$100.00</strong></span>
+              <span>→ Sale price: <strong style="color:var(--neon-green);" id="discount-example">$${exampleSale}</strong></span>
+            </div>
+          </div>
+
+          <!-- Save -->
+          <div style="display:flex; gap:var(--space-md); align-items:center;">
+            <button class="btn btn-primary" id="btn-save-discount" style="min-width:160px;">💾 Save Discount</button>
+            <span id="discount-save-status" class="text-sm"></span>
+          </div>
+        </div>
+
+        <!-- INFO CARD -->
+        <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,200,0,0.15);">
+          <h4 style="margin:0 0 var(--space-sm) 0; color:#ffc000;">⚠️ What changes when you save?</h4>
+          <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:0.875rem; color:var(--text-secondary);">
+            <li>All <strong style="color:#fff;">product sale prices</strong> on the Store, Home, and Product pages update immediately</li>
+            <li>All <strong style="color:#fff;">discount badges</strong> ("SALE −X%") on product cards recalculate automatically</li>
+            <li>The <strong style="color:#fff;">Quick View</strong> modal discount label updates</li>
+            <li>Admin product modal <strong style="color:#fff;">auto-fill</strong> uses the new % for new products</li>
+            <li>The setting is saved to <strong style="color:#fff;">Supabase</strong> and persists across all sessions</li>
+          </ul>
+        </div>
+
+      </div>
+    `;
+  }
+
   // ── DATA LOADERS ──────────────────────────────────────────
   async function loadOrders() {
     state.ordersLoading = true;
@@ -980,7 +1201,7 @@ export function renderAdminPanel(params) {
     });
 
     // Edit / Delete Actions
-    document.getElementById('admin-table-body')?.addEventListener('click', (e) => {
+    document.getElementById('admin-table-body')?.addEventListener('click', async (e) => {
       const editBtn = e.target.closest('.admin-edit-btn');
       const delBtn = e.target.closest('.admin-del-btn');
       
@@ -992,10 +1213,19 @@ export function renderAdminPanel(params) {
       
       if (delBtn) {
         const id = delBtn.dataset.id;
-        const prod = state.products.find(p => p.id === id);
+        // Normalize to string for safe comparison (dataset always returns strings)
+        const prod = state.products.find(p => String(p.id) === String(id));
         if (confirm(`Delete "${prod?.name || id}"? This cannot be undone.`)) {
-          deleteProduct(id);
-          showToast('Product deleted', 'success');
+          try {
+            delBtn.disabled = true;
+            delBtn.textContent = '⏳';
+            await deleteProduct(id);
+            showToast('✅ Product deleted from Supabase', 'success');
+          } catch (err) {
+            showToast('❌ Delete failed: ' + (err.message || 'Supabase error — check RLS policies'), 'error');
+            delBtn.disabled = false;
+            delBtn.textContent = 'Delete';
+          }
         }
       }
     });
@@ -1006,22 +1236,106 @@ export function renderAdminPanel(params) {
       openModal();
     });
 
-    // Delete ALL Products
+    // Delete ALL Products — triple-confirm with typed verification
     document.getElementById('admin-clear-all')?.addEventListener('click', async () => {
-      const first = confirm('⚠️ Delete ALL products from the database? This cannot be undone.');
+      // Step 1: initial confirm
+      const first = confirm('⚠️ WARNING: This will permanently delete ALL products from the database.\n\nClick OK only if you are absolutely sure.');
       if (!first) return;
-      const second = confirm('Are you absolutely sure? Every product will be permanently deleted.');
-      if (!second) return;
+      // Step 2: typed confirmation
+      const typed = prompt('Type DELETE to confirm you want to erase every product:');
+      if (!typed || typed.trim().toUpperCase() !== 'DELETE') {
+        showToast('Cancelled — type DELETE to confirm.', 'error');
+        return;
+      }
       try {
         const btn = document.getElementById('admin-clear-all');
         if (btn) { btn.disabled = true; btn.textContent = '⏳ Deleting...'; }
         await clearAllProducts();
         await loadInventory();
-        showToast('🗑️ All products deleted successfully.', 'success');
+        state.products = getInventory();
+        renderPage();
+        showToast('🗑️ All products deleted. Use Restore to recover.', 'success');
       } catch (err) {
         showToast('Failed to delete: ' + err.message, 'error');
         const btn = document.getElementById('admin-clear-all');
         if (btn) { btn.disabled = false; btn.textContent = '🗑️ Delete All Products'; }
+      }
+    });
+
+    // Restore Missing Products — single batch insert with timeout guard
+    document.getElementById('admin-restore-products')?.addEventListener('click', async () => {
+      const btn = document.getElementById('admin-restore-products');
+      const statusEl = document.getElementById('restore-status');
+      if (!btn || !statusEl) return;
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Restoring...';
+      statusEl.style.display = 'block';
+      statusEl.style.color = 'var(--text-secondary)';
+      statusEl.textContent = '🔍 Checking what is already in Supabase...';
+
+      try {
+        // 1. Fetch current inventory with a 10s timeout
+        const invTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Supabase timeout — check your connection.')), 10000));
+        await Promise.race([loadInventory(), invTimeout]);
+
+        const existing = new Set(getInventory().map(p => p.id));
+        const missing = SEED_PRODUCTS.filter(p => !existing.has(p.id));
+
+        if (missing.length === 0) {
+          statusEl.style.color = 'var(--neon-green)';
+          statusEl.textContent = '✅ All catalogue products are already in Supabase — nothing to restore.';
+          showToast('Everything is already up to date!', 'success');
+          btn.disabled = false;
+          btn.textContent = '↻ Restore Products';
+          return;
+        }
+
+        statusEl.textContent = `Found ${missing.length} missing product(s). Preparing batch insert...`;
+
+        // 2. Apply live discount to every missing product
+        const discountPct = getDiscountPct();
+        const readyToInsert = missing.map(p => {
+          const mult = (100 - discountPct) / 100;
+          const salePrice = +(p.price * mult).toFixed(2);
+          const effectivePrice = salePrice < p.price ? salePrice : p.price;
+          return {
+            ...p,
+            salePrice,
+            cryptoPrices: {
+              BTC: +(effectivePrice / 90000).toFixed(6),
+              ETH: +(effectivePrice / 3200).toFixed(5),
+              USDT: effectivePrice,
+            },
+          };
+        });
+
+        statusEl.textContent = `Inserting ${readyToInsert.length} product(s) into Supabase...`;
+
+        // 3. Single bulk insert with a 15s hard timeout
+        const insertTimeout = new Promise((_, rej) =>
+          setTimeout(() => rej(new Error('Insert timed out after 15s. Your Supabase RLS policy may be blocking inserts — check the Supabase dashboard.')), 15000)
+        );
+        await Promise.race([bulkInsertProducts(readyToInsert), insertTimeout]);
+
+        // 4. Reload and re-render
+        statusEl.textContent = 'Refreshing inventory...';
+        await loadInventory();
+        state.products = getInventory();
+        renderPage();
+
+        statusEl.style.color = 'var(--neon-green)';
+        statusEl.textContent = `✅ Successfully restored ${readyToInsert.length} product(s)!`;
+        showToast(`✅ Restored ${readyToInsert.length} missing products!`, 'success');
+
+      } catch (err) {
+        statusEl.style.color = '#ff4444';
+        statusEl.textContent = '❌ ' + err.message;
+        showToast('Restore failed: ' + err.message, 'error');
+        console.error('Restore error:', err);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '↻ Restore Products';
       }
     });
 
@@ -1122,6 +1436,75 @@ export function renderAdminPanel(params) {
     document.getElementById('btn-refresh-visitors')?.addEventListener('click', () => { state.visitors = null; loadVisitors(); });
     document.getElementById('btn-refresh-notif-logs')?.addEventListener('click', () => { state.notificationLogs = null; loadNotificationLogs(); });
 
+    // Settings tab — discount slider & save
+    const slider = document.getElementById('discount-slider');
+    const input  = document.getElementById('discount-input');
+    const previewPct = document.getElementById('discount-preview-pct');
+    const previewPay = document.getElementById('discount-preview-pay');
+    const exampleEl  = document.getElementById('discount-example');
+    const sliderEl   = document.getElementById('discount-slider');
+
+    function updateDiscountUI(pct) {
+      const p = Math.max(1, Math.min(99, Math.round(pct)));
+      if (slider)     slider.value = p;
+      if (input)      input.value  = p;
+      if (previewPct) previewPct.textContent = p + '%';
+      if (previewPay) previewPay.textContent  = (100 - p) + '%';
+      if (exampleEl)  exampleEl.textContent   = '$' + (100 * (100 - p) / 100).toFixed(2);
+      // Update slider gradient
+      if (sliderEl) {
+        sliderEl.style.background = `linear-gradient(to right, var(--neon-green) 0%, var(--neon-green) ${p}%, rgba(255,255,255,0.1) ${p}%, rgba(255,255,255,0.1) 100%)`;
+      }
+    }
+
+    slider?.addEventListener('input', (e) => {
+      const p = parseInt(e.target.value);
+      if (input) input.value = p;
+      updateDiscountUI(p);
+    });
+
+    input?.addEventListener('input', (e) => {
+      const p = parseInt(e.target.value);
+      if (!isNaN(p)) updateDiscountUI(p);
+    });
+
+    document.getElementById('btn-save-discount')?.addEventListener('click', async () => {
+      const btn    = document.getElementById('btn-save-discount');
+      const status = document.getElementById('discount-save-status');
+      const pct    = parseInt(document.getElementById('discount-input')?.value || state.discountPct);
+      if (isNaN(pct) || pct < 1 || pct > 99) {
+        showToast('Enter a valid discount between 1–99%', 'error'); return;
+      }
+      try {
+        btn.disabled = true; btn.textContent = '⏳ Saving discount...';
+        status.textContent = '⏳ Saving setting...';
+        status.style.color = 'var(--text-muted)';
+
+        // Step 1: save the % to site_settings
+        await saveDiscount(pct);
+        state.discountPct = pct;
+
+        // Step 2: recalculate & write sale_price for every product in Supabase
+        btn.textContent = '⏳ Updating prices...';
+        status.textContent = '⏳ Recalculating all prices...';
+        const { updated } = await bulkUpdateSalePrices(pct);
+
+        // Step 3: reload inventory so the admin table reflects new prices
+        await loadInventory();
+
+        status.textContent = `✅ Done! ${updated} product${updated !== 1 ? 's' : ''} updated.`;
+        status.style.color = 'var(--neon-green)';
+        showToast(`✅ Discount set to ${pct}% — ${updated} prices updated`, 'success');
+        setTimeout(() => { status.textContent = ''; }, 5000);
+      } catch (err) {
+        status.textContent = '❌ ' + err.message;
+        status.style.color = '#ff4444';
+        showToast('Failed to save discount: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false; btn.textContent = '💾 Save Discount';
+      }
+    });
+
     document.getElementById('ts-test')?.addEventListener('click', async () => {
       const btn = document.getElementById('ts-test');
       const bot_token = document.getElementById('ts-token').value.trim();
@@ -1175,6 +1558,7 @@ export function renderAdminPanel(params) {
       document.getElementById('f-type').value = (state.editingProduct.type || []).join(', ');
       document.getElementById('f-daw').value = (state.editingProduct.dawCompat || []).join(', ');
       document.getElementById('f-image').value = (state.editingProduct.images || []).join('\n');
+      if (window.renderImagePreviewStrip) window.renderImagePreviewStrip();
       document.getElementById('f-video').value = state.editingProduct.videoDemo || '';
       document.getElementById('f-url').value = state.editingProduct.productPage !== '#' ? (state.editingProduct.productPage || '') : '';
       document.getElementById('f-price').value = state.editingProduct.price || '';
@@ -1208,6 +1592,8 @@ export function renderAdminPanel(params) {
     } else {
       title.textContent = 'Add New Product';
       document.getElementById('product-form').reset();
+      document.getElementById('f-image').value = '';
+      if (window.renderImagePreviewStrip) window.renderImagePreviewStrip();
       document.getElementById('f-quick-fill').value = '';
       document.getElementById('quick-fill-status').style.display = 'none';
       document.getElementById('f-isnew').checked = true;
@@ -1227,16 +1613,27 @@ export function renderAdminPanel(params) {
   // Subscribe to inventory changes — only update state + table, NOT full re-render
   const unsubscribe = on('inventory:updated', (newInventory) => {
     state.products = newInventory;
-    // Only re-render the table and stats, NOT the modal
+
+    // If the modal is currently open and saving, do NOT touch the DOM at all —
+    // the save handler will call closeModal() and then we can update safely.
+    const modal = document.getElementById('product-modal');
+    const isSaving = modal && modal.dataset.saving === '1';
+    if (isSaving) return;
+
     const tbody = document.getElementById('admin-table-body');
     if (tbody) {
+      // Update table in-place so the modal is never torn down mid-operation
       renderTable();
-      // Update stats too
+      // Update the stat counters individually (they now have IDs)
       const stats = getStats();
       const el1 = document.getElementById('stat-total');
+      const el2 = document.getElementById('stat-bundles');
+      const el3 = document.getElementById('stat-value');
       if (el1) el1.textContent = stats.total;
+      if (el2) el2.textContent = stats.bundles;
+      if (el3) el3.textContent = formatPrice(stats.value);
     } else {
-      // If table not in DOM yet, do a full render (first load)
+      // Table not in DOM — full re-render is safe since modal isn't open
       renderPage();
     }
   });

@@ -9,6 +9,7 @@ import { on } from '../core/store.js';
 import { getWishlist, getRecentlyViewed } from '../core/wishlist.js';
 import { navigate } from '../core/router.js';
 import { formatPrice, getPluginImage, sanitizeHTML } from '../core/utils.js';
+import { getDiscountPct } from '../services/discountService.js';
 
 const PAGE_SIZE = 20;
 
@@ -159,7 +160,7 @@ export function renderStorePage(params) {
             <span class="trust-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Instant Digital Delivery</span>
             <span class="trust-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Lifetime License</span>
             <span class="trust-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> 24/7 Support</span>
-            <span class="trust-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> −70% vs Retail</span>
+            <span class="trust-badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> −${getDiscountPct()}% vs Retail</span>
           </div>
         </div>
       </div>

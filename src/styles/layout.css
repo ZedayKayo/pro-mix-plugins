@@ -29,7 +29,7 @@
 
 /* ── Sections ── */
 .section {
-  padding: var(--space-3xl) 0;
+  padding: var(--space-xl) 0 var(--space-3xl);
 }
 .section-lg {
   padding: var(--space-4xl) 0;
@@ -740,6 +740,10 @@
   .header-nav { display: none; }
   .hamburger-btn { display: flex; }
   #header-auth-btn { display: none; }
+  /* hide credit badge on mobile — shown in mobile menu footer instead */
+  .user-credits { display: none; }
+  /* tighten header inner on mobile */
+  .header-inner { padding: 0 var(--space-md); gap: var(--space-sm); }
   .section { padding: var(--space-2xl) 0; }
   h1 { font-size: var(--text-3xl); }
   h2 { font-size: var(--text-2xl); }
@@ -749,6 +753,9 @@
   .store-search-input { width: 160px; }
   .store-search-input:focus { width: 200px; }
   .store-slim-title { font-size: var(--text-lg); }
+  /* toast shouldn't cause horizontal scroll */
+  .toast { min-width: 0; max-width: calc(100vw - var(--space-3xl)); }
+  .toast-container { right: var(--space-md); left: var(--space-md); }
 }
 
 @media (max-width: 480px) {

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import { allPlugins, bundlesDB } from './index.js';
+import { applyDiscount } from '../services/discountService.js';
 
 export const categories = [
   { id: 'bundle', name: 'Bundles', icon: '📦' },
@@ -89,10 +90,9 @@ const newIds = new Set([
   'baby-audio-ihny2','kilohearts-phase-plant','output-portal',
 ]);
 
-// Pro-Mix 70% off (company partnership model)
+// Pro-Mix dynamic discount (controlled from Admin Panel → Settings)
 function promixPrice(msrp) {
-  if (!msrp) return 0;
-  return Math.round(msrp * 0.30);
+  return applyDiscount(msrp);
 }
 function buildCryptoPrices(usd) {
   return { BTC: +(usd / 90000).toFixed(6), ETH: +(usd / 3200).toFixed(5), USDT: usd };

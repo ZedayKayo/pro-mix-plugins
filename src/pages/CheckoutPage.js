@@ -547,47 +547,20 @@ export function renderCheckoutPage() {
       }
       setTimeout(async () => {
         try {
-          await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
+          const result = await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
           const purchasedCart = [...cart];
           clearCart();
 
-          if (statusMsg) {
-            statusMsg.className = 'payment-status confirmed';
-            statusMsg.innerHTML = useCredits ? '✓ Order Confirmed!' : '🕐 Awaiting Block Confirmation';
-          }
+          // Save order details for the success page to read
+          sessionStorage.setItem('pm_last_order', JSON.stringify({
+            items: purchasedCart.map(i => ({ id: i.id, name: i.name })),
+            orderId: result?.order_id,
+            method: useCredits ? 'credits' : selectedCoin,
+            instant: useCredits
+          }));
 
-          const itemCards = purchasedCart.map(item => `
-            <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:12px;padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-sm);display:flex;align-items:center;justify-content:space-between;gap:var(--space-md);flex-wrap:wrap;">
-              <div>
-                <div style="font-weight:600;font-size:0.95rem;">${item.name}</div>
-                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">${useCredits ? '⚡ Access unlocked instantly' : '⏳ Available after payment confirmation'}</div>
-              </div>
-              ${useCredits
-                ? `<a href="/dashboard" class="btn btn-primary btn-sm" style="white-space:nowrap;">⬇ Get Download</a>`
-                : `<span style="font-size:0.8rem;color:var(--neon-orange);white-space:nowrap;">⏳ Pending</span>`
-              }
-            </div>`).join('');
-
-          const successEl = document.createElement('div');
-          successEl.className = 'co-success-banner animate-fade-in-up';
-          successEl.innerHTML = `
-            <div class="co-success-icon">🎉</div>
-            <h3 style="color:var(--neon-green);margin-bottom:var(--space-sm);">
-              ${useCredits ? 'Access Unlocked!' : 'Order Submitted!'}
-            </h3>
-            <p class="text-secondary text-sm" style="margin-bottom:var(--space-lg);">
-              ${useCredits
-                ? 'Your downloads are ready. Go to your dashboard to access them.'
-                : 'Send the exact crypto amount shown. Once we verify your transaction, your downloads will be unlocked in your dashboard.'}
-            </p>
-            <div style="margin-bottom:var(--space-lg);">${itemCards}</div>
-            <button class="btn btn-primary" id="go-dashboard-btn" style="width:100%;">Go to My Dashboard →</button>
-          `;
-          const widget = document.querySelector('.co-crypto-widget') || document.querySelector('.co-credits-only-card');
-          widget?.after(successEl);
-          document.getElementById('go-dashboard-btn')?.addEventListener('click', () => navigate('/dashboard'));
-          simBtn.style.display = 'none';
-          showToast(useCredits ? '🎉 Order complete! Downloads ready.' : '📨 Order submitted! Check your dashboard after confirmation.', 'success');
+          showToast(useCredits ? '🎉 Order complete! Follow the install guide.' : '📨 Order submitted! Send the crypto to unlock.', 'success');
+          navigate('/order-success');
         } catch (err) {
           showToast(err.message || 'Payment failed. Please try again.', 'error');
           if (simBtn) {

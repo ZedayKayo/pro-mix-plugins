@@ -89,10 +89,11 @@
 /* ── HERO ── */
 .hp-hero {
   position: relative;
-  min-height: 90vh;
+  min-height: 80vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-top: 0;
   overflow: hidden;
   background: var(--bg-primary);
 }
@@ -140,7 +141,7 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--space-3xl);
   align-items: center;
-  padding: var(--space-3xl) 0 var(--space-2xl);
+  padding: var(--space-lg) 0 var(--space-2xl);
 }
 
 /* Hero left */
@@ -156,7 +157,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--neon-green);
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-md);
 }
 .hp-badge-dot {
   width: 6px; height: 6px;
@@ -176,7 +177,7 @@
   line-height: 1.08;
   letter-spacing: -2px;
   color: var(--text-primary);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-xs);
 }
 .hp-headline-accent {
   background: linear-gradient(90deg, var(--neon-green), var(--neon-blue), var(--neon-purple));
@@ -194,14 +195,14 @@
   font-size: var(--text-md);
   color: var(--text-secondary);
   line-height: 1.7;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
   max-width: 480px;
 }
 .hp-trust-row {
   display: flex;
   gap: var(--space-lg);
   flex-wrap: wrap;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 .hp-trust-item {
   display: flex;

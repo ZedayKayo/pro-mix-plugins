@@ -2,7 +2,7 @@
 // PRO-MIX — Quick View Modal Component
 // ═══════════════════════════════════════════════════════
 
-import { formatPrice, renderStars, getCategoryName, sanitizeHTML, getPluginImage } from '../core/utils.js';
+import { formatPrice, renderStars, getCategoryName, sanitizeHTML, getPluginImage, calculateDiscount } from '../core/utils.js';
 import { addToCart, isInCart } from '../core/store.js';
 import { showToast } from './Toast.js';
 import { navigate } from '../core/router.js';
@@ -95,7 +95,7 @@ export function openQuickView(product) {
         <div class="qv-price">${formatPrice(price)}</div>
         ${product.salePrice && product.salePrice < product.price
           ? `<div class="qv-original">${formatPrice(product.price)}</div>
-             <div class="qv-discount">−70% OFF</div>`
+             <div class="qv-discount">−${calculateDiscount(product.price, product.salePrice)}% OFF</div>`
           : ''}
       </div>
 

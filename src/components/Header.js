@@ -27,11 +27,12 @@ export function renderHeader() {
 
         <nav class="header-nav" id="header-nav" aria-label="Main navigation">
           <a href="/">Home</a>
-          
           <a href="/store">Plugins</a>
-
-          <a href="/compare">Compare</a>
-          <a href="/dashboard">Dashboard</a>
+          <a href="/bundles">Bundles</a>
+          <a href="/blog">Blog</a>
+          <a href="/support">Support</a>
+          <a href="/about">About</a>
+          ${loggedIn ? `<a href="/dashboard">Dashboard</a>` : ''}
           ${admin ? `<a href="/admin" style="color: var(--neon-orange);">Admin</a>` : ''}
         </nav>
 
@@ -75,13 +76,20 @@ export function renderHeader() {
       <div class="mobile-menu-links">
         <a href="/" class="mobile-nav-link">Home</a>
         <a href="/store" class="mobile-nav-link">Plugins</a>
-        <a href="/compare" class="mobile-nav-link">Compare</a>
-        <a href="/dashboard" class="mobile-nav-link">Dashboard</a>
+        <a href="/bundles" class="mobile-nav-link">Bundles</a>
+        <a href="/blog" class="mobile-nav-link">Blog</a>
+        <a href="/support" class="mobile-nav-link">Support</a>
+        <a href="/about" class="mobile-nav-link">About</a>
+        ${loggedIn ? `<a href="/dashboard" class="mobile-nav-link">Dashboard</a>` : ''}
         ${admin ? `<a href="/admin" class="mobile-nav-link" style="color: var(--neon-orange);">Admin</a>` : ''}
       </div>
       <div class="mobile-menu-footer">
         ${loggedIn ? `
-          <button class="btn btn-ghost" style="width:100%;" id="mobile-account-btn">👤 Account</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-sm) var(--space-md);background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:var(--radius-md);margin-bottom:var(--space-sm);">
+            <span style="font-size:var(--text-xs);color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">Credit Balance</span>
+            <span id="mobile-credits-display" style="font-weight:700;color:var(--neon-green);font-size:var(--text-md);">💵 $${getUser()?.credits ?? 0}</span>
+          </div>
+          <button class="btn btn-ghost" style="width:100%;" id="mobile-account-btn">👤 My Account</button>
         ` : `
           <button class="btn btn-primary" style="width:100%;" id="mobile-signin-btn">Sign In</button>
         `}
@@ -187,6 +195,11 @@ export function initHeaderEvents() {
       const creditDisplay = document.getElementById('header-credits-display');
       if (creditDisplay && user) {
         creditDisplay.innerHTML = `💵 $${user.credits ?? 0}`;
+      }
+      // also patch the mobile menu credit display
+      const mobileCredits = document.getElementById('mobile-credits-display');
+      if (mobileCredits && user) {
+        mobileCredits.innerHTML = `💵 $${user.credits ?? 0}`;
       }
     });
 
