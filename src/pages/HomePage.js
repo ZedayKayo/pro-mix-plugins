@@ -5,7 +5,7 @@
 import { getFeaturedProducts, getTrendingProducts, getNewProducts } from '../data/products.js';
 import { renderProductCard, initProductCardEvents } from '../components/ProductCard.js';
 import { initQuickViewModal } from '../components/QuickViewModal.js';
-import { formatPrice, getPluginImage, sanitizeHTML } from '../core/utils.js';
+import { formatPrice, getPluginImage, sanitizeHTML, setPageMeta } from '../core/utils.js';
 import { navigate } from '../core/router.js';
 import { getDiscountPct } from '../services/discountService.js';
 
@@ -15,6 +15,11 @@ export function renderHomePage() {
   const latest    = getNewProducts();
   const container = document.getElementById('page-content');
   const discountPct = getDiscountPct();
+
+  setPageMeta(
+    'Professional Audio Plugins at Up to ' + discountPct + '% Off',
+    'Access 80+ professional audio plugins — EQs, compressors, reverbs, synthesizers — at up to ' + discountPct + '% off retail price. Pay with crypto. Instant download. Lifetime license.',
+  );
 
   container.innerHTML = `
 
@@ -292,7 +297,7 @@ export function renderHomePage() {
     <section class="hp-section">
       <div class="container">
         <div class="hp-bundle-card animate-fade-in-up">
-          <div class="hp-bundle-tag">⚡ Limited-time offer</div>
+          <div class="hp-bundle-tag">⚡ Ultimate Value</div>
           <div class="hp-bundle-content">
             <div>
               <h2 class="hp-bundle-title">Get Everything.<br/>Pay Once.</h2>

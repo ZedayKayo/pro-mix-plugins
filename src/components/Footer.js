@@ -9,14 +9,14 @@ export function renderFooter() {
         <div class="footer-grid">
           <div class="footer-brand">
             <a href="/" class="header-logo" style="margin-bottom: var(--space-sm); display: inline-flex;">
-              <img src="/images/logo.png" alt="ProMix" style="height: 34px; width: auto;" />
+              <img src="/images/logo.png" alt="ProMix" style="height: 34px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
             </a>
             <p>Professional audio plugins crafted for producers, engineers, and artists. Pushing the boundaries of digital sound since 2023.</p>
             <div class="footer-social">
-              <a href="#" title="Twitter / X" aria-label="Twitter">𝕏</a>
-              <a href="#" title="YouTube" aria-label="YouTube">▶</a>
-              <a href="#" title="Discord" aria-label="Discord">💬</a>
-              <a href="#" title="Instagram" aria-label="Instagram">📷</a>
+              <a href="https://twitter.com/promixplugins" target="_blank" rel="noopener noreferrer" title="Twitter / X" aria-label="Twitter">𝕏</a>
+              <a href="https://youtube.com/@promixplugins" target="_blank" rel="noopener noreferrer" title="YouTube" aria-label="YouTube">▶</a>
+              <a href="https://discord.gg/promixplugins" target="_blank" rel="noopener noreferrer" title="Discord" aria-label="Discord">💬</a>
+              <a href="https://instagram.com/promixplugins" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram">📷</a>
             </div>
           </div>
 
@@ -28,6 +28,7 @@ export function renderFooter() {
             <a href="/store?category=reverb">Reverbs</a>
             <a href="/store?category=synth">Synthesizers</a>
             <a href="/store?category=mastering">Mastering</a>
+            <a href="/bundles">Plugin Bundles</a>
           </div>
 
           <div class="footer-col">
@@ -35,13 +36,16 @@ export function renderFooter() {
             <a href="/faq">FAQ</a>
             <a href="/contact">Contact Us</a>
             <a href="/support">Support Center</a>
-            <a href="/compare">Plugin Comparisons</a>
+            <a href="/affiliates">Affiliate Program</a>
+            <a href="/blog">Blog</a>
           </div>
 
           <div class="footer-col">
-            <h5>Company</h5>
+            <h5>Legal</h5>
             <a href="/about">About Us</a>
             <a href="/refunds">Refund Policy</a>
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms of Service</a>
           </div>
         </div>
 
@@ -58,3 +62,4 @@ export function renderFooter() {
     </footer>
   `;
 }
+

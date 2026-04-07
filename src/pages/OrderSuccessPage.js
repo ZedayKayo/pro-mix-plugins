@@ -226,6 +226,16 @@ export function renderOrderSuccessPage() {
           Follow the guide below to install and activate.
         </p>
 
+        ${(order?.guestEmail || user?.email) ? `
+          <div style="background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.2); border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: var(--space-xl); display: inline-flex; align-items: center; gap: 12px; font-size: 14px; text-align: left;">
+            <div style="font-size: 20px;">📧</div>
+            <div>
+              <div style="color: var(--neon-green); font-weight: 600; margin-bottom: 2px;">Receipt & Download Links Sent</div>
+              <div style="color: var(--text-secondary);">We've emailed a backup copy of your order to <strong style="color:white">${order?.guestEmail || user?.email}</strong>.</div>
+            </div>
+          </div>
+        ` : ''}
+
         ${items.length > 0 ? `
         <div class="os-purchased-items">
           ${items.map(item => `

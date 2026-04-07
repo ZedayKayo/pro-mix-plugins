@@ -11,7 +11,6 @@ import './styles/pages/checkout.css';
 import './styles/pages/card-checkout.css';
 import './styles/pages/dashboard.css';
 import './styles/pages/auth.css';
-import './styles/pages/comparison.css';
 import './styles/pages/order-success.css';
 import './styles/pages/info-pages.css';
 import './styles/animations.css';
@@ -34,13 +33,14 @@ import { renderAdminPanel } from './pages/AdminPanelPage.js';
 import { renderLoginPage } from './pages/auth/LoginPage.js';
 import { renderRegisterPage } from './pages/auth/RegisterPage.js';
 import { renderForgotPasswordPage } from './pages/auth/ForgotPasswordPage.js';
-import { renderComparisonsPage, renderComparisonDetailPage } from './pages/ComparisonPage.js';
 import { renderOrderSuccessPage } from './pages/OrderSuccessPage.js';
-import { renderAboutPage, renderFaqPage, renderSupportPage, renderRefundPolicyPage, renderContactPage } from './pages/InfoPages.js';
+import { renderAboutPage, renderFaqPage, renderSupportPage, renderRefundPolicyPage, renderContactPage, renderPrivacyPolicyPage, renderTermsPage } from './pages/InfoPages.js';
 import { renderBlogPage } from './pages/BlogPage.js';
 import { renderChangelogPage } from './pages/ChangelogPage.js';
 import { renderAffiliatesPage } from './pages/AffiliatesPage.js';
 import { renderBundlesPage } from './pages/BundlesPage.js';
+import { initCookieBanner } from './components/CookieBanner.js';
+import { initEmailPopup } from './components/EmailPopup.js';
 
 async function bootstrap() {
   await initStore();
@@ -56,11 +56,17 @@ async function bootstrap() {
 
   document.getElementById('header-container').innerHTML = renderHeader();
   if (typeof initHeaderEvents === 'function') initHeaderEvents();
-  
+
   document.getElementById('footer-container').innerHTML = renderFooter();
 
   // Initialize universal cart drawer
   initCartDrawer();
+
+  // Initialize GDPR cookie banner
+  initCookieBanner();
+
+  // Initialize email capture popup (10s delay, first-time visitors)
+  initEmailPopup();
 
   // Register Routes
   registerRoute('/', () => renderHomePage());
@@ -74,8 +80,6 @@ async function bootstrap() {
   registerRoute('/login', () => renderLoginPage());
   registerRoute('/register', () => renderRegisterPage());
   registerRoute('/forgot-password', () => renderForgotPasswordPage());
-  registerRoute('/compare', () => renderComparisonsPage());
-  registerRoute('/compare/:slug', (params) => renderComparisonDetailPage(params));
   registerRoute('/order-success', () => renderOrderSuccessPage());
 
   // Info pages
@@ -84,6 +88,8 @@ async function bootstrap() {
   registerRoute('/support', () => renderSupportPage());
   registerRoute('/refunds', () => renderRefundPolicyPage());
   registerRoute('/contact', () => renderContactPage());
+  registerRoute('/privacy', () => renderPrivacyPolicyPage());
+  registerRoute('/terms', () => renderTermsPage());
 
   // New pages
   registerRoute('/blog', () => renderBlogPage());

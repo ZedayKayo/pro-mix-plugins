@@ -8,7 +8,7 @@ import { initQuickViewModal } from '../components/QuickViewModal.js';
 import { on } from '../core/store.js';
 import { getWishlist, getRecentlyViewed } from '../core/wishlist.js';
 import { navigate } from '../core/router.js';
-import { formatPrice, getPluginImage, sanitizeHTML } from '../core/utils.js';
+import { formatPrice, getPluginImage, sanitizeHTML, setPageMeta } from '../core/utils.js';
 import { getDiscountPct } from '../services/discountService.js';
 
 const PAGE_SIZE = 20;
@@ -19,6 +19,11 @@ export function renderStorePage(params) {
   const initialSearch   = searchParams.get('search') || '';
   const initialCategory = searchParams.get('category') ? [searchParams.get('category')] : [];
   const initialSort     = searchParams.get('sort') || 'newest';
+
+  setPageMeta(
+    'Plugin Store — 80+ Professional Audio Plugins',
+    'Browse 80+ professional audio plugins — EQ, compression, reverb, synths, mastering. Up to ' + getDiscountPct() + '% off retail. Filter by DAW, format, brand, and price. Instant download.'
+  );
 
   const state = {
     category:   initialCategory,
@@ -172,15 +177,6 @@ export function renderStorePage(params) {
             <span class="featured-strip-label">⭐ Featured Picks</span>
           </div>
           <div class="featured-strip-scroll" id="featured-scroll"></div>
-        </div>
-      </div>
-
-      <!-- ── Compare bar (floating) ── -->
-      <div class="compare-bar" id="compare-bar" style="display:none">
-        <div class="compare-bar-inner">
-          <span class="compare-bar-label">Comparing: <strong id="compare-count">0</strong>/3 plugins</span>
-          <button class="btn btn-primary btn-sm" id="compare-go">Compare Now →</button>
-          <button class="btn btn-ghost btn-sm" id="compare-clear">Clear</button>
         </div>
       </div>
 
@@ -491,30 +487,6 @@ export function renderStorePage(params) {
   }
   document.getElementById('clear-filters')?.addEventListener('click', clearAllFilters);
   document.getElementById('no-results-clear')?.addEventListener('click', clearAllFilters);
-
-  // ── Compare bar ────────────────────────────────
-  function updateCompareBar(list) {
-    const bar = document.getElementById('compare-bar');
-    const cnt = document.getElementById('compare-count');
-    if (!bar) return;
-    bar.style.display = list.length > 0 ? 'flex' : 'none';
-    if (cnt) cnt.textContent = list.length;
-  }
-  // Show on init if session has data
-  const initCompare = JSON.parse(sessionStorage.getItem('pmx_compare') || '[]');
-  updateCompareBar(initCompare);
-
-  document.addEventListener('compare:updated', e => updateCompareBar(e.detail));
-
-  document.getElementById('compare-go')?.addEventListener('click', () => {
-    const ids = sessionStorage.getItem('pmx_compare') || '[]';
-    navigate(`/compare?ids=${encodeURIComponent(ids)}`);
-  });
-  document.getElementById('compare-clear')?.addEventListener('click', () => {
-    sessionStorage.removeItem('pmx_compare');
-    updateCompareBar([]);
-    document.querySelectorAll('.pc-compare-btn').forEach(b => b.classList.remove('active'));
-  });
 
   // ── Inventory update (Supabase async load) ─────
   const unsubscribe = on('inventory:updated', () => {

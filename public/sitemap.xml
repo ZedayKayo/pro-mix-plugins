@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://promixplugins.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://promixplugins.com/store</loc><changefreq>daily</changefreq><priority>0.9</priority></url>
+  <url><loc>https://promixplugins.com/bundles</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://promixplugins.com/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://promixplugins.com/blog?article=eq-techniques</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/blog?article=compression-guide</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/blog?article=reverb-masterclass</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/blog?article=sidechain-pro</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/blog?article=mastering-diy</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/blog?article=synth-programming</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/about</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://promixplugins.com/faq</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://promixplugins.com/support</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://promixplugins.com/compare</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://promixplugins.com/affiliates</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://promixplugins.com/refunds</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://promixplugins.com/privacy</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://promixplugins.com/terms</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://promixplugins.com/contact</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+</urlset>

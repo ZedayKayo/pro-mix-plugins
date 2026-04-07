@@ -7,6 +7,7 @@ import { addToCart, isInCart } from '../core/store.js';
 import { navigate } from '../core/router.js';
 import { showToast } from './Toast.js';
 import { isWishlisted, toggleWishlist } from '../core/wishlist.js';
+import { getProductReviews } from '../data/reviews.js';
 
 const CAT_GRADIENTS = {
   eq:         'linear-gradient(135deg,#00ff88 0%,#0090cc 100%)',
@@ -40,10 +41,21 @@ export function renderProductCard(product, animDelay = 0) {
     badge = `<span class="pc-badge pc-badge-hot">🔥 HOT</span>`;
   }
 
-  const starsHtml = product.reviews > 0
+  let totalReviews = product.reviews;
+  let avgRating = product.rating;
+
+  // If reviews is 0 (or undefined/null), fall back to the dynamic generation
+  // to ensure consistency with the ProductPage which always generates them.
+  if (!totalReviews) {
+    const allReviews = getProductReviews(product.id, product.category);
+    totalReviews = allReviews.length;
+    avgRating = totalReviews > 0 ? +(allReviews.reduce((sum, r) => sum + r.stars, 0) / totalReviews).toFixed(1) : 0;
+  }
+
+  const starsHtml = totalReviews > 0
     ? `<div class="pc-rating">
-        <span class="pc-stars">${renderStars(product.rating)}</span>
-        <span class="pc-reviews">${product.reviews}</span>
+        <span class="pc-stars">${renderStars(avgRating)}</span>
+        <span class="pc-reviews">${totalReviews}</span>
        </div>`
     : '<div></div>';
 
@@ -71,11 +83,6 @@ export function renderProductCard(product, animDelay = 0) {
             <button class="pc-action-btn" title="Quick View" data-quickview="${product.id}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-              </svg>
-            </button>
-            <button class="pc-action-btn pc-compare-btn" title="Add to Compare" data-compare="${product.id}">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
               </svg>
             </button>
           </div>
@@ -143,26 +150,6 @@ export function initProductCardEvents(container) {
       showToast(added ? '❤️ Added to wishlist' : 'Removed from wishlist', 'info');
       // Refresh wishlist count bubble if exists
       document.dispatchEvent(new CustomEvent('wishlist:updated'));
-      return;
-    }
-
-    // ── Compare ─────────────────────────────────
-    const cmpBtn = e.target.closest('[data-compare]');
-    if (cmpBtn) {
-      e.preventDefault(); e.stopPropagation();
-      const id = cmpBtn.dataset.compare;
-      let compareList = JSON.parse(sessionStorage.getItem('pmx_compare') || '[]');
-      if (compareList.includes(id)) {
-        showToast('Already in compare list', 'info'); return;
-      }
-      if (compareList.length >= 3) {
-        showToast('Max 3 plugins to compare', 'info'); return;
-      }
-      compareList.push(id);
-      sessionStorage.setItem('pmx_compare', JSON.stringify(compareList));
-      cmpBtn.classList.add('active');
-      showToast(`Added to compare (${compareList.length}/3)`, 'success');
-      document.dispatchEvent(new CustomEvent('compare:updated', { detail: compareList }));
       return;
     }
 

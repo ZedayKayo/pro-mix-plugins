@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════
 
 import { getProductBySlug, getProducts } from '../data/products.js';
-import { formatPrice, formatCrypto, renderStars, getPluginImage, getCategoryName, calculateDiscount } from '../core/utils.js';
+import { getProductReviews, saveUserReview, formatReviewDate } from '../data/reviews.js';
+import { formatPrice, formatCrypto, renderStars, getPluginImage, getCategoryName, calculateDiscount, setPageMeta } from '../core/utils.js';
 import { addToCart, isInCart } from '../core/store.js';
 import { navigate } from '../core/router.js';
 import { showToast } from '../components/Toast.js';
@@ -28,6 +29,21 @@ export function renderProductPage(params) {
   const inCart = isInCart(product.id);
   const related = getProducts().filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
   const totalImages = product.images.length;
+
+  // Set unique SEO meta for this product
+  setPageMeta(
+    product.name,
+    `${product.shortDesc || ''} — Get ${product.name} at up to 70% off retail. ${getCategoryName(product.category)} plugin. Instant download. Pay with crypto.`.trim(),
+    getPluginImage(product, 0)
+  );
+
+  // ── Fetch Reviews & Calculate True Rating ──
+  let allReviews = getProductReviews(product.id, product.category);
+  const totalReviews = allReviews.length;
+  const avgRating = totalReviews > 0 ? (allReviews.reduce((sum, r) => sum + r.stars, 0) / totalReviews).toFixed(1) : 0;
+  
+  // Sort State
+  let activeSort = 'helpful';
 
   // Generate waveform bars
   const bars = Array.from({ length: 60 }, () => Math.random() * 80 + 10);
@@ -111,8 +127,8 @@ export function renderProductPage(params) {
             <p class="product-subtitle">${product.shortDesc}</p>
 
             <div class="product-rating-row">
-              <span class="stars">${renderStars(product.rating)}</span>
-              <span class="text-sm text-secondary">${product.rating} (${product.reviews} reviews)</span>
+              <span class="stars">${renderStars(avgRating)}</span>
+              <span class="text-sm text-secondary">${avgRating} (${totalReviews} reviews)</span>
             </div>
 
             <!-- Price Block -->
@@ -144,25 +160,16 @@ export function renderProductPage(params) {
               <span>🔄 Lifetime Updates</span>
             </div>
 
-            <!-- Audio Demo -->
-            ${product.audioDemo ? `
-              <div class="audio-player">
-                <div class="audio-player-header">
-                  <span>🎵</span>
-                  <span>Audio Demo</span>
-                </div>
-                <div class="audio-player-controls">
-                  <div class="audio-progress-wrapper">
-                    <div class="audio-waveform" id="audio-waveform" style="opacity: 0.5;">
-                      ${bars.map((h, i) => `<div class="waveform-bar" style="height:${h}%" data-bar="${i}"></div>`).join('')}
-                    </div>
-                    <div class="audio-time" style="justify-content: center;">
-                      <span style="color: var(--text-tertiary); font-family: var(--font-display); letter-spacing: 1px; font-size: 11px; text-transform: uppercase;">Audio Preview Coming Soon</span>
-                    </div>
-                  </div>
-                </div>
+            <!-- Waveform Visual (decorative) -->
+            <div class="audio-player" style="opacity:0.6;">
+              <div class="audio-player-header">
+                <span>🎛️</span>
+                <span style="font-size:var(--text-xs);text-transform:uppercase;letter-spacing:1px;">Frequency Spectrum</span>
               </div>
-            ` : ''}
+              <div class="audio-waveform" id="audio-waveform" style="pointer-events:none;">
+                ${bars.map((h, i) => `<div class="waveform-bar" style="height:${h}%;animation-delay:${(i*0.04).toFixed(2)}s"></div>`).join('')}
+              </div>
+            </div>
 
           </div> <!-- /product-info -->
         </div> <!-- /product-detail -->
@@ -174,6 +181,7 @@ export function renderProductPage(params) {
               <button class="product-tab active" data-tab="desc">Description</button>
               <button class="product-tab" data-tab="features">Key Features</button>
               <button class="product-tab" data-tab="specs">Specs & Reqs</button>
+              <button class="product-tab" data-tab="reviews">Reviews <span style="background:rgba(0,255,136,0.1); color:var(--neon-green); padding:2px 6px; border-radius:12px; font-size:10px; margin-left:6px;">${totalReviews}</span></button>
             </div>
 
             <!-- Tab: Description -->
@@ -218,6 +226,12 @@ export function renderProductPage(params) {
                 </div>
               </div>
             </div>
+
+            <!-- Tab: Reviews -->
+            <div class="product-tab-content" id="tab-reviews">
+              <div id="reviews-container"></div>
+            </div>
+
           </div>
         </div>
 
@@ -443,7 +457,6 @@ export function renderProductPage(params) {
     navigate('/checkout');
   });
 
-  initAudioPlayer();
   initProductCardEvents(document.getElementById('related-grid'));
 
   // Tabs
@@ -458,6 +471,244 @@ export function renderProductPage(params) {
       if (target) target.classList.add('active');
     });
   });
+
+  // ── Render Dynamic Reviews ──
+  function renderReviews() {
+    const revContainer = document.getElementById('reviews-container');
+    if (!revContainer) return;
+
+    // Apply Sort
+    let sorted = [...allReviews];
+    if (activeSort === 'newest') sorted.sort((a,b) => new Date(b.date) - new Date(a.date));
+    else if (activeSort === 'highest') sorted.sort((a,b) => b.stars - a.stars);
+    else if (activeSort === 'lowest') sorted.sort((a,b) => a.stars - b.stars);
+    else if (activeSort === 'helpful') sorted.sort((a,b) => b.helpful - a.helpful);
+
+    // Filter Distributions
+    const dist = {5:0,4:0,3:0,2:0,1:0};
+    allReviews.forEach(r => { dist[r.stars] = (dist[r.stars] || 0) + 1; });
+
+    revContainer.innerHTML = `
+      <div class="review-header">
+        <div class="review-summary">
+          <div class="review-avg-box">
+            <div class="review-avg-number">${avgRating}</div>
+            <div class="stars">${renderStars(avgRating)}</div>
+            <div class="review-count-text">Based on ${totalReviews} reviews</div>
+          </div>
+          <div class="review-bars">
+            ${[5,4,3,2,1].map(stars => `
+              <div class="review-bar-row">
+                <span>${stars} ★</span>
+                <div class="review-bar-track">
+                  <div class="review-bar-fill" style="width: ${(totalReviews > 0 ? (dist[stars]/totalReviews)*100 : 0)}%"></div>
+                </div>
+                <span style="font-size:12px; color:var(--text-muted); width:20px; text-align:right;">${dist[stars]}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="review-actions">
+          <button class="btn btn-primary" id="btn-write-review">✎ Write a Review</button>
+        </div>
+      </div>
+
+      <div class="review-filters">
+        <span>Sort by:</span>
+        <select id="review-sort" class="input" style="width:auto; padding:4px 8px;">
+          <option value="helpful" ${activeSort === 'helpful' ? 'selected' : ''}>Most Helpful</option>
+          <option value="newest" ${activeSort === 'newest' ? 'selected' : ''}>Newest</option>
+          <option value="highest" ${activeSort === 'highest' ? 'selected' : ''}>Highest Rated</option>
+          <option value="lowest" ${activeSort === 'lowest' ? 'selected' : ''}>Lowest Rated</option>
+        </select>
+      </div>
+
+      <div class="review-list">
+        ${sorted.map(r => `
+          <div class="review-card ${r.isUser ? 'user-review' : ''}">
+            <div class="rev-header">
+              <div class="rev-avatar" style="background:hsl(${Array.from(r.author).reduce((a,c)=>a+c.charCodeAt(0),0)%360}, 60%, 40%)">${r.initials}</div>
+              <div class="rev-meta">
+                <div class="rev-author">${r.author} ${r.verified ? '<span class="rev-badge">✅ Verified Buyer</span>' : ''}</div>
+                <div class="rev-date">${formatReviewDate(r.date)}</div>
+              </div>
+              <div class="rev-stars">${renderStars(r.stars)}</div>
+            </div>
+            <div class="rev-body">
+              <h4 class="rev-title">${r.title}</h4>
+              <p class="rev-text">${r.text}</p>
+            </div>
+            <div class="rev-footer">
+              <span class="rev-helpful-txt">Was this helpful?</span>
+              <button class="rev-btn" data-id="${r.id}" data-type="yes">Yes (${r.helpful})</button>
+              <button class="rev-btn" data-id="${r.id}" data-type="no">No</button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <!-- Write Review Modal -->
+      <div id="review-modal" class="modal-overlay" style="display:none;">
+        <div class="modal" style="max-width:500px;">
+          <h2 style="margin-bottom:var(--space-sm);">Write a Review</h2>
+          <p style="color:var(--text-secondary); margin-bottom:var(--space-md);">Share your experience with this plugin.</p>
+          <form id="write-rev-form">
+            <div style="margin-bottom:12px;">
+              <label style="display:block;margin-bottom:4px;font-size:12px;">Rating</label>
+              <select id="wr-rating" class="input" required>
+                <option value="5">5 Stars — Excellent</option>
+                <option value="4">4 Stars — Good</option>
+                <option value="3">3 Stars — Average</option>
+                <option value="2">2 Stars — Poor</option>
+                <option value="1">1 Star — Terrible</option>
+              </select>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="display:block;margin-bottom:4px;font-size:12px;">Title</label>
+              <input type="text" id="wr-title" class="input" placeholder="Summarize your thoughts" required />
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="display:block;margin-bottom:4px;font-size:12px;">Review</label>
+              <textarea id="wr-text" class="input" rows="4" placeholder="How do you use it? What do you like or dislike?" required></textarea>
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:4px;font-size:12px;">Your Name</label>
+              <input type="text" id="wr-name" class="input" placeholder="e.g. John Doe" required />
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:12px;">
+              <button type="button" class="btn btn-ghost" id="btn-cancel-rev">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="btn-submit-rev">Submit Review</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+
+    // Bind Dropdown
+    document.getElementById('review-sort')?.addEventListener('change', (e) => {
+      activeSort = e.target.value;
+      renderReviews();
+    });
+
+    // Helpful interactions
+    document.querySelectorAll('.rev-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = e.target.dataset.id;
+        const type = e.target.dataset.type;
+        const lsKey = `pm_voted_${id}`;
+        if (localStorage.getItem(lsKey)) {
+          showToast('You already voted on this review.', 'error');
+          return;
+        }
+        localStorage.setItem(lsKey, 'true');
+        showToast('Thanks for your feedback!', 'success');
+        
+        if (type === 'yes') {
+          const rev = allReviews.find(x => x.id === id);
+          if (rev) rev.helpful++;
+          renderReviews();
+        }
+      });
+    });
+
+    // Modal behavior
+    document.getElementById('btn-write-review')?.addEventListener('click', () => {
+      document.getElementById('review-modal').style.display = 'flex';
+    });
+    document.getElementById('btn-cancel-rev')?.addEventListener('click', () => {
+      document.getElementById('review-modal').style.display = 'none';
+      document.getElementById('write-rev-form').reset();
+    });
+    
+    // Form Submit
+    document.getElementById('write-rev-form')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const wrBtn = document.getElementById('btn-submit-rev');
+      wrBtn.disabled = true;
+      wrBtn.textContent = 'Submitting...';
+
+      setTimeout(() => {
+        const title = document.getElementById('wr-title').value;
+        const text = document.getElementById('wr-text').value;
+        const name = document.getElementById('wr-name').value;
+        const stars = parseInt(document.getElementById('wr-rating').value, 10);
+        
+        let pName = name.split(' ');
+        let initials = pName[0]?.charAt(0);
+        if (pName[1]) initials += pName[1].charAt(0);
+
+        const newRev = {
+          title, text, author: name, initials: initials.toUpperCase(), stars
+        };
+
+        saveUserReview(product.id, newRev);
+        // Refresh
+        allReviews = getProductReviews(product.id, product.category);
+        
+        document.getElementById('review-modal').style.display = 'none';
+        showToast('Review approved instantly!', 'success');
+        
+        // Auto sort to Newest so they see it
+        activeSort = 'newest';
+        renderReviews();
+      }, 600);
+    });
+  }
+
+  // Trigger initial review render
+  renderReviews();
+
+  // ── Sticky Add-to-Cart Bar ─────────────────────────────────
+  const mainCta = document.getElementById('product-add-cart');
+  if (mainCta) {
+    // Create the sticky bar
+    const stickyBar = document.createElement('div');
+    stickyBar.id = 'sticky-atc-bar';
+    stickyBar.className = 'sticky-atc-bar';
+    stickyBar.innerHTML = `
+      <div class="sticky-atc-info">
+        <span class="sticky-atc-name">${product.name}</span>
+        <span class="sticky-atc-price">${formatPrice(price)}</span>
+      </div>
+      <div class="sticky-atc-actions">
+        <button class="btn btn-primary" id="sticky-atc-btn" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
+          ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
+        </button>
+        <button class="btn" style="background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);color:#f7931a;" id="sticky-buy-btn">
+          ⚡ Buy Now
+        </button>
+      </div>
+    `;
+    // Append to page content so it's auto-cleaned up on route change
+    document.getElementById('page-content').appendChild(stickyBar);
+
+    // Show/hide based on whether main CTA is in viewport
+    const observer = new IntersectionObserver(
+      ([entry]) => stickyBar.classList.toggle('sticky-atc-visible', !entry.isIntersecting),
+      { threshold: 0, rootMargin: '-68px 0px 0px 0px' } // account for header height
+    );
+    observer.observe(mainCta);
+
+    // Sticky bar events
+    document.getElementById('sticky-atc-btn')?.addEventListener('click', () => {
+      if (!isInCart(product.id)) {
+        addToCart(product);
+        showToast(`${product.name} added to cart!`, 'success');
+        document.getElementById('sticky-atc-btn').textContent = '✓ In Cart';
+        document.getElementById('sticky-atc-btn').disabled = true;
+        document.getElementById('sticky-atc-btn').style.opacity = '0.5';
+        // Sync main button too
+        if (mainCta) { mainCta.textContent = '✓ In Cart'; mainCta.disabled = true; mainCta.style.opacity = '0.5'; }
+      }
+    });
+    document.getElementById('sticky-buy-btn')?.addEventListener('click', () => {
+      if (!isInCart(product.id)) addToCart(product);
+      navigate('/checkout');
+    });
+
+    // Clean up observer when navigating away
+    window.addEventListener('popstate', () => { observer.disconnect(); stickyBar?.remove(); }, { once: true });
+  }
 }
 
 function initAudioPlayer() {

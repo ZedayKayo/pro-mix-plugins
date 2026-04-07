@@ -4,9 +4,11 @@
 // ═══════════════════════════════════════════════════════
 
 import { getDiscountPct } from '../services/discountService.js';
+import { setPageMeta } from '../core/utils.js';
 
 // ── ABOUT PAGE ─────────────────────────────────────────
 export function renderAboutPage() {
+  setPageMeta('About ProMix Plugins', 'ProMix was founded to make studio-grade audio software affordable for every producer. Learn how we deliver top plugins at up to ' + getDiscountPct() + '% off retail.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -37,7 +39,7 @@ export function renderAboutPage() {
           </div>
           <div class="about-story-visual">
             <div class="about-stat-card">
-              <span class="about-stat-num">200+</span>
+              <span class="about-stat-num">80+</span>
               <span class="about-stat-label">Plugins Available</span>
             </div>
             <div class="about-stat-card">
@@ -122,6 +124,7 @@ const FAQ_ITEMS = [
 const FAQ_CATS = ['All', ...new Set(FAQ_ITEMS.map(f => f.cat))];
 
 export function renderFaqPage() {
+  setPageMeta('FAQ — ProMix Plugins', 'Answers to the most common questions about purchasing, installing, and licensing ProMix audio plugins. Installation guides, payment help, and more.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -217,6 +220,7 @@ export function renderFaqPage() {
 
 // ── SUPPORT PAGE ────────────────────────────────────────
 export function renderSupportPage() {
+  setPageMeta('Support Center — ProMix Plugins', 'Get help with plugin installation, license keys, payment issues, and DAW compatibility. Live chat, email support, and a full knowledge base available 24/7.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -395,6 +399,7 @@ export function renderSupportPage() {
 
 // ── REFUND POLICY PAGE ──────────────────────────────────
 export function renderRefundPolicyPage() {
+  setPageMeta('Refund Policy — ProMix Plugins', 'ProMix Plugins refund policy for digital audio software purchases. All sales are final once a license is issued, with exceptions for verified broken products.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -448,6 +453,7 @@ export function renderRefundPolicyPage() {
 
 // ── CONTACT PAGE ────────────────────────────────────────
 export function renderContactPage() {
+  setPageMeta('Contact ProMix Plugins', 'Get in touch with the ProMix team for technical support, payment questions, partnership enquiries, or general help. We respond within 24 hours.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -507,3 +513,193 @@ export function renderContactPage() {
     });
   });
 }
+
+// ── PRIVACY POLICY PAGE ─────────────────────────────────
+export function renderPrivacyPolicyPage() {
+  setPageMeta('Privacy Policy — ProMix Plugins', 'How ProMix Plugins collects, uses, and protects your personal data. GDPR and CCPA compliant. Learn about your rights and how to contact us.');
+  const container = document.getElementById('page-content');
+  const lastUpdated = 'April 5, 2026';
+  container.innerHTML = `
+    <div class="info-hero">
+      <div class="container">
+        <span class="info-hero-eyebrow">Legal</span>
+        <h1>Privacy Policy</h1>
+        <p>Last updated: ${lastUpdated}. We are committed to protecting your personal information.</p>
+      </div>
+    </div>
+    <div class="section">
+      <div class="container container-narrow animate-fade-in-up">
+        <div class="card" style="padding:var(--space-2xl); line-height:1.8; color:var(--text-secondary);">
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">1. Who We Are</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            ProMix Plugins ("we", "us", "our") operates the website <strong style="color:var(--text-primary);">promixplugins.com</strong>.
+            We sell digital audio plugin software to music producers and engineers worldwide.
+            For questions about this policy, contact us at <a href="mailto:privacy@promixplugins.com" style="color:var(--neon-green)">privacy@promixplugins.com</a>.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">2. Information We Collect</h3>
+          <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
+            <li><strong style="color:var(--text-primary);">Account information:</strong> Email address and password hash when you register an account.</li>
+            <li><strong style="color:var(--text-primary);">Purchase data:</strong> Items purchased, transaction method (crypto or card), and order timestamps.</li>
+            <li><strong style="color:var(--text-primary);">Session data:</strong> Authentication tokens stored in your browser's localStorage via Supabase.</li>
+            <li><strong style="color:var(--text-primary);">Usage data:</strong> Pages visited, browser type, and approximate location (country-level, via server logs).</li>
+            <li><strong style="color:var(--text-primary);">Cookies:</strong> We use essential cookies for authentication and session management. We do not use advertising or tracking cookies.</li>
+          </ul>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">3. How We Use Your Information</h3>
+          <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
+            <li>To create and manage your ProMix account</li>
+            <li>To process and fulfil your digital plugin purchases</li>
+            <li>To deliver download links and license keys to your Dashboard</li>
+            <li>To send transactional emails (order confirmations, support responses)</li>
+            <li>To send marketing emails if you opted in (you may unsubscribe at any time)</li>
+            <li>To prevent fraud, abuse, and unauthorised access</li>
+            <li>To improve the website and our product catalogue</li>
+          </ul>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">4. Data Storage & Third Parties</h3>
+          <p style="margin-bottom:var(--space-md);">Your data is stored securely on <strong style="color:var(--text-primary);">Supabase</strong> (our database provider), which is hosted on AWS infrastructure in the EU. We do not sell your data to third parties.</p>
+          <p style="margin-bottom:var(--space-xl);">We use the following third-party services: <strong style="color:var(--text-primary);">Supabase</strong> (database & auth), <strong style="color:var(--text-primary);">Vercel</strong> (hosting), and payment processors for card transactions. Each provider maintains their own privacy policy and adequate data protection standards.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">5. Cryptocurrency Transactions</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            Crypto payments (BTC, ETH, USDT) are processed on-chain. We only record the <strong style="color:var(--text-primary);">public wallet address</strong> and transaction amount for order verification. We do not have access to your private keys or wallet identity. Blockchain transactions are publicly visible by their nature.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">6. Your Rights (GDPR & CCPA)</h3>
+          <p style="margin-bottom:var(--space-md);">Depending on your jurisdiction, you have the right to:</p>
+          <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
+            <li><strong style="color:var(--text-primary);">Access</strong> the personal data we hold about you</li>
+            <li><strong style="color:var(--text-primary);">Correct</strong> inaccurate or incomplete data</li>
+            <li><strong style="color:var(--text-primary);">Delete</strong> your account and associated personal data</li>
+            <li><strong style="color:var(--text-primary);">Export</strong> your data in a portable format</li>
+            <li><strong style="color:var(--text-primary);">Object</strong> to or restrict certain types of processing</li>
+            <li><strong style="color:var(--text-primary);">Withdraw consent</strong> for marketing communications at any time</li>
+          </ul>
+          <p style="margin-bottom:var(--space-xl);">To exercise any of these rights, email <a href="mailto:privacy@promixplugins.com" style="color:var(--neon-green)">privacy@promixplugins.com</a>. We will respond within 30 days.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">7. Data Retention</h3>
+          <p style="margin-bottom:var(--space-xl);">We retain your account data for as long as your account is active. Purchase records are retained for 7 years for legal and accounting purposes. You may request deletion of your account at any time, subject to these minimum retention obligations.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">8. Cookies</h3>
+          <p style="margin-bottom:var(--space-xl);">We use only essential cookies required for authentication and cart functionality. These cookies are strictly necessary and do not require consent under GDPR. We do not use advertising, analytics, or fingerprinting cookies. You can disable cookies in your browser settings, but this will prevent login and checkout from functioning.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">9. Children's Privacy</h3>
+          <p style="margin-bottom:var(--space-xl);">ProMix Plugins is not directed at children under 16. We do not knowingly collect personal data from children. If you believe a minor has provided us data, please contact us immediately.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">10. Changes to This Policy</h3>
+          <p style="margin-bottom:var(--space-xl);">We may update this Privacy Policy from time to time. Significant changes will be communicated by email or a prominent notice on the website. Continued use of the site after changes constitutes acceptance of the updated policy.</p>
+
+          <div style="margin-top:var(--space-xl);padding:var(--space-md) var(--space-lg);background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--text-sm);">
+            <strong style="color:var(--text-primary);">Questions?</strong> Email us at
+            <a href="mailto:privacy@promixplugins.com" style="color:var(--neon-green);"> privacy@promixplugins.com</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ── TERMS OF SERVICE PAGE ───────────────────────────────
+export function renderTermsPage() {
+  setPageMeta('Terms of Service — ProMix Plugins', 'Terms of Service governing use of ProMix Plugins. Covers purchases, digital licenses, refund eligibility, affiliate program, and prohibited use.');
+  const container = document.getElementById('page-content');
+  const lastUpdated = 'April 5, 2026';
+  container.innerHTML = `
+    <div class="info-hero">
+      <div class="container">
+        <span class="info-hero-eyebrow">Legal</span>
+        <h1>Terms of Service</h1>
+        <p>Last updated: ${lastUpdated}. Please read these terms carefully before using ProMix Plugins.</p>
+      </div>
+    </div>
+    <div class="section">
+      <div class="container container-narrow animate-fade-in-up">
+        <div class="card" style="padding:var(--space-2xl); line-height:1.8; color:var(--text-secondary);">
+
+          <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.18);border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-xl);font-size:var(--text-sm);">
+            By creating an account or making a purchase on promixplugins.com, you agree to be bound by these Terms of Service.
+          </div>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">1. Acceptance of Terms</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            These Terms of Service ("Terms") govern your use of the ProMix Plugins website and all associated services. By accessing or using our platform, you confirm that you are at least 18 years old and have the legal capacity to enter into a binding agreement.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">2. Our Service</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            ProMix Plugins provides digital audio plugin software to music producers, engineers, and artists at significantly reduced prices through direct partnership and bulk licensing arrangements with software developers. All products sold are digital goods delivered electronically to your ProMix account Dashboard.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">3. Account Responsibilities</h3>
+          <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
+            <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
+            <li>You must not share your account or allow others to use your login.</li>
+            <li>You are responsible for all activity that occurs under your account.</li>
+            <li>You must notify us immediately at <a href="mailto:support@promixplugins.com" style="color:var(--neon-green)">support@promixplugins.com</a> if you suspect unauthorised access.</li>
+          </ul>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">4. Purchases and Payments</h3>
+          <p style="margin-bottom:var(--space-md);">All prices are listed in USD. We accept payment via cryptocurrency (BTC, ETH, USDT) and credit/debit card (Visa, Mastercard, AMEX). A 4.9% processing fee applies to card payments. Cryptocurrency payments carry no additional fee.</p>
+          <p style="margin-bottom:var(--space-xl);">
+            Upon successful payment confirmation, you will receive a perpetual, non-exclusive, non-transferable license to use the purchased software on up to 3 of your personal machines for personal and commercial music production purposes.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">5. Digital Product License</h3>
+          <p style="margin-bottom:var(--space-md);">Each plugin purchase grants you a <strong style="color:var(--text-primary);">lifetime, personal-use license</strong> for the specific version purchased. You may not:</p>
+          <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
+            <li>Redistribute, resell, sublicense, or share the software or license key</li>
+            <li>Reverse-engineer, decompile, or modify the software</li>
+            <li>Use the software for unlawful purposes</li>
+            <li>Transfer the license to another person without express written approval</li>
+          </ul>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">6. Refund Policy</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            Due to the digital nature of our products, all sales are final once a license is issued to your Dashboard. Exceptions apply where a plugin is verified as non-functional on an advertised platform and we are unable to resolve the issue within 30 days. Full details are in our <a href="/refunds" style="color:var(--neon-green)">Refund Policy</a>.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">7. Affiliate Program</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            Participation in the ProMix Affiliates Program is subject to separate Affiliate Terms provided upon approval. We reserve the right to suspend or terminate affiliate accounts for fraudulent referrals, policy violations, or abusive behaviour.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">8. Prohibited Use</h3>
+          <p style="margin-bottom:var(--space-md);">You agree not to:</p>
+          <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
+            <li>Attempt to gain unauthorised access to our systems or other users' accounts</li>
+            <li>Use automated tools (bots, scrapers) to access or harvest data from our platform</li>
+            <li>Submit false, fraudulent, or deceptive payment information</li>
+            <li>Abuse the dispute or chargeback process</li>
+            <li>Engage in any activity that disrupts or degrades the performance of our services</li>
+          </ul>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">9. Limitation of Liability</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            To the maximum extent permitted by law, ProMix Plugins shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services. Our total liability for any claim shall not exceed the amount you paid for the specific product giving rise to the claim.
+          </p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">10. Changes to Terms</h3>
+          <p style="margin-bottom:var(--space-xl);">We may update these Terms from time to time. Continued use of the platform after changes constitutes acceptance. Significant changes will be communicated by email or a site notice.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">11. Governing Law</h3>
+          <p style="margin-bottom:var(--space-xl);">These Terms are governed by applicable international e-commerce law. Disputes shall be resolved first through good-faith negotiation, and if unresolved, through binding arbitration.</p>
+
+          <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">12. Contact</h3>
+          <p style="margin-bottom:var(--space-xl);">
+            For questions about these Terms, contact us at <a href="mailto:legal@promixplugins.com" style="color:var(--neon-green)">legal@promixplugins.com</a>.
+          </p>
+
+          <div style="margin-top:var(--space-xl);padding:var(--space-md) var(--space-lg);background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--text-sm);">
+            <strong style="color:var(--text-primary);">Legal enquiries:</strong>
+            <a href="mailto:legal@promixplugins.com" style="color:var(--neon-green);"> legal@promixplugins.com</a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+}
+

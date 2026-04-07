@@ -798,6 +798,7 @@ export function renderAdminPanel(params) {
                 <th style="padding:10px 8px;">Payment</th>
                 <th style="padding:10px 8px;">Status</th>
                 <th style="padding:10px 8px;">Date</th>
+                <th style="padding:10px 8px; text-align:right;">Actions</th>
               </tr></thead>
               <tbody>
                 ${orders.map(o => `
@@ -809,12 +810,19 @@ export function renderAdminPanel(params) {
                     <td style="padding:10px 8px; font-size:0.8rem; text-transform:capitalize; color:var(--text-secondary);">${sanitizeHTML(o.payment_method||'—')}</td>
                     <td style="padding:10px 8px;"><span style="padding:2px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; background:${o.status==='completed'?'rgba(0,255,136,0.15)':'rgba(255,107,43,0.15)'}; color:${o.status==='completed'?'var(--neon-green)':'#ff6b2b'};">${o.status||'unknown'}</span></td>
                     <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
+                    <td style="padding:10px 8px; text-align:right;">
+                      ${o.status === 'pending' ? `
+                        <button class="btn btn-primary btn-xs admin-approve-order-btn" data-id="${o.id}" style="padding:4px 10px; font-size:11px;">Approve</button>
+                      ` : `
+                        <span style="color:var(--text-muted); font-size:11px;">Done</span>
+                      `}
+                    </td>
                   </tr>`).join('')}
               </tbody>
             </table>
           </div>`}
         </div>
-        ${pendingCount > 0 ? `<div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,107,43,0.3);"><h4 style="margin:0 0 8px 0; color:#ff6b2b;">⚠️ ${pendingCount} Pending Order(s) Need Verification</h4><p class="text-sm text-secondary" style="margin:0;">Once crypto/bank payment is confirmed, update the order status to <strong>completed</strong> in Supabase to generate licenses.</p></div>` : ''}
+        ${pendingCount > 0 ? `<div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,107,43,0.3);"><h4 style="margin:0 0 8px 0; color:#ff6b2b;">⚠️ ${pendingCount} Pending Order(s) Need Verification</h4><p class="text-sm text-secondary" style="margin:0;">Use the Approve button above to finalize orders and release licenses.</p></div>` : ''}
       </div>`;
   }
 
@@ -854,6 +862,7 @@ export function renderAdminPanel(params) {
                   <th style="padding:10px 8px;">Total Spent</th>
                   <th style="padding:10px 8px;">Last Order</th>
                   <th style="padding:10px 8px;">Joined</th>
+                  <th style="padding:10px 8px; text-align:right;">Actions</th>
                 </tr></thead>
                 <tbody>
                   ${users.map(u => `
@@ -872,6 +881,9 @@ export function renderAdminPanel(params) {
                       <td style="padding:10px 8px; font-weight:bold; color:var(--neon-green);">${formatPrice(u.totalSpent || 0)}</td>
                       <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${u.lastOrder ? new Date(u.lastOrder).toLocaleDateString() : '—'}</td>
                       <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+                      <td style="padding:10px 8px; text-align:right;">
+                        <button class="btn btn-ghost btn-xs admin-add-credits-btn" data-id="${u.id}" data-name="${sanitizeHTML(u.name || u.email || 'User')}" style="padding:4px 8px; font-size:11px; white-space:nowrap; border: 1px solid rgba(168,85,247,0.4); color:var(--neon-purple);">+ Gift Credits</button>
+                      </td>
                     </tr>`).join('')}
                 </tbody>
               </table>
@@ -1435,6 +1447,86 @@ export function renderAdminPanel(params) {
     document.getElementById('btn-load-visitors')?.addEventListener('click', loadVisitors);
     document.getElementById('btn-refresh-visitors')?.addEventListener('click', () => { state.visitors = null; loadVisitors(); });
     document.getElementById('btn-refresh-notif-logs')?.addEventListener('click', () => { state.notificationLogs = null; loadNotificationLogs(); });
+
+    // Table Actions (Order Approvals & User Credits) via Event Delegation
+    document.querySelector('.admin-panel')?.addEventListener('click', async (e) => {
+      // 1. Approve Order Button
+      const approveBtn = e.target.closest('.admin-approve-order-btn');
+      if (approveBtn) {
+        const orderId = approveBtn.dataset.id;
+        if (!confirm('Approve this payment and dispatch licenses?')) return;
+        
+        try {
+          const ogText = approveBtn.textContent;
+          approveBtn.disabled = true;
+          approveBtn.textContent = '⏳...';
+          
+          const res = await fetch('/api/admin-orders', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ order_id: orderId, status: 'completed' })
+          });
+          
+          const data = await res.json();
+          if (res.ok) {
+            showToast('✅ Order approved successfully!', 'success');
+            state.orders = null;
+            loadOrders(); // Re-render the orders table automatically
+          } else {
+            showToast('❌ Failed to approve: ' + data.error, 'error');
+            approveBtn.disabled = false;
+            approveBtn.textContent = ogText;
+          }
+        } catch (err) {
+          showToast('❌ Network error', 'error');
+          approveBtn.disabled = false;
+          approveBtn.textContent = 'Approve';
+        }
+      }
+
+      // 2. Add Credits Button
+      const creditBtn = e.target.closest('.admin-add-credits-btn');
+      if (creditBtn) {
+        const userId = creditBtn.dataset.id;
+        const userName = creditBtn.dataset.name;
+        
+        const amountStr = prompt(`How many credits would you like to gift to ${userName}?\n\nEnter a number (e.g. 50):`);
+        if (amountStr === null) return; // User cancelled
+        
+        const amount = parseFloat(amountStr);
+        if (isNaN(amount) || amount <= 0) {
+          showToast('Invalid amount entered.', 'error');
+          return;
+        }
+
+        try {
+          const ogText = creditBtn.textContent;
+          creditBtn.disabled = true;
+          creditBtn.textContent = '⏳...';
+
+          const res = await fetch('/api/admin-users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add_credits', userId, amount })
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast(`✅ Added $${amount} credits to ${userName}!`, 'success');
+            state.users = null;
+            loadUsers(); // Re-render table
+          } else {
+            showToast('❌ Failed to add credits: ' + data.error, 'error');
+            creditBtn.disabled = false;
+            creditBtn.textContent = ogText;
+          }
+        } catch (err) {
+          showToast('❌ Network error', 'error');
+          creditBtn.disabled = false;
+          creditBtn.textContent = '+ Gift Credits';
+        }
+      }
+    });
 
     // Settings tab — discount slider & save
     const slider = document.getElementById('discount-slider');

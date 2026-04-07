@@ -298,32 +298,51 @@ export function getLicenses() {
   return [];
 }
 
-export async function addPurchaseAsync(items, paymentMethod, useCredits) {
+import { sendOrderConfirmation } from '../services/emailService.js';
+
+export async function addPurchaseAsync(items, paymentMethod, useCredits, guestEmail = null) {
   const user = getUser();
-  if (!user) throw new Error('Must be logged in to purchase');
+  if (!user && !guestEmail) throw new Error('Must be logged in or provide an email to purchase');
 
-  const result = await processSecureCheckout(user.id, items, paymentMethod, useCredits);
+  if (user) {
+    const result = await processSecureCheckout(user.id, items, paymentMethod, useCredits);
 
-  if (result.success) {
-    // Re-fetch fresh profile from Supabase so credits balance is immediately accurate
-    const freshProfile = await fetchSessionProfile();
-    if (freshProfile) {
-      memoryUser = freshProfile;
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(freshProfile));
-      emit('user:updated', freshProfile);  // updates header credit badge instantly
+    if (result.success) {
+      // Dispatch email in the background
+      sendOrderConfirmation(user.email, items, result.order_id).catch(console.error);
+
+      // Re-fetch fresh profile from Supabase so credits balance is immediately accurate
+      const freshProfile = await fetchSessionProfile();
+      if (freshProfile) {
+        memoryUser = freshProfile;
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(freshProfile));
+        emit('user:updated', freshProfile);  // updates header credit badge instantly
+      }
+
+      // Refresh orders list
+      const orders = await fetchUserOrders(user.id);
+      if (orders) {
+        memoryPurchases = orders;
+        localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(orders));
+        emit('purchases:updated', orders);
+      }
+
+      emit('purchase:completed', result);
+      return result;
     }
+  } else {
+    // ── GUEST ORDER FLOW ──
+    const orderId = 'gst_' + Math.random().toString(36).substring(2, 9);
+    const total_charged = items.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+    
+    // Dispatch email
+    sendOrderConfirmation(guestEmail, items, orderId).catch(console.error);
 
-    // Refresh orders list
-    const orders = await fetchUserOrders(user.id);
-    if (orders) {
-      memoryPurchases = orders;
-      localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(orders));
-      emit('purchases:updated', orders);
-    }
-
+    const result = { success: true, order_id: orderId, total_charged, is_guest: true };
     emit('purchase:completed', result);
     return result;
   }
+  
   throw new Error('Checkout failed');
 }
 

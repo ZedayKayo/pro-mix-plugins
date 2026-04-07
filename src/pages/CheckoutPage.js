@@ -26,26 +26,30 @@ export function renderCheckoutPage() {
     return;
   }
 
-  // Login gate
-  if (!isLoggedIn()) {
-    navigate('/login');
-    return;
-  }
-
   // ── State ──
   let paymentMethod = null; // null | 'crypto' | 'card'
   let selectedCoin = 'BTC';
   let useCredits = false;
   let nudgeVisible = false;
+  let appliedPromo = sessionStorage.getItem('pm_promo_code') || null;
+  let guestEmailValue = sessionStorage.getItem('pm_guest_email') || '';
 
   function render() {
     const user = getUser();
     const availableCredits = user ? (user.credits || 0) : 0;
-    const cartTotal = getCartTotal();
-    const canCoverWithCredits = availableCredits >= cartTotal;
-    const finalTotalStr = useCredits ? formatPrice(0) : formatPrice(cartTotal);
-    const finalCryptoTotal = useCredits ? 0 : cart.reduce((sum, item) => sum + (item.cryptoPrices?.[selectedCoin] || 0), 0);
-    const cardTotalWithFee = cartTotal * 1.049;
+    
+    // Apply discount
+    let cartTotal = getCartTotal();
+    const discountAmount = appliedPromo === 'WELCOME5' ? cartTotal * 0.05 : 0;
+    const discountedTotal = Math.max(0, cartTotal - discountAmount);
+    
+    const canCoverWithCredits = availableCredits >= discountedTotal;
+    const finalTotalStr = useCredits ? formatPrice(0) : formatPrice(discountedTotal);
+    
+    let finalCryptoTotal = useCredits ? 0 : cart.reduce((sum, item) => sum + (item.cryptoPrices?.[selectedCoin] || 0), 0);
+    if (appliedPromo === 'WELCOME5') finalCryptoTotal *= 0.95;
+    
+    const cardTotalWithFee = discountedTotal * 1.049;
 
     container.innerHTML = `
       <div class="co-page">
@@ -115,7 +119,36 @@ export function renderCheckoutPage() {
                 </div>
                 ` : ''}
 
-                <div class="co-total-row">
+                <!-- Promo Code -->
+                <div class="co-promo-row" style="margin-top:var(--space-md); padding-top:var(--space-md); border-top:1px solid var(--border-primary);">
+                  ${appliedPromo ? `
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,255,136,0.05); border:1px solid rgba(0,255,136,0.2); padding:8px 12px; border-radius:var(--radius-md);">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="color:var(--neon-green)">✓</span>
+                        <span style="font-weight:600">${appliedPromo}</span>
+                      </div>
+                      <button class="btn btn-ghost btn-sm" id="co-promo-remove" style="padding:4px 8px; font-size:12px;">Remove</button>
+                    </div>
+                  ` : `
+                    <form id="co-promo-form" style="display:flex; gap:8px;">
+                      <input type="text" id="co-promo-input" class="input" placeholder="Promo code" style="flex:1;" />
+                      <button type="submit" class="btn btn-ghost" id="co-promo-apply">Apply</button>
+                    </form>
+                  `}
+                </div>
+
+                ${discountAmount > 0 ? `
+                <div class="co-total-row" style="padding-top:var(--space-md); margin-top:var(--space-md); border-top:none;">
+                  <span class="co-total-label">Subtotal</span>
+                  <span class="co-total-amount" style="font-weight:normal; font-size:16px;">${formatPrice(cartTotal)}</span>
+                </div>
+                <div class="co-total-row" style="margin-top:4px;">
+                  <span class="co-total-label" style="color:var(--neon-green);">Discount (${appliedPromo})</span>
+                  <span class="co-total-amount" style="color:var(--neon-green); font-weight:normal; font-size:16px;">-${formatPrice(discountAmount)}</span>
+                </div>
+                ` : ''}
+
+                <div class="co-total-row" style="padding-top:var(--space-md); ${discountAmount === 0 ? 'margin-top:var(--space-md); border-top:1px solid var(--border-primary);' : ''}">
                   <span class="co-total-label">Total</span>
                   <span class="co-total-amount">${finalTotalStr}</span>
                 </div>
@@ -153,6 +186,17 @@ export function renderCheckoutPage() {
               ${useCredits ? `
               <!-- ── CREDITS ONLY FLOW ── -->
               <div class="co-credits-only-card">
+                <div class="co-summary-box animate-fade-in-up delay-2">
+                <h3 style="margin-bottom: var(--space-md);">Order Summary</h3>
+                
+                ${!user ? `
+                  <div style="margin-bottom: var(--space-md); border-bottom: 1px solid var(--border-primary); padding-bottom: var(--space-md);">
+                    <label style="display:block; font-size:12px; margin-bottom:6px; color:var(--text-secondary); font-weight:600;">Where should we send your download links?</label>
+                    <input type="email" id="co-guest-email" class="input" placeholder="you@email.com" value="${guestEmailValue}" style="width:100%; border-color:var(--border-secondary);" required />
+                  </div>
+                ` : ''}
+
+                <div class="co-items-list">
                 <div style="font-size:40px;margin-bottom:var(--space-md);">🎁</div>
                 <h3 style="margin-bottom:var(--space-sm);">Pay with Store Credits</h3>
                 <p class="text-secondary text-sm" style="margin-bottom:var(--space-xl);">
@@ -174,95 +218,48 @@ export function renderCheckoutPage() {
                 <!-- ── CRYPTO CARD ── -->
                 <button class="co-pm-card co-pm-crypto" id="pm-choose-crypto" aria-label="Pay with cryptocurrency">
                   <div class="co-pm-card-glow"></div>
-                  <div class="co-pm-card-inner">
-                    <div class="co-pm-header">
-                      <div class="co-pm-icon co-pm-icon-crypto">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
-                        </svg>
+                  <div class="co-pm-card-inner" style="padding: 16px 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div style="display:flex; align-items:center; gap: 16px;">
+                        <div class="co-pm-icon co-pm-icon-crypto" style="width:40px; height:40px; margin:0;">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+                          </svg>
+                        </div>
+                        <div style="text-align: left;">
+                          <div class="co-pm-title" style="font-size: 16px; margin-bottom: 2px;">Pay with Crypto</div>
+                          <div style="font-size: 12px; color: var(--neon-green); font-weight: 600;">Zero fees • Instant</div>
+                        </div>
                       </div>
-                      <div>
-                        <div class="co-pm-title">Pay with Crypto</div>
-                        <div class="co-pm-sub">BTC · ETH · USDT</div>
+                      <div style="display:flex; flex-direction:column; align-items:flex-end;">
+                        <span class="co-pm-badge-rec" style="margin: 0 0 6px 0; font-size: 10px; padding: 3px 8px;">⚡ Recommended</span>
+                        <div style="font-size:12px; color:var(--text-secondary); font-weight:600;">Select →</div>
                       </div>
-                      <span class="co-pm-badge-rec">⚡ Recommended</span>
-                    </div>
-
-                    <div class="co-pm-coins">
-                      <div class="co-pm-coin" style="background:rgba(247,147,26,0.12);border-color:rgba(247,147,26,0.3);">
-                        <span style="color:#f7931a;font-size:16px;">₿</span>
-                        <span>Bitcoin</span>
-                      </div>
-                      <div class="co-pm-coin" style="background:rgba(98,126,234,0.12);border-color:rgba(98,126,234,0.3);">
-                        <span style="color:#627eea;font-size:16px;">Ξ</span>
-                        <span>Ethereum</span>
-                      </div>
-                      <div class="co-pm-coin" style="background:rgba(38,161,123,0.12);border-color:rgba(38,161,123,0.3);">
-                        <span style="color:#26a17b;font-size:14px;">₮</span>
-                        <span>Tether</span>
-                      </div>
-                    </div>
-
-                    <div class="co-pm-perks">
-                      <div class="co-pm-perk">✅ Zero extra fees</div>
-                      <div class="co-pm-perk">✅ No ID required</div>
-                      <div class="co-pm-perk">✅ Instant & private</div>
-                      <div class="co-pm-perk">✅ Global payments</div>
-                    </div>
-
-                    <div class="co-pm-cta">
-                      Pay with Crypto
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                     </div>
                   </div>
                 </button>
 
                 <!-- ── CARD CARD ── -->
                 <button class="co-pm-card co-pm-card-method" id="pm-choose-card" aria-label="Pay with credit card">
-                  <div class="co-pm-card-inner">
-                    <div class="co-pm-header">
-                      <div class="co-pm-icon co-pm-icon-card">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                          <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/>
-                          <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
-                          <rect x="5" y="14" width="4" height="2" rx="1" fill="currentColor"/>
-                        </svg>
+                  <div class="co-pm-card-inner" style="padding: 16px 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div style="display:flex; align-items:center; gap: 16px;">
+                        <div class="co-pm-icon co-pm-icon-card" style="width:40px; height:40px; margin:0;">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
+                            <rect x="5" y="14" width="4" height="2" rx="1" fill="currentColor"/>
+                          </svg>
+                        </div>
+                        <div style="text-align: left;">
+                          <div class="co-pm-title" style="font-size: 16px; margin-bottom: 2px;">Pay with Card</div>
+                          <div style="font-size: 12px; color: var(--text-tertiary);">+4.9% fee</div>
+                        </div>
                       </div>
-                      <div>
-                        <div class="co-pm-title">Pay with Card</div>
-                        <div class="co-pm-sub">Visa · Mastercard · Amex</div>
+                      <div style="display:flex; gap: 6px;">
+                        <div class="co-pm-brand-logo" style="padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-primary); border-radius: 4px;"><svg viewBox="0 0 780 500" width="28" height="18"><rect width="780" height="500" rx="40" fill="#1A1F71"/><text x="390" y="320" text-anchor="middle" font-family="Arial" font-size="200" font-weight="900" fill="#fff" letter-spacing="-8">VISA</text></svg></div>
+                        <div class="co-pm-brand-logo" style="padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-primary); border-radius: 4px;"><svg viewBox="0 0 131.4 86" width="28" height="18"><rect width="131.4" height="86" rx="8" fill="#252525"/><circle cx="45.7" cy="43" r="27.9" fill="#EB001B"/><circle cx="85.7" cy="43" r="27.9" fill="#F79E1B"/><path d="M65.7 20.8a27.9 27.9 0 0 1 0 44.4 27.9 27.9 0 0 1 0-44.4z" fill="#FF5F00"/></svg></div>
                       </div>
-                    </div>
-
-                    <div class="co-pm-brands">
-                      <div class="co-pm-brand-logo">
-                        <svg viewBox="0 0 780 500" width="52" height="33"><rect width="780" height="500" rx="40" fill="#1A1F71"/><text x="390" y="320" text-anchor="middle" font-family="Arial" font-size="200" font-weight="900" fill="#fff" letter-spacing="-8">VISA</text></svg>
-                      </div>
-                      <div class="co-pm-brand-logo">
-                        <svg viewBox="0 0 131.4 86" width="52" height="33"><rect width="131.4" height="86" rx="8" fill="#252525"/><circle cx="45.7" cy="43" r="27.9" fill="#EB001B"/><circle cx="85.7" cy="43" r="27.9" fill="#F79E1B"/><path d="M65.7 20.8a27.9 27.9 0 0 1 0 44.4 27.9 27.9 0 0 1 0-44.4z" fill="#FF5F00"/></svg>
-                      </div>
-                      <div class="co-pm-brand-logo">
-                        <svg viewBox="0 0 131.4 86" width="52" height="33"><rect width="131.4" height="86" rx="8" fill="#2E77BC"/><text x="65.7" y="56" text-anchor="middle" font-family="Arial" font-size="22" font-weight="900" fill="#fff" letter-spacing="2">AMEX</text></svg>
-                      </div>
-                      <div class="co-pm-brand-logo">
-                        <svg viewBox="0 0 131.4 86" width="52" height="33"><rect width="131.4" height="86" rx="8" fill="#fff"/><text x="65.7" y="56" text-anchor="middle" font-family="Arial" font-size="14" font-weight="700" fill="#FF6600" letter-spacing="1">DISCOVER</text></svg>
-                      </div>
-                    </div>
-
-                    <div class="co-pm-perks co-pm-perks-muted">
-                      <div class="co-pm-perk co-pm-perk-warn">⚠️ +4.9% processing fee</div>
-                      <div class="co-pm-perk co-pm-perk-warn">⚠️ KYC may be required</div>
-                      <div class="co-pm-perk co-pm-perk-ok">✅ Familiar checkout flow</div>
-                      <div class="co-pm-perk co-pm-perk-ok">✅ 3D Secure verified</div>
-                    </div>
-
-                    <div class="co-pm-warning-total">
-                      Total with fee: <strong>${formatPrice(cardTotalWithFee)}</strong>
-                    </div>
-
-                    <div class="co-pm-cta co-pm-cta-card">
-                      Pay with Card
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                     </div>
                   </div>
                 </button>
@@ -453,6 +450,26 @@ export function renderCheckoutPage() {
 
   // ── Events ──
   function attachEvents() {
+    // Promo code
+    document.getElementById('co-promo-form')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const val = document.getElementById('co-promo-input').value.trim().toUpperCase();
+      if (val === 'WELCOME5') {
+        appliedPromo = val;
+        sessionStorage.setItem('pm_promo_code', val);
+        showToast('Promo code applied!', 'success');
+        render();
+      } else if (val) {
+        showToast('Invalid or expired promo code.', 'error');
+      }
+    });
+
+    document.getElementById('co-promo-remove')?.addEventListener('click', () => {
+      appliedPromo = null;
+      sessionStorage.removeItem('pm_promo_code');
+      render();
+    });
+
     // Credits toggle
     document.getElementById('use-credits-toggle')?.addEventListener('change', e => {
       useCredits = e.target.checked;
@@ -506,9 +523,8 @@ export function renderCheckoutPage() {
       render();
     });
 
-    // Go to full card checkout — COMING SOON
     document.getElementById('go-to-card-checkout')?.addEventListener('click', () => {
-      showToast('Card payments coming soon! Use crypto or store credits for now.', 'info');
+      navigate('/checkout/card');
     });
 
     // Coin tabs
@@ -536,6 +552,16 @@ export function renderCheckoutPage() {
 
     // Verify crypto payment / credits
     document.getElementById('simulate-payment-btn')?.addEventListener('click', () => {
+      let guestEmail = null;
+      if (!getUser()) {
+        const mailInput = document.getElementById('co-guest-email');
+        if (!mailInput || !mailInput.value.includes('@')) {
+          showToast('Please provide a valid email for your receipt.', 'error');
+          return;
+        }
+        guestEmail = mailInput.value;
+      }
+
       const simBtn = document.getElementById('simulate-payment-btn');
       const statusMsg = document.getElementById('checkout-status-msg');
       simBtn.disabled = true;
@@ -547,7 +573,7 @@ export function renderCheckoutPage() {
       }
       setTimeout(async () => {
         try {
-          const result = await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits);
+          const result = await addPurchaseAsync(cart, useCredits ? 'credits' : selectedCoin, useCredits, guestEmail);
           const purchasedCart = [...cart];
           clearCart();
 
@@ -556,10 +582,11 @@ export function renderCheckoutPage() {
             items: purchasedCart.map(i => ({ id: i.id, name: i.name })),
             orderId: result?.order_id,
             method: useCredits ? 'credits' : selectedCoin,
-            instant: useCredits
+            instant: useCredits,
+            guestEmail: guestEmail
           }));
 
-          showToast(useCredits ? '🎉 Order complete! Follow the install guide.' : '📨 Order submitted! Send the crypto to unlock.', 'success');
+          showToast(useCredits ? '🎉 Order complete! Email sending...' : '📨 Order submitted! Processing delivery...', 'success');
           navigate('/order-success');
         } catch (err) {
           showToast(err.message || 'Payment failed. Please try again.', 'error');
@@ -570,6 +597,12 @@ export function renderCheckoutPage() {
           if (statusMsg) statusMsg.style.display = 'none';
         }
       }, 1200);
+    });
+
+    // Save guest email to session storage dynamically
+    document.getElementById('co-guest-email')?.addEventListener('input', (e) => {
+      guestEmailValue = e.target.value;
+      sessionStorage.setItem('pm_guest_email', guestEmailValue);
     });
   }
 

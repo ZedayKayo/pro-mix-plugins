@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import { getDiscountPct } from '../services/discountService.js';
+import { setPageMeta } from '../core/utils.js';
 
 const ARTICLES = [
   {
@@ -208,6 +209,14 @@ function renderBlogList(container) {
   const featured = ARTICLES.find(a => a.featured);
   const rest = ARTICLES.filter(a => !a.featured);
 
+  setPageMeta(
+    'Mixing & Production Blog',
+    'Pro techniques, plugin tutorials, and industry insights written by engineers. EQ, compression, reverb, sidechain, mastering — level up your mixes.'
+  );
+
+  // Restore clean URL when returning to blog list
+  history.replaceState(null, '', '/blog');
+
   container.innerHTML = `
     <div class="info-hero">
       <div class="container">
@@ -298,6 +307,13 @@ function renderBlogList(container) {
 
 function renderArticle(container, article) {
   currentArticleId = article.id;
+
+  // Update URL and page meta for this article
+  history.pushState(null, '', `/blog?article=${article.id}`);
+  setPageMeta(
+    article.title,
+    article.excerpt + ' — ProMix Blog: professional mixing and production guides.'
+  );
   container.innerHTML = `
     <div class="section">
       <div class="container">

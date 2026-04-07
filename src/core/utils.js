@@ -115,6 +115,58 @@ export function getCategoryName(categoryId) {
   return map[categoryId] || categoryId;
 }
 
+// ── SEO Meta Helper ───────────────────────────────────────────────────────────
+// Call this at the top of every page render to set unique titles, descriptions,
+// and Open Graph tags for each route.
+const DEFAULT_OG_IMAGE = '/images/og-default.jpg';
+
+export function setPageMeta(title, description, ogImage) {
+  const fullTitle = title
+    ? `${title} — ProMix Plugins`
+    : 'ProMix Plugins — Professional Audio Tools for Music Production';
+  const desc = description ||
+    'Access professional audio plugins — EQs, compressors, reverbs, synthesizers — at up to 70% off retail. Pay with crypto. Download instantly.';
+  const img = ogImage || DEFAULT_OG_IMAGE;
+
+  // Page title
+  document.title = fullTitle;
+
+  // Meta description
+  let metaDesc = document.querySelector('meta[name="description"]');
+  if (!metaDesc) {
+    metaDesc = document.createElement('meta');
+    metaDesc.name = 'description';
+    document.head.appendChild(metaDesc);
+  }
+  metaDesc.content = desc;
+
+  // Open Graph
+  const og = {
+    'og:title':       fullTitle,
+    'og:description': desc,
+    'og:image':       img,
+    'og:url':         window.location.href,
+    'og:type':        'website',
+    'og:site_name':   'ProMix Plugins',
+    // Twitter Card
+    'twitter:card':        'summary_large_image',
+    'twitter:title':       fullTitle,
+    'twitter:description': desc,
+    'twitter:image':       img,
+  };
+
+  for (const [prop, content] of Object.entries(og)) {
+    const attr = prop.startsWith('twitter:') ? 'name' : 'property';
+    let tag = document.querySelector(`meta[${attr}="${prop}"]`);
+    if (!tag) {
+      tag = document.createElement('meta');
+      tag.setAttribute(attr, prop);
+      document.head.appendChild(tag);
+    }
+    tag.content = content;
+  }
+}
+
 export function getPluginImage(product, index = 0) {
   // First priority: use the real image from the product
   let realImg = null;

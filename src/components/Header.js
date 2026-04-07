@@ -22,7 +22,7 @@ export function renderHeader() {
     <header class="site-header" id="site-header">
       <div class="header-inner">
         <a href="/" class="header-logo" id="header-logo">
-          <img src="/images/logo.png" alt="ProMix" style="height: 38px; width: auto;" />
+          <img src="/images/logo.png" alt="ProMix" style="height: 38px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
         </a>
 
         <nav class="header-nav" id="header-nav" aria-label="Main navigation">
@@ -47,7 +47,7 @@ export function renderHeader() {
           </button>
           
           ${loggedIn ? `
-            <div class="user-credits" title="Your Credit Balance" style="display:flex; align-items:center; gap:4px; font-weight:600; font-size:14px; padding:0 12px; background:var(--bg-tertiary); border:1px solid var(--border-primary); border-radius:var(--radius-full); height:38px; color:var(--neon-green);">
+            <div class="user-credits" title="Your Credit Balance">
               <span id="header-credits-display">💵 $${getUser().credits ?? 0}</span>
             </div>
           ` : ''}
@@ -70,28 +70,67 @@ export function renderHeader() {
     <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true"></div>
     <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation" aria-hidden="true">
       <div class="mobile-menu-header">
-        <img src="/images/logo.png" alt="ProMix" style="height:32px;" />
+        <img src="/images/logo.png" alt="ProMix" style="height:28px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
         <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close navigation menu">✕</button>
       </div>
+
+      ${loggedIn ? `
+        <div class="mobile-user-profile">
+          <div class="mobile-user-info">
+            <div class="mobile-avatar">${(getUser().name || getUser().email || '?').charAt(0).toUpperCase()}</div>
+            <div class="mobile-user-details">
+              <h4>${getUser().name || 'Mix Pro'}</h4>
+              <p>${getUser().email}</p>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:var(--radius-md);">
+            <span style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;font-weight:600;">Available Credits</span>
+            <span id="mobile-credits-display" style="font-weight:700;color:var(--neon-green);font-size:16px;">💵 $${getUser().credits ?? 0}</span>
+          </div>
+        </div>
+      ` : ''}
+
       <div class="mobile-menu-links">
-        <a href="/" class="mobile-nav-link">Home</a>
-        <a href="/store" class="mobile-nav-link">Plugins</a>
-        <a href="/bundles" class="mobile-nav-link">Bundles</a>
-        <a href="/blog" class="mobile-nav-link">Blog</a>
-        <a href="/support" class="mobile-nav-link">Support</a>
-        <a href="/about" class="mobile-nav-link">About</a>
-        ${loggedIn ? `<a href="/dashboard" class="mobile-nav-link">Dashboard</a>` : ''}
-        ${admin ? `<a href="/admin" class="mobile-nav-link" style="color: var(--neon-orange);">Admin</a>` : ''}
+        <a href="/" class="mobile-nav-link">
+          <span class="mobile-nav-link-icon">🏠</span> Home
+        </a>
+        <a href="/store" class="mobile-nav-link">
+          <span class="mobile-nav-link-icon">🔌</span> Plugins
+        </a>
+        <a href="/bundles" class="mobile-nav-link">
+          <span class="mobile-nav-link-icon">📦</span> Bundles
+        </a>
+        <a href="/blog" class="mobile-nav-link">
+          <span class="mobile-nav-link-icon">📰</span> Blog
+        </a>
+        <a href="/support" class="mobile-nav-link">
+          <span class="mobile-nav-link-icon">🎧</span> Support
+        </a>
+        ${loggedIn ? `
+          <a href="/dashboard" class="mobile-nav-link">
+            <span class="mobile-nav-link-icon">📊</span> Dashboard
+          </a>
+          ${admin ? `
+            <a href="/admin" class="mobile-nav-link" style="color: var(--neon-orange);">
+              <span class="mobile-nav-link-icon">⚡</span> Admin
+            </a>
+          ` : ''}
+        ` : ''}
       </div>
+      
       <div class="mobile-menu-footer">
         ${loggedIn ? `
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--space-sm) var(--space-md);background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:var(--radius-md);margin-bottom:var(--space-sm);">
-            <span style="font-size:var(--text-xs);color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;">Credit Balance</span>
-            <span id="mobile-credits-display" style="font-weight:700;color:var(--neon-green);font-size:var(--text-md);">💵 $${getUser()?.credits ?? 0}</span>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-sm);">
+            <button class="btn btn-ghost" id="mobile-account-btn" style="padding:10px;">👤 Profile</button>
+            <button class="btn btn-ghost" id="mobile-logout-btn" style="padding:10px; color:var(--neon-red);">🚪 Logout</button>
           </div>
-          <button class="btn btn-ghost" style="width:100%;" id="mobile-account-btn">👤 My Account</button>
         ` : `
-          <button class="btn btn-primary" style="width:100%;" id="mobile-signin-btn">Sign In</button>
+          <div style="display:flex; flex-direction:column; gap:var(--space-sm);">
+            <button class="btn btn-primary" style="width:100%; height:46px;" id="mobile-signin-btn">Sign In</button>
+            <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-top:8px;">
+               Professional tools for modern producers.
+            </p>
+          </div>
         `}
       </div>
     </nav>
@@ -131,6 +170,8 @@ export function initHeaderEvents() {
       setTimeout(() => document.getElementById('store-search')?.focus(), 100);
     });
   }
+
+
 
   // ── Mobile Menu ──
   const hamburger = document.getElementById('hamburger-btn');
@@ -173,6 +214,11 @@ export function initHeaderEvents() {
   document.getElementById('mobile-account-btn')?.addEventListener('click', () => {
     closeMobileMenu();
     navigate('/dashboard');
+  });
+
+  document.getElementById('mobile-logout-btn')?.addEventListener('click', () => {
+    closeMobileMenu();
+    logoutUser();
   });
 
   // ESC closes mobile menu

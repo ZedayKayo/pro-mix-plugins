@@ -40,12 +40,12 @@ body {
   background: var(--bg-secondary);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-full);
   border: 2px solid var(--bg-secondary);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.4);
 }
 
 /* ── Selection ── */
