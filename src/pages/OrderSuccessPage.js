@@ -42,28 +42,36 @@ export function renderOrderSuccessPage() {
 
           <div class="os-free-downloads" style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
             ${items.map(item => {
-              const dlWin = item.specs?.download_win && item.specs.download_win !== '#' ? `window.open('${item.specs.download_win}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} for Windows...')`;
-              const dlMac = item.specs?.download_mac && item.specs.download_mac !== '#' ? `window.open('${item.specs.download_mac}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} for iOS / macOS...')`;
-              const dlLinux = item.specs?.download_linux && item.specs.download_linux !== '#' ? `window.open('${item.specs.download_linux}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} for Linux...')`;
-              const dlManual = item.specs?.download_manual && item.specs.download_manual !== '#' ? `window.open('${item.specs.download_manual}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} User Manual PDF...')`;
+              const hasWin = item.specs?.download_win && item.specs.download_win !== '#';
+              const hasMac = item.specs?.download_mac && item.specs.download_mac !== '#';
+              const hasLinux = item.specs?.download_linux && item.specs.download_linux !== '#';
+              const hasManual = item.specs?.download_manual && item.specs.download_manual !== '#';
 
               return `
               <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 1.5rem; width: 100%; max-width: 600px; text-align: center;">
                 <h3 style="margin-bottom: 1rem; color: var(--neon-green);">${item.name}</h3>
                 <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
-                  <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="${dlWin}">
-                    <svg width="20" height="20" viewBox="0 0 88 88" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M0 12.4L35.6 7.60001V41.6H0V12.4ZM40 7.20001L88 0V41.6H40V7.20001ZM0 45.6H35.6V79.2L0 74V45.6ZM40 45.6H88V87.2L40 80V45.6Z"/></svg>
-                    Windows
-                  </button>
-                  <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="${dlMac}">
-                    <span style="font-size: 20px; line-height: 1; display: flex;">🍏</span> iOS / macOS
-                  </button>
-                  <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="${dlLinux}">
-                    <span style="font-size: 20px; line-height: 1; display: flex;">🐧</span> Linux
-                  </button>
-                  <button class="btn btn-ghost" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.2);" onclick="${dlManual}">
-                    <span style="font-size: 20px; line-height: 1; display: flex;">📄</span> User Manual (PDF)
-                  </button>
+                  ${hasWin ? `
+                    <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="window.open('${item.specs.download_win}', '_blank')">
+                      <svg width="20" height="20" viewBox="0 0 88 88" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M0 12.4L35.6 7.60001V41.6H0V12.4ZM40 7.20001L88 0V41.6H40V7.20001ZM0 45.6H35.6V79.2L0 74V45.6ZM40 45.6H88V87.2L40 80V45.6Z"/></svg>
+                      Windows
+                    </button>
+                  ` : ''}
+                  ${hasMac ? `
+                    <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="window.open('${item.specs.download_mac}', '_blank')">
+                      <span style="font-size: 20px; line-height: 1; display: flex;">🍏</span> iOS / macOS
+                    </button>
+                  ` : ''}
+                  ${hasLinux ? `
+                    <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="window.open('${item.specs.download_linux}', '_blank')">
+                      <span style="font-size: 20px; line-height: 1; display: flex;">🐧</span> Linux
+                    </button>
+                  ` : ''}
+                  ${hasManual ? `
+                    <button class="btn btn-ghost" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.2);" onclick="window.open('${item.specs.download_manual}', '_blank')">
+                      <span style="font-size: 20px; line-height: 1; display: flex;">📄</span> User Manual (PDF)
+                    </button>
+                  ` : ''}
                 </div>
               </div>
             `;
