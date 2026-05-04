@@ -72,6 +72,13 @@ export function renderOrderSuccessPage() {
                       <span style="font-size: 20px; line-height: 1; display: flex;">📄</span> User Manual (PDF)
                     </button>
                   ` : ''}
+                  ${(!hasWin && !hasMac && !hasLinux && !hasManual) ? `
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; padding: var(--space-md); border: 1px dashed rgba(255,255,255,0.15); border-radius: var(--radius-md); background: rgba(255,255,255,0.02); width: 100%;">
+                      <div style="font-size: 1.5rem; margin-bottom: 8px;">⏳</div>
+                      Sorry, there are no downloadable links available for this plugin yet. <br/>
+                      <span style="color: var(--neon-blue);">We are currently working on adding them!</span>
+                    </div>
+                  ` : ''}
                 </div>
               </div>
             `;
