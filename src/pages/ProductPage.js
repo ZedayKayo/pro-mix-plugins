@@ -146,12 +146,18 @@ export function renderProductPage(params) {
 
             <!-- Actions -->
             <div class="product-actions">
-              <button class="btn btn-primary btn-lg" id="product-add-cart" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
-                ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
-              </button>
-              <button class="btn" style="background: rgba(247, 147, 26, 0.1); border: 1px solid rgba(247, 147, 26, 0.3); color: #f7931a;" id="product-buy-crypto">
-                ⚡ Instant Access — Pay with Crypto
-              </button>
+              ${price === 0 ? `
+                <button class="btn btn-primary btn-lg" id="product-download-free" style="width: 100%;">
+                  ⬇️ Download Free
+                </button>
+              ` : `
+                <button class="btn btn-primary btn-lg" id="product-add-cart" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
+                  ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
+                </button>
+                <button class="btn" style="background: rgba(247, 147, 26, 0.1); border: 1px solid rgba(247, 147, 26, 0.3); color: #f7931a;" id="product-buy-crypto">
+                  ⚡ Instant Access — Pay with Crypto
+                </button>
+              `}
             </div>
 
             <div class="product-trust-badges" style="display:flex; justify-content:space-between; margin-bottom:var(--space-xl); font-size:12px; color:var(--text-muted); border-top:1px solid var(--border-primary); padding-top:var(--space-md);">
@@ -203,7 +209,7 @@ export function renderProductPage(params) {
                   <h4 style="margin-bottom: var(--space-sm); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);">Specifications</h4>
                   <table class="specs-table" style="margin-bottom: var(--space-lg);">
                     ${Object.entries(product.specs)
-                      .filter(([k]) => !['source_url', 'download_mac', 'download_win', 'magnet'].includes(k.toLowerCase()))
+                      .filter(([k]) => !['source_url', 'download_mac', 'download_win', 'download_linux', 'download_manual', 'magnet'].includes(k.toLowerCase()))
                       .map(([k, v]) => `<tr><td>${k}</td><td style="word-break: break-word;">${v}</td></tr>`)
                       .join('')}
                   </table>
@@ -439,6 +445,15 @@ export function renderProductPage(params) {
   });
 
   // ── Other Events ──────────────────────────────────────
+  document.getElementById('product-download-free')?.addEventListener('click', () => {
+    sessionStorage.setItem('pm_last_order', JSON.stringify({
+      items: [product],
+      total: 0,
+      isFree: true
+    }));
+    navigate('/order-success');
+  });
+
   const addCartBtn = document.getElementById('product-add-cart');
   if (!inCart && addCartBtn) {
     addCartBtn.addEventListener('click', () => {
@@ -671,12 +686,18 @@ export function renderProductPage(params) {
         <span class="sticky-atc-price">${formatPrice(price)}</span>
       </div>
       <div class="sticky-atc-actions">
-        <button class="btn btn-primary" id="sticky-atc-btn" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
-          ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
-        </button>
-        <button class="btn" style="background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);color:#f7931a;" id="sticky-buy-btn">
-          ⚡ Buy Now
-        </button>
+        ${price === 0 ? `
+          <button class="btn btn-primary" id="sticky-download-free">
+            ⬇️ Download Free
+          </button>
+        ` : `
+          <button class="btn btn-primary" id="sticky-atc-btn" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
+            ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
+          </button>
+          <button class="btn" style="background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);color:#f7931a;" id="sticky-buy-btn">
+            ⚡ Buy Now
+          </button>
+        `}
       </div>
     `;
     // Append to page content so it's auto-cleaned up on route change
@@ -690,6 +711,15 @@ export function renderProductPage(params) {
     observer.observe(mainCta);
 
     // Sticky bar events
+    document.getElementById('sticky-download-free')?.addEventListener('click', () => {
+      sessionStorage.setItem('pm_last_order', JSON.stringify({
+        items: [product],
+        total: 0,
+        isFree: true
+      }));
+      navigate('/order-success');
+    });
+
     document.getElementById('sticky-atc-btn')?.addEventListener('click', () => {
       if (!isInCart(product.id)) {
         addToCart(product);

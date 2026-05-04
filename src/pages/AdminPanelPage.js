@@ -12,6 +12,7 @@ import { clearAllProducts, insertProduct, bulkInsertProducts } from '../services
 import { SEED_PRODUCTS } from '../data/seed-products.js';
 import { fetchTelegramSettings, updateTelegramSettings } from '../services/dbService.js';
 import { getDiscountPct, saveDiscount, loadDiscount, bulkUpdateSalePrices } from '../services/discountService.js';
+import { supabase } from '../lib/supabase.js';
 
 export function renderAdminPanel(params) {
   if (!isAdmin()) {
@@ -198,12 +199,33 @@ export function renderAdminPanel(params) {
               </div>
               <div>
                 <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Windows (.exe / .zip)</label>
-                <input type="text" class="input" id="f-dl-win" placeholder="Private bucket path or URL" />
+                <div style="display:flex; gap:8px;">
+                  <input type="text" class="input" id="f-dl-win" placeholder="Bucket path or URL" style="flex:1;" />
+                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-win" style="padding: 0 12px; font-size:12px;">Upload</button>
+                </div>
               </div>
               <div>
                 <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">macOS (.dmg / .pkg)</label>
-                <input type="text" class="input" id="f-dl-mac" placeholder="Private bucket path or URL" />
+                <div style="display:flex; gap:8px;">
+                  <input type="text" class="input" id="f-dl-mac" placeholder="Bucket path or URL" style="flex:1;" />
+                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-mac" style="padding: 0 12px; font-size:12px;">Upload</button>
+                </div>
               </div>
+              <div>
+                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Linux (.tar.gz / .deb)</label>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" class="input" id="f-dl-linux" placeholder="Bucket path or URL" style="flex:1;" />
+                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-linux" style="padding: 0 12px; font-size:12px;">Upload</button>
+                </div>
+              </div>
+              <div>
+                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">User Manual (.pdf)</label>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" class="input" id="f-dl-manual" placeholder="Bucket path or URL" style="flex:1;" />
+                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-manual" style="padding: 0 12px; font-size:12px;">Upload</button>
+                </div>
+              </div>
+              <input type="file" id="f-dl-file-input" style="display:none;" />
             </div>
 
             <div style="display:flex; gap:var(--space-lg); padding:var(--space-sm) 0;">
@@ -237,6 +259,58 @@ export function renderAdminPanel(params) {
 
     // Cancel button
     modalEl.querySelector('#modal-cancel')?.addEventListener('click', closeModal);
+
+    // ── Upload Logic ──
+    const fileInput = modalEl.querySelector('#f-dl-file-input');
+    let currentUploadTarget = null;
+    let currentUploadBtn = null;
+
+    modalEl.querySelectorAll('.upload-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentUploadTarget = btn.dataset.target;
+        currentUploadBtn = btn;
+        fileInput.click();
+      });
+    });
+
+    fileInput?.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file || !currentUploadTarget || !currentUploadBtn) return;
+      
+      const nameField = document.getElementById('f-name');
+      const slug = (nameField?.value || 'plugin').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
+      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `${slug}/${fileName}`;
+      
+      const originalText = currentUploadBtn.textContent;
+      currentUploadBtn.textContent = '⏳';
+      currentUploadBtn.disabled = true;
+      showToast('Uploading file...', 'info');
+
+      try {
+        const { data, error } = await supabase.storage
+          .from('plugin-downloads')
+          .upload(filePath, file, { cacheControl: '3600', upsert: false });
+
+        if (error) throw error;
+        
+        const { data: publicData } = supabase.storage
+          .from('plugin-downloads')
+          .getPublicUrl(filePath);
+          
+        if (publicData?.publicUrl) {
+          document.getElementById(currentUploadTarget).value = publicData.publicUrl;
+          showToast('File uploaded successfully!', 'success');
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        showToast(`Upload failed: ${err.message}`, 'error');
+      } finally {
+        currentUploadBtn.textContent = originalText;
+        currentUploadBtn.disabled = false;
+        fileInput.value = '';
+      }
+    });
 
     // Global renderer for the image preview strip
     window.renderImagePreviewStrip = function() {
@@ -439,6 +513,8 @@ export function renderAdminPanel(params) {
           document.getElementById('f-spec-ver').value = data.specs.Version || '';
           if (data.specs.download_win) document.getElementById('f-dl-win').value = data.specs.download_win;
           if (data.specs.download_mac) document.getElementById('f-dl-mac').value = data.specs.download_mac;
+          if (data.specs.download_linux) document.getElementById('f-dl-linux').value = data.specs.download_linux;
+          if (data.specs.download_manual) document.getElementById('f-dl-manual').value = data.specs.download_manual;
         }
         if (data.systemReqs) {
           document.getElementById('f-req-os').value = data.systemReqs.os || '';
@@ -506,6 +582,8 @@ export function renderAdminPanel(params) {
           source_url: document.getElementById('f-sourceurl').value.trim(),
           download_win: document.getElementById('f-dl-win').value.trim(),
           download_mac: document.getElementById('f-dl-mac').value.trim(),
+          download_linux: document.getElementById('f-dl-linux').value.trim(),
+          download_manual: document.getElementById('f-dl-manual').value.trim(),
         },
         systemReqs: {
           os: document.getElementById('f-req-os').value.trim(),
@@ -918,7 +996,10 @@ export function renderAdminPanel(params) {
           <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
             <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
               <h3 style="margin:0;">Recent Visitors</h3>
-              <button class="btn btn-ghost" id="btn-refresh-visitors" style="font-size:0.8rem;">🔄 Refresh</button>
+              <div style="display:flex; gap:8px;">
+                <a href="/api/admin-logs-txt" target="_blank" download="visitor_activity.txt" class="btn btn-ghost" style="font-size:0.8rem; border:1px solid rgba(0,212,255,0.3); color:var(--neon-blue);">📥 Download .txt Log</a>
+                <button class="btn btn-ghost" id="btn-refresh-visitors" style="font-size:0.8rem;">🔄 Refresh</button>
+              </div>
             </div>
             <div style="overflow-x:auto;">
               <table style="width:100%; border-collapse:collapse;" class="admin-table">
@@ -1668,6 +1749,8 @@ export function renderAdminPanel(params) {
       document.getElementById('f-sourceurl').value = sp.source_url || '';
       document.getElementById('f-dl-win').value = sp.download_win || '';
       document.getElementById('f-dl-mac').value = sp.download_mac || '';
+      document.getElementById('f-dl-linux').value = sp.download_linux || '';
+      document.getElementById('f-dl-manual').value = sp.download_manual || '';
 
       const req = state.editingProduct.systemReqs || {};
       document.getElementById('f-req-os').value = req.os || '';

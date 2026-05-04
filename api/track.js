@@ -1,4 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
 // Initialize Supabase with service role key to bypass RLS
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -11,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { sessionId, path, referrer, userId, isBot } = req.body;
+    const { sessionId, path: requestPath, referrer, userId, isBot } = req.body;
 
     if (!sessionId) {
       return res.status(400).json({ error: 'Missing sessionId' });
@@ -76,11 +78,25 @@ export default async function handler(req, res) {
     // ─── 2. Insert event log ─────────────────────────────────────────────────
     const { error: eventErr } = await supabase.from('event_logs').insert([{
       session_id: sessionId,
-      page_url: path,
+      page_url: requestPath,
       referrer: referrer || null,
       user_id: userId || null
     }]);
     if (eventErr) console.error('event_logs insert error:', eventErr);
+
+    // ─── 2.5 Log to local text file (New Feature) ─────────────────────────────
+    try {
+      const logEntry = `[${new Date().toISOString()}] IP: ${ip} | SESSION: ${sessionId.substring(0, 8)} | PATH: ${requestPath} | OS: ${os} | BROWSER: ${browser} | COUNTRY: ${country}\n`;
+      
+      // In Vercel, we can only write to /tmp, but for local/VPS we try project root
+      const logFilePath = process.env.VERCEL ? '/tmp/visitor_logs.txt' : path.join(process.cwd(), 'visitor_logs.txt');
+      
+      fs.appendFileSync(logFilePath, logEntry);
+    } catch (fsErr) {
+      // Silently fail if filesystem is read-only (common in serverless)
+      // We will provide a downloadable version via another API endpoint anyway.
+      console.warn('Local file logging skipped or failed:', fsErr.message);
+    }
 
     // ─── 3. Respond early — don't block client on Telegram send ──────────────
     // NOTE: We respond here so the browser isn't waiting. Vercel will continue
@@ -125,13 +141,13 @@ export default async function handler(req, res) {
       messageType = 'new_visitor';
     } else if (settings.notify_all_pages) {
       // Notify on every page except /admin
-      if (!path.startsWith('/admin')) {
+      if (!requestPath.startsWith('/admin')) {
         shouldNotify = true;
         messageType = 'page_view';
       }
     } else {
       const tracked = settings.tracked_pages || [];
-      const match = tracked.find(t => path === t.path || (t.regex && new RegExp(t.regex).test(path)));
+      const match = tracked.find(t => requestPath === t.path || (t.regex && new RegExp(t.regex).test(requestPath)));
       if (match && match.mode === 'notify') {
         shouldNotify = true;
         messageType = 'page_view';
@@ -150,14 +166,14 @@ export default async function handler(req, res) {
         `🚨 *New Visitor Alert*\n\n` +
         `🌍 *Location:* ${city !== 'unknown' ? city + ', ' : ''}${country}\n` +
         `💻 *Device:* ${os} / ${browser}\n` +
-        `🔗 *Landing Page:* \`${path}\`\n` +
+        `🔗 *Landing Page:* \`${requestPath}\`\n` +
         (referrer && referrer !== 'null' ? `🔙 *Referrer:* ${referrer}\n` : '') +
         `🌐 *IP:* ||${ip}||\n` +
         `🆔 *Session:* \`${sessionId.substring(0, 8)}\``;
     } else {
       messageText =
         `🧭 *Page View*\n\n` +
-        `📍 *Page:* \`${path}\`\n` +
+        `📍 *Page:* \`${requestPath}\`\n` +
         `🌍 *From:* ${city !== 'unknown' ? city + ', ' : ''}${country}\n` +
         `💻 *Device:* ${os} / ${browser}\n` +
         `🆔 *Session:* \`${sessionId.substring(0, 8)}\`\n` +
@@ -194,7 +210,7 @@ export default async function handler(req, res) {
     const { error: logErr } = await supabase.from('notification_logs').insert([{
       session_id: sessionId,
       message_type: messageType,
-      page_url: path,
+      page_url: requestPath,
       country,
       city,
       browser,

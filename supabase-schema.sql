@@ -3,7 +3,7 @@
 -- ═══════════════════════════════════════════════════════════════════════════════
 -- Run this entire file in Supabase SQL Editor to set up or re-create the DB.
 -- Safe to re-run: uses CREATE TABLE IF NOT EXISTS + CREATE OR REPLACE everywhere.
--- Last updated: 2026-04-03
+-- Last updated: 2026-05-03
 -- Changes tracked:
 --   2026-03-xx  Initial schema (products, profiles, carts, orders, licenses)
 --   2026-04-01  Added telegram_settings, visitor_sessions, event_logs
@@ -11,6 +11,7 @@
 --   2026-04-02  Changed default credits: 50 → 20 (1 credit = $1 USD)
 --   2026-04-03  Added payment_type, fee_amount, card_last4 to orders table
 --               Updated checkout_cart RPC: accepts p_payment_type, p_fee_amount, p_card_last4
+--   2026-05-03  Added storage bucket 'plugin-downloads' and public upload RLS policies
 -- ═══════════════════════════════════════════════════════════════════════════════
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -387,3 +388,33 @@ ALTER TABLE public.notification_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Service roles can manage notification logs" ON public.notification_logs;
 CREATE POLICY "Service roles can manage notification logs"
   ON public.notification_logs FOR ALL USING (true);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 12. STORAGE BUCKETS & RLS
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Create the bucket for plugin downloads
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('plugin-downloads', 'plugin-downloads', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- RLS for storage.objects
+-- Allow public read access to the downloads
+CREATE POLICY "Public Access"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'plugin-downloads' );
+
+-- Allow anyone (using the anon key) to upload/update/delete plugin files
+-- NOTE: In production, you would restrict this to authenticated admins only.
+CREATE POLICY "Allow Anon Uploads"
+ON storage.objects FOR INSERT
+WITH CHECK ( bucket_id = 'plugin-downloads' );
+
+CREATE POLICY "Allow Anon Update"
+ON storage.objects FOR UPDATE
+USING ( bucket_id = 'plugin-downloads' );
+
+CREATE POLICY "Allow Anon Delete"
+ON storage.objects FOR DELETE
+USING ( bucket_id = 'plugin-downloads' );

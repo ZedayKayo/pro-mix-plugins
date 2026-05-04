@@ -31,7 +31,9 @@ const RESPONSE_SCHEMA = {
         Download:   { type: "STRING" },
         Version:    { type: "STRING" },
         download_win: { type: "STRING" },
-        download_mac: { type: "STRING" }
+        download_mac: { type: "STRING" },
+        download_linux: { type: "STRING" },
+        download_manual: { type: "STRING" }
       }
     },
     systemReqs: {
@@ -63,7 +65,7 @@ RUTRACKER RULES:
 - "Разработчик" = Developer, "что нового" = What's new, "системные требования" = System Requirements
 - "Год выпуска" = Release year, "Интерфейс" = Interface language
 - Images: look for [IMAGE: url] markers in the content from fastpic.org, radikal, imgur, etc.
-- Magnet links: if you see a magnet link (starts with magnet:?), extract it into specs.download_win for Windows, and specs.download_mac for macOS. If platform is unclear, put it in both.
+- Magnet links: if you see a magnet link (starts with magnet:?), extract it into specs.download_win for Windows, specs.download_mac for macOS, and specs.download_linux for Linux. Also look for User Manual PDF links and place them in specs.download_manual. If platform is unclear, put it in win and mac.
 - If proxies failed and you received NO page content: set images to [] and estimate specs from your knowledge.
 `;
 

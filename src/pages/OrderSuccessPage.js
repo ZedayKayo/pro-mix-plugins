@@ -17,6 +17,102 @@ export function renderOrderSuccessPage() {
   const user = getUser();
   const items = order?.items || [];
 
+  const isFree = order?.isFree || (items.length > 0 && items.every(item => (item.salePrice || item.price) === 0));
+
+  if (isFree) {
+    container.innerHTML = `
+      <div class="os-page">
+        <!-- Ambient glowing orbs -->
+        <div class="os-orb os-orb-1"></div>
+        <div class="os-orb os-orb-2"></div>
+        <div class="os-orb os-orb-3"></div>
+
+        <div class="os-hero animate-fade-in-up">
+          <div class="os-hero-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" stroke="#00ff88" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            DOWNLOAD READY
+          </div>
+
+          <h1 class="os-hero-title" style="margin-top: 1rem;">Choose Your Download</h1>
+          <p class="os-hero-sub">
+            ${user?.name ? `Hey ${user.name}! ` : ''}Your free plugin${items.length > 1 ? 's are' : ' is'} ready. Select your operating system below to begin downloading.
+          </p>
+
+          <div class="os-free-downloads" style="margin-top: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
+            ${items.map(item => {
+              const dlWin = item.specs?.download_win && item.specs.download_win !== '#' ? `window.open('${item.specs.download_win}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} for Windows...')`;
+              const dlMac = item.specs?.download_mac && item.specs.download_mac !== '#' ? `window.open('${item.specs.download_mac}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} for iOS / macOS...')`;
+              const dlLinux = item.specs?.download_linux && item.specs.download_linux !== '#' ? `window.open('${item.specs.download_linux}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} for Linux...')`;
+              const dlManual = item.specs?.download_manual && item.specs.download_manual !== '#' ? `window.open('${item.specs.download_manual}', '_blank')` : `alert('Downloading ${item.name.replace(/'/g, "\\'")} User Manual PDF...')`;
+
+              return `
+              <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 1.5rem; width: 100%; max-width: 600px; text-align: center;">
+                <h3 style="margin-bottom: 1rem; color: var(--neon-green);">${item.name}</h3>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; align-items: center;">
+                  <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="${dlWin}">
+                    <svg width="20" height="20" viewBox="0 0 88 88" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M0 12.4L35.6 7.60001V41.6H0V12.4ZM40 7.20001L88 0V41.6H40V7.20001ZM0 45.6H35.6V79.2L0 74V45.6ZM40 45.6H88V87.2L40 80V45.6Z"/></svg>
+                    Windows
+                  </button>
+                  <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="${dlMac}">
+                    <span style="font-size: 20px; line-height: 1; display: flex;">🍏</span> iOS / macOS
+                  </button>
+                  <button class="btn btn-primary" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="${dlLinux}">
+                    <span style="font-size: 20px; line-height: 1; display: flex;">🐧</span> Linux
+                  </button>
+                  <button class="btn btn-ghost" style="font-size: 16px; padding: 10px 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(255,255,255,0.2);" onclick="${dlManual}">
+                    <span style="font-size: 20px; line-height: 1; display: flex;">📄</span> User Manual (PDF)
+                  </button>
+                </div>
+              </div>
+            `;
+            }).join('')}
+
+            <div class="os-free-instructions" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-md); padding: 1.5rem; width: 100%; max-width: 600px; text-align: left; margin-top: 1rem;">
+              <h3 style="color: var(--neon-green); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 20px;">🔧</span> Installation Instructions
+              </h3>
+              
+              <div style="margin-bottom: 1.2rem;">
+                <strong>1. Extract the Archive</strong>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px; line-height: 1.5;">Extract the zip you downloaded and you will see the plugin file. The format depends on your OS:</p>
+                <ul style="color: var(--text-secondary); font-size: 14px; margin-top: 4px; margin-left: 1.5rem; line-height: 1.5;">
+                  <li><strong>Windows:</strong> <code>.dll</code> (VST2) or <code>.vst3</code></li>
+                  <li><strong>macOS:</strong> <code>.vst</code>, <code>.vst3</code>, or <code>.component</code> (AU)</li>
+                  <li><strong>Linux:</strong> <code>.so</code> or <code>.vst3</code></li>
+                </ul>
+              </div>
+
+              <div style="margin-bottom: 1.2rem;">
+                <strong>2. Move to Plugin Folder</strong>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px; line-height: 1.5;">Drag the extracted plugin file into your system's default plugin folder:</p>
+                <ul style="color: var(--text-secondary); font-size: 14px; margin-top: 4px; margin-left: 1.5rem; line-height: 1.5;">
+                  <li><strong>Win (VST3):</strong> <code>C:\\Program Files\\Common Files\\VST3</code></li>
+                  <li><strong>Mac (VST3):</strong> <code>/Library/Audio/Plug-Ins/VST3</code></li>
+                  <li><strong>Mac (AU):</strong> <code>/Library/Audio/Plug-Ins/Components</code></li>
+                  <li><strong>Linux (VST3):</strong> <code>~/.vst3</code> or <code>/usr/lib/vst3</code></li>
+                </ul>
+              </div>
+
+              <div>
+                <strong>3. Open up your DAW and enjoy!</strong>
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 4px; line-height: 1.5;">Rescan your plugins in your DAW settings, load it onto a track, and start creating.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="os-footer-btns" style="margin-top: 3rem; justify-content: center;">
+            <button class="btn btn-ghost" id="os-go-store">Browse More Plugins</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('os-go-store')?.addEventListener('click', () => navigate('/store'));
+    return;
+  }
+
   const steps = [
     {
       num: '01',

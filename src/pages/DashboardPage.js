@@ -66,7 +66,7 @@ export function renderDashboardPage() {
       b.addEventListener('click', () => {
         const prodId = b.dataset.download;
         const prod = getProducts().find(x => x.id === prodId);
-        const dlUrl = prod?.specs?.download_win || prod?.specs?.download_mac;
+        const dlUrl = prod?.specs?.download_win || prod?.specs?.download_mac || prod?.specs?.download_linux || prod?.specs?.download_manual;
         
         if (dlUrl) {
           showToast('Validating license...', 'info');

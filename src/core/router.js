@@ -127,13 +127,23 @@ export function initRouter(containerSelector) {
   // Intercept all internal link clicks
   document.body.addEventListener('click', e => {
     const link = e.target.closest('a');
-    if (link && link.getAttribute('href')?.startsWith('/')) {
-      e.preventDefault();
-      navigate(link.getAttribute('href'));
-    } else if (link && link.getAttribute('href')?.startsWith('#/')) {
-      // Gracefully handle legacy hash links by stripping hash
-      e.preventDefault();
-      navigate(link.getAttribute('href').replace('#', ''));
+    if (link) {
+      const href = link.getAttribute('href');
+      const target = link.getAttribute('target');
+      
+      // Skip if it's an API call, external link, or has a target
+      if (href?.startsWith('/api') || target === '_blank' || href?.startsWith('http')) {
+        return; 
+      }
+
+      if (href?.startsWith('/')) {
+        e.preventDefault();
+        navigate(href);
+      } else if (href?.startsWith('#/')) {
+        // Gracefully handle legacy hash links by stripping hash
+        e.preventDefault();
+        navigate(href.replace('#', ''));
+      }
     }
   });
 

@@ -29,7 +29,9 @@ const RESPONSE_SCHEMA = {
         Download: { type: "STRING" },
         Version: { type: "STRING" },
         download_win: { type: "STRING" },
-        download_mac: { type: "STRING" }
+        download_mac: { type: "STRING" },
+        download_linux: { type: "STRING" },
+        download_manual: { type: "STRING" }
       }
     },
     systemReqs: {
@@ -60,7 +62,7 @@ RUTRACKER RULES:
 - Title format: "Developer - Plugin Name vX.X.X [VST3/AU/AAX] [WIN/MAC/x64]"
 - "Разработчик" = Developer, "что нового" = What's new, "системные требования" = System Requirements
 - Images: look for [IMAGE: url] markers from fastpic.org, radikal, imgur, etc.
-- Magnet links: extract into specs.download_win (Windows) or specs.download_mac (macOS).
+- Magnet links: extract into specs.download_win (Windows), specs.download_mac (macOS), or specs.download_linux (Linux). Look for manuals and extract to specs.download_manual.
 - If proxies failed and you received NO page content: set images to [] and estimate specs from your knowledge.
 `;
 
