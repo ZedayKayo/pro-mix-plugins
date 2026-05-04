@@ -288,9 +288,16 @@ export function renderAdminPanel(params) {
       showToast('Uploading file...', 'info');
 
       try {
-        const { data, error } = await supabase.storage
+        // Timeout after 60 seconds to prevent indefinite hanging (common with large files/CORS limits)
+        const uploadPromise = supabase.storage
           .from('plugin-downloads')
           .upload(filePath, file, { cacheControl: '3600', upsert: false });
+          
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Upload timed out. The file might be too large (Supabase limits to 50MB on free tier).')), 60000)
+        );
+
+        const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
 
         if (error) throw error;
         
@@ -304,7 +311,11 @@ export function renderAdminPanel(params) {
         }
       } catch (err) {
         console.error('Upload error:', err);
-        showToast(`Upload failed: ${err.message}`, 'error');
+        if (err.message.includes('timed out') || file.size > 50 * 1024 * 1024) {
+           showToast('Upload failed: File is likely too large (over 50MB). Please host large files externally and paste the link.', 'error');
+        } else {
+           showToast(`Upload failed: ${err.message}`, 'error');
+        }
       } finally {
         currentUploadBtn.textContent = originalText;
         currentUploadBtn.disabled = false;

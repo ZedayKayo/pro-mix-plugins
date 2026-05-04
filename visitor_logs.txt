@@ -10,3 +10,7 @@
 [2026-05-04T13:21:32.192Z] IP: ::1 | SESSION: cc3c373f | PATH: /store | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
 [2026-05-04T13:21:36.380Z] IP: ::1 | SESSION: cc3c373f | PATH: /product/audiolens | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
 [2026-05-04T13:21:36.997Z] IP: ::1 | SESSION: cc3c373f | PATH: /order-success | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
+[2026-05-04T13:26:25.005Z] IP: ::1 | SESSION: cc3c373f | PATH: /order-success | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
+[2026-05-04T13:43:19.565Z] IP: ::1 | SESSION: cc3c373f | PATH: /admin | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
+[2026-05-04T13:43:45.258Z] IP: ::1 | SESSION: cc3c373f | PATH: /admin | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
+[2026-05-04T14:09:01.467Z] IP: ::1 | SESSION: cc3c373f | PATH: /admin | OS: Windows | BROWSER: Chrome | COUNTRY: unknown
