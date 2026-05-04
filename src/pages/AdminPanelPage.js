@@ -984,12 +984,14 @@ export function renderAdminPanel(params) {
     const today = new Date().toDateString();
     const todayCount = sessions.filter(s => new Date(s.last_seen).toDateString() === today).length;
     const countries = [...new Set(sessions.map(s => s.country).filter(Boolean))];
+    const uniqueIps = [...new Set(sessions.map(s => s.ip_address).filter(Boolean))];
     return `
       <div style="margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--space-md);">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--space-md);">
           <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Sessions</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${sessions.length}</div></div>
+          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Unique IPs</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-purple);">${uniqueIps.length}</div></div>
           <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Today</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-green);">${todayCount}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Countries</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-purple);">${countries.length}</div></div>
+          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Countries</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${countries.length}</div></div>
           <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Page Views</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-orange);">${sessions.reduce((a,s)=>a+(s.page_views||0),0)}</div></div>
         </div>
         <div style="display:grid; grid-template-columns:2fr 1fr; gap:var(--space-lg);">
@@ -1004,7 +1006,8 @@ export function renderAdminPanel(params) {
             <div style="overflow-x:auto;">
               <table style="width:100%; border-collapse:collapse;" class="admin-table">
                 <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.78rem;">
-                  <th style="padding:8px 12px;">Location</th>
+                  <th style="padding:8px 12px;">IP Address</th>
+                  <th style="padding:8px;">Location</th>
                   <th style="padding:8px;">Device</th>
                   <th style="padding:8px;">Browser</th>
                   <th style="padding:8px;">Views</th>
@@ -1013,7 +1016,8 @@ export function renderAdminPanel(params) {
                 <tbody>
                   ${sessions.slice(0,50).map(s => `
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                      <td style="padding:8px 12px; font-size:0.82rem;">${sanitizeHTML(s.city&&s.city!=='unknown'?s.city+', ':'')}${sanitizeHTML(s.country||'Unknown')}</td>
+                      <td style="padding:8px 12px; font-size:0.8rem; font-family:monospace; color:var(--text-secondary);">${sanitizeHTML(s.ip_address || '—')}</td>
+                      <td style="padding:8px; font-size:0.82rem;">${sanitizeHTML(s.city&&s.city!=='unknown'?s.city+', ':'')}${sanitizeHTML(s.country||'Unknown')}</td>
                       <td style="padding:8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(s.os||'—')}</td>
                       <td style="padding:8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(s.browser||'—')}</td>
                       <td style="padding:8px; font-size:0.82rem; color:var(--neon-blue); font-weight:600;">${s.page_views||0}</td>
