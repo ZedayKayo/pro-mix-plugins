@@ -394,27 +394,46 @@ CREATE POLICY "Service roles can manage notification logs"
 -- 12. STORAGE BUCKETS & RLS
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- Create the bucket for plugin downloads
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('plugin-downloads', 'plugin-downloads', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
+-- Create the bucket for plugin downloads (public = URLs are readable without auth)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'plugin-downloads',
+  'plugin-downloads',
+  true,
+  104857600,  -- 100 MB max file size
+  ARRAY['application/zip','application/x-zip-compressed','application/octet-stream',
+        'application/x-msdownload','application/x-deb','application/gzip',
+        'application/x-tar','application/pdf','application/vnd.apple.installer+xml',
+        'application/x-apple-diskimage']
+)
+ON CONFLICT (id) DO UPDATE
+  SET public            = true,
+      file_size_limit   = 104857600,
+      allowed_mime_types = ARRAY['application/zip','application/x-zip-compressed','application/octet-stream',
+                                 'application/x-msdownload','application/x-deb','application/gzip',
+                                 'application/x-tar','application/pdf','application/vnd.apple.installer+xml',
+                                 'application/x-apple-diskimage'];
 
--- RLS for storage.objects
--- Allow public read access to the downloads
+-- ── Drop old policies first (safe to re-run) ──
+DROP POLICY IF EXISTS "Public Access"      ON storage.objects;
+DROP POLICY IF EXISTS "Allow Anon Uploads" ON storage.objects;
+DROP POLICY IF EXISTS "Allow Anon Update"  ON storage.objects;
+DROP POLICY IF EXISTS "Allow Anon Delete"  ON storage.objects;
+
+-- Public can read/download any file in the bucket
 CREATE POLICY "Public Access"
-ON storage.objects FOR SELECT
-USING ( bucket_id = 'plugin-downloads' );
+  ON storage.objects FOR SELECT
+  USING ( bucket_id = 'plugin-downloads' );
 
--- Allow anyone (using the anon key) to upload/update/delete plugin files
--- NOTE: In production, you would restrict this to authenticated admins only.
+-- Anyone can upload — service role key is used in practice; anon fallback kept
 CREATE POLICY "Allow Anon Uploads"
-ON storage.objects FOR INSERT
-WITH CHECK ( bucket_id = 'plugin-downloads' );
+  ON storage.objects FOR INSERT
+  WITH CHECK ( bucket_id = 'plugin-downloads' );
 
 CREATE POLICY "Allow Anon Update"
-ON storage.objects FOR UPDATE
-USING ( bucket_id = 'plugin-downloads' );
+  ON storage.objects FOR UPDATE
+  USING ( bucket_id = 'plugin-downloads' );
 
 CREATE POLICY "Allow Anon Delete"
-ON storage.objects FOR DELETE
-USING ( bucket_id = 'plugin-downloads' );
+  ON storage.objects FOR DELETE
+  USING ( bucket_id = 'plugin-downloads' );

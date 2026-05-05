@@ -145,12 +145,12 @@ export function renderAdminPanel(params) {
                 <input type="url" class="input" id="f-sourceurl" placeholder="https://rutracker.org/..." />
               </div>
               <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">MSRP (Original Price $) *</label>
-                <input type="number" class="input" id="f-price" min="0" step="0.01" required />
+                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">MSRP (Original Price $)</label>
+                <input type="number" class="input" id="f-price" min="0" step="0.01" value="0" placeholder="0" />
               </div>
               <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (−<span id="modal-discount-label">${state.discountPct}</span>% OFF) *</label>
-                <input type="number" class="input" id="f-saleprice" min="0" step="0.01" required />
+                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (−<span id="modal-discount-label">${state.discountPct}</span>% OFF)</label>
+                <input type="number" class="input" id="f-saleprice" min="0" step="0.01" value="0" placeholder="0" />
               </div>
             </div>
             
@@ -193,10 +193,19 @@ export function renderAdminPanel(params) {
 
             <!-- SECURE DOWNLOAD LINKS -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); padding:var(--space-md); background:rgba(255,100,100,0.05); border-radius:var(--radius-md); border:1px solid rgba(255,100,100,0.2); margin-bottom:var(--space-md);">
-              <div style="grid-column: span 2;">
-                <h4 style="margin:0 0 8px 0; color:#ff6b2b;">Secure Download Files (Private)</h4>
-                <p class="text-xs text-secondary" style="margin-bottom:12px;">These paths will only be exposed to users holding a valid license.</p>
+              <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                <div>
+                  <h4 style="margin:0 0 4px 0; color:#ff6b2b;">Secure Download Files (Private)</h4>
+                  <p class="text-xs text-secondary" style="margin:0;">These paths will only be exposed to users holding a valid license.</p>
+                </div>
+                <label for="f-dl-all-input" class="btn" id="btn-upload-all" style="cursor:pointer; background:rgba(255,107,43,0.15); border:1px solid rgba(255,107,43,0.5); color:#ff6b2b; font-size:12px; padding:6px 14px; display:flex; align-items:center; gap:6px; white-space:nowrap; margin:0;">
+                  📦 Upload All Files at Once
+                </label>
+                <input type="file" id="f-dl-all-input" multiple style="display:none;"
+                  accept=".exe,.zip,.dmg,.pkg,.deb,.tar.gz,.tar,.gz,.pdf,.vsix,.vst3" />
               </div>
+              <!-- Per-file progress bar (hidden by default) -->
+              <div id="bulk-upload-status" style="grid-column:span 2; display:none; flex-direction:column; gap:4px; font-size:12px;"></div>
               <div>
                 <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Windows (.exe / .zip)</label>
                 <div style="display:flex; gap:8px;">
@@ -225,6 +234,7 @@ export function renderAdminPanel(params) {
                   <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-manual" style="padding: 0 12px; font-size:12px;">Upload</button>
                 </div>
               </div>
+              <!-- Hidden input for single-file per-button uploads -->
               <input type="file" id="f-dl-file-input" style="display:none;" />
             </div>
 
@@ -276,51 +286,206 @@ export function renderAdminPanel(params) {
     fileInput?.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file || !currentUploadTarget || !currentUploadBtn) return;
-      
+
       const nameField = document.getElementById('f-name');
       const slug = (nameField?.value || 'plugin').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
       const filePath = `${slug}/${fileName}`;
-      
+
       const originalText = currentUploadBtn.textContent;
-      currentUploadBtn.textContent = '⏳';
+      currentUploadBtn.textContent = '⏳ 0%';
       currentUploadBtn.disabled = true;
-      showToast('Uploading file... (This may take a few minutes for large files)', 'info');
+
+      // ── Use service role key so RLS is fully bypassed for admin uploads ──
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const serviceKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+
+      if (!supabaseUrl || !serviceKey) {
+        showToast('❌ Upload failed: VITE_SUPABASE_SERVICE_ROLE_KEY is missing from your .env file.', 'error');
+        currentUploadBtn.textContent = originalText;
+        currentUploadBtn.disabled = false;
+        fileInput.value = '';
+        return;
+      }
+
+      // ── Raw XHR upload — gives real progress events that fetch() does not ──
+      const uploadUrl = `${supabaseUrl}/storage/v1/object/plugin-downloads/${filePath}`;
 
       try {
-        // Timeout after 10 minutes (600,000 ms)
-        const uploadPromise = supabase.storage
-          .from('plugin-downloads')
-          .upload(filePath, file, { cacheControl: '3600', upsert: false });
-          
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Upload timed out after 10 minutes. Please check your internet connection or use an external link.')), 600000)
-        );
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', uploadUrl, true);
+          xhr.setRequestHeader('Authorization', `Bearer ${serviceKey}`);
+          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+          xhr.setRequestHeader('x-upsert', 'true'); // allow overwrite if same path exists
 
-        const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+          // Live progress counter in the button
+          xhr.upload.addEventListener('progress', (ev) => {
+            if (ev.lengthComputable) {
+              const pct = Math.round((ev.loaded / ev.total) * 100);
+              currentUploadBtn.textContent = `⏳ ${pct}%`;
+            }
+          });
 
-        if (error) throw error;
-        
-        const { data: publicData } = supabase.storage
-          .from('plugin-downloads')
-          .getPublicUrl(filePath);
-          
-        if (publicData?.publicUrl) {
-          document.getElementById(currentUploadTarget).value = publicData.publicUrl;
-          showToast('File uploaded successfully!', 'success');
-        }
+          xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve();
+            } else {
+              let msg = `HTTP ${xhr.status}`;
+              try { msg = JSON.parse(xhr.responseText)?.message || msg; } catch {}
+              reject(new Error(msg));
+            }
+          });
+
+          xhr.addEventListener('error', () => reject(new Error('Network error — check your internet connection.')));
+          xhr.addEventListener('timeout', () => reject(new Error('Upload timed out after 10 minutes.')));
+          xhr.timeout = 600000; // 10 min
+
+          xhr.send(file);
+        });
+
+        // Public URL is deterministic — no extra request needed
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/plugin-downloads/${filePath}`;
+        document.getElementById(currentUploadTarget).value = publicUrl;
+        showToast(`✅ Upload complete! (${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'success');
+
       } catch (err) {
         console.error('Upload error:', err);
-        if (err.message.includes('timed out') || file.size > 50 * 1024 * 1024) {
-           showToast('Upload failed: File is likely too large (over 50MB). Please host large files externally and paste the link.', 'error');
-        } else {
-           showToast(`Upload failed: ${err.message}`, 'error');
-        }
+        showToast(`❌ Upload failed: ${err.message}`, 'error');
       } finally {
         currentUploadBtn.textContent = originalText;
         currentUploadBtn.disabled = false;
         fileInput.value = '';
       }
+    });
+
+    // ── Bulk Upload All Files at Once ──
+    const allFilesInput = modalEl.querySelector('#f-dl-all-input');
+    allFilesInput?.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const serviceKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+      if (!supabaseUrl || !serviceKey) {
+        showToast('❌ VITE_SUPABASE_SERVICE_ROLE_KEY missing from .env', 'error');
+        return;
+      }
+
+      // Auto-detect which slot each file belongs to by extension
+      const detectTarget = (filename) => {
+        const n = filename.toLowerCase();
+        if (n.endsWith('.pdf'))                          return 'f-dl-manual';
+        if (n.endsWith('.dmg') || n.endsWith('.pkg'))   return 'f-dl-mac';
+        if (n.endsWith('.deb') || n.endsWith('.tar.gz') || n.endsWith('.tar') || n.endsWith('.gz')) return 'f-dl-linux';
+        if (n.endsWith('.exe') || n.endsWith('.zip') || n.endsWith('.msi')) return 'f-dl-win';
+        return null; // unrecognised — skip
+      };
+
+      const nameField = document.getElementById('f-name');
+      const slug = (nameField?.value || 'plugin').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
+
+      // Show bulk status panel
+      const statusPanel = document.getElementById('bulk-upload-status');
+      statusPanel.style.display = 'flex';
+      statusPanel.innerHTML = '';
+
+      // Build a status row per file
+      const rows = {};
+      const uploadTasks = [];
+
+      for (const file of files) {
+        const targetId = detectTarget(file.name);
+        if (!targetId) {
+          const row = document.createElement('div');
+          row.style.cssText = 'color:#aaa; padding:2px 0;';
+          row.textContent = `⚠️ ${file.name} — unrecognised extension, skipped`;
+          statusPanel.appendChild(row);
+          continue;
+        }
+
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:8px;';
+        row.innerHTML = `
+          <span style="min-width:120px; color:var(--text-secondary);">${file.name.length > 24 ? file.name.slice(0,21)+'...' : file.name}</span>
+          <div style="flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
+            <div id="bar-${targetId}" style="height:100%; width:0%; background:#ff6b2b; border-radius:4px; transition:width 0.2s;"></div>
+          </div>
+          <span id="pct-${targetId}" style="min-width:36px; text-align:right; color:#ff6b2b;">0%</span>
+        `;
+        statusPanel.appendChild(row);
+        rows[targetId] = row;
+
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const filePath = `${slug}/${fileName}`;
+        const uploadUrl = `${supabaseUrl}/storage/v1/object/plugin-downloads/${filePath}`;
+        const publicUrl = `${supabaseUrl}/storage/v1/object/public/plugin-downloads/${filePath}`;
+
+        uploadTasks.push(
+          new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', uploadUrl, true);
+            xhr.setRequestHeader('Authorization', `Bearer ${serviceKey}`);
+            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+            xhr.setRequestHeader('x-upsert', 'true');
+            xhr.timeout = 600000;
+
+            xhr.upload.addEventListener('progress', (ev) => {
+              if (ev.lengthComputable) {
+                const pct = Math.round((ev.loaded / ev.total) * 100);
+                const bar = document.getElementById(`bar-${targetId}`);
+                const lbl = document.getElementById(`pct-${targetId}`);
+                if (bar) bar.style.width = pct + '%';
+                if (lbl) lbl.textContent = pct + '%';
+              }
+            });
+
+            xhr.addEventListener('load', () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                // Fill the corresponding URL field
+                const field = document.getElementById(targetId);
+                if (field) field.value = publicUrl;
+                // Mark row green
+                const lbl = document.getElementById(`pct-${targetId}`);
+                const bar = document.getElementById(`bar-${targetId}`);
+                if (lbl) { lbl.textContent = '✅'; lbl.style.color = 'var(--neon-green)'; }
+                if (bar) bar.style.background = 'var(--neon-green)';
+                resolve({ targetId, publicUrl });
+              } else {
+                let msg = `HTTP ${xhr.status}`;
+                try { msg = JSON.parse(xhr.responseText)?.message || msg; } catch {}
+                const lbl = document.getElementById(`pct-${targetId}`);
+                if (lbl) { lbl.textContent = '❌'; lbl.style.color = '#ff4444'; }
+                reject(new Error(`${file.name}: ${msg}`));
+              }
+            });
+
+            xhr.addEventListener('error',   () => reject(new Error(`${file.name}: Network error`)));
+            xhr.addEventListener('timeout', () => reject(new Error(`${file.name}: Timed out`)));
+            xhr.send(file);
+          })
+        );
+      }
+
+      if (!uploadTasks.length) {
+        statusPanel.style.display = 'none';
+        allFilesInput.value = '';
+        return;
+      }
+
+      showToast(`📦 Uploading ${uploadTasks.length} file(s) in parallel...`, 'info');
+
+      const results = await Promise.allSettled(uploadTasks);
+      const failed  = results.filter(r => r.status === 'rejected');
+      const passed  = results.filter(r => r.status === 'fulfilled');
+
+      if (failed.length === 0) {
+        showToast(`✅ All ${passed.length} file(s) uploaded successfully!`, 'success');
+      } else {
+        showToast(`⚠️ ${passed.length} uploaded, ${failed.length} failed: ${failed.map(r=>r.reason?.message).join(' | ')}`, 'error');
+      }
+
+      allFilesInput.value = '';
     });
 
     // Global renderer for the image preview strip
