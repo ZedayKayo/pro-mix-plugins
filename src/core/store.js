@@ -13,7 +13,7 @@ const STORAGE_KEYS = {
 
 // Import Supabase service
 import { fetchProducts, insertProduct, updateProduct, removeProduct } from '../services/productService.js';
-import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchSessionProfile, loginUserAuth, loginWithGoogleAuth, registerUserAuth, logoutUserAuth, resetPasswordAuth, processSecureCheckout } from '../services/dbService.js';
+import { fetchUserCart, syncUserCart, linkSessionCartToUser, fetchUserOrders, fetchSessionProfile, loginUserAuth, loginWithGoogleAuth, registerUserAuth, logoutUserAuth, resetPasswordAuth, processSecureCheckout, fetchSiteSettings } from '../services/dbService.js';
 import { supabase } from '../lib/supabase.js';
 import { loadDiscount } from '../services/discountService.js';
 
@@ -24,6 +24,7 @@ let memoryInventory = [];
 let memoryCart = [];
 let memoryUser = null;
 let memoryPurchases = [];
+let memorySiteSettings = { discord_link: '', telegram_link: '', support_email: '' };
 let initDone = false;
 
 function emit(event, data) {
@@ -370,6 +371,23 @@ export function toggleTheme() {
   return next;
 }
 
+// ── Site Settings ──
+export async function loadSiteSettings() {
+  try {
+    const data = await fetchSiteSettings();
+    if (data) {
+      memorySiteSettings = data;
+      emit('settings:updated', memorySiteSettings);
+    }
+  } catch (err) {
+    console.error("Failed to load site settings", err);
+  }
+}
+
+export function getSiteSettings() {
+  return memorySiteSettings;
+}
+
 // ── Init ──
 export async function initStore() {
   const theme = getTheme();
@@ -377,7 +395,7 @@ export async function initStore() {
 
   // Load discount % first so all pricing calculations are correct
   await loadDiscount();
-
+  await loadSiteSettings();
   await loadInventory();
 
   // Load existing state from DB via Auth session

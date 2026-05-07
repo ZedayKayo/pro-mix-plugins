@@ -114,6 +114,17 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, pct: clamped });
     }
 
+    // ── SAVE CONTACT & SOCIAL LINKS ───────────────────────
+    if (action === 'save-links') {
+      const { discord_link, telegram_link, support_email } = req.body;
+      const { error } = await supabase
+        .from('site_settings')
+        .update({ discord_link, telegram_link, support_email, updated_at: new Date().toISOString() })
+        .eq('id', 1);
+      if (error) throw error;
+      return res.status(200).json({ ok: true });
+    }
+
     // ── BULK UPDATE SALE PRICES ───────────────────────────
     if (action === 'bulk-update-prices') {
       const clamped = Math.max(1, Math.min(99, Math.round(pct)));

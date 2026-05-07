@@ -326,6 +326,32 @@ ON CONFLICT (id) DO NOTHING;
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- 8.1. SITE SETTINGS TABLE (Single-row config for social & contact)
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.site_settings (
+  id               INT PRIMARY KEY DEFAULT 1,
+  discord_link     TEXT DEFAULT 'https://discord.gg/promixplugins',
+  telegram_link    TEXT DEFAULT 'https://t.me/promixplugins',
+  support_email    TEXT DEFAULT 'support@promixplugins.com',
+  updated_at       TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+-- Public can read site settings
+DROP POLICY IF EXISTS "Public can view site settings" ON public.site_settings;
+CREATE POLICY "Public can view site settings" ON public.site_settings FOR SELECT USING (true);
+-- Only admins can update
+DROP POLICY IF EXISTS "Admins can manage site settings" ON public.site_settings;
+CREATE POLICY "Admins can manage site settings" ON public.site_settings FOR ALL TO authenticated USING (true);
+
+-- Seed default row
+INSERT INTO public.site_settings (id, discord_link, telegram_link, support_email)
+VALUES (1, 'https://discord.gg/promixplugins', 'https://t.me/promixplugins', 'support@promixplugins.com')
+ON CONFLICT (id) DO NOTHING;
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- 9. VISITOR SESSIONS TABLE
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.visitor_sessions (

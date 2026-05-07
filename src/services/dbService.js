@@ -166,3 +166,21 @@ export const updateTelegramSettings = async (settings) => {
   if (error) throw error;
   return data;
 };
+
+// ── SITE SETTINGS ──
+export const fetchSiteSettings = async () => {
+  const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle();
+  if (error) console.error("Error fetching site settings:", error);
+  return data || null;
+};
+
+export const updateSiteSettings = async (settings) => {
+  const res = await fetch('/api/admin-product', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'save-links', ...settings })
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || 'Failed to update settings via API');
+  return json;
+};

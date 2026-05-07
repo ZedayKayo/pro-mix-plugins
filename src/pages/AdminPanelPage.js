@@ -2,7 +2,7 @@
 // PRO-MIX PLUGINS — Admin Panel
 // ═══════════════════════════════════════════════════════
 
-import { getInventory, saveProduct, deleteProduct, loadInventory, on, isAdmin, isLoggedIn } from '../core/store.js';
+import { getInventory, saveProduct, deleteProduct, loadInventory, on, isAdmin, isLoggedIn, getSiteSettings, loadSiteSettings } from '../core/store.js';
 import { getBrandList, categories } from '../data/products.js';
 import { navigate } from '../core/router.js';
 import { formatPrice, sanitizeHTML } from '../core/utils.js';
@@ -10,7 +10,7 @@ import { showToast } from '../components/Toast.js';
 import { autoFillPluginData } from '../services/aiService.js';
 import { clearAllProducts, insertProduct, bulkInsertProducts } from '../services/productService.js';
 import { SEED_PRODUCTS } from '../data/seed-products.js';
-import { fetchTelegramSettings, updateTelegramSettings } from '../services/dbService.js';
+import { fetchTelegramSettings, updateTelegramSettings, fetchSiteSettings, updateSiteSettings } from '../services/dbService.js';
 import { getDiscountPct, saveDiscount, loadDiscount, bulkUpdateSalePrices } from '../services/discountService.js';
 import { supabase } from '../lib/supabase.js';
 
@@ -28,6 +28,7 @@ export function renderAdminPanel(params) {
     editingProduct: null,
     activeTab: 'inventory',
     telegramSettings: null,
+    siteSettings: getSiteSettings(),
     orders: null,
     ordersLoading: false,
     users: null,
@@ -45,6 +46,14 @@ export function renderAdminPanel(params) {
     fetchTelegramSettings().then(s => {
       state.telegramSettings = s || { bot_token: '', chat_id: '', is_enabled: false, notify_all_pages: true, tracked_pages: [] };
       if (state.activeTab === 'telegram') renderPage();
+    });
+  }
+
+  // Pre-fetch site settings ONCE
+  if (!state.siteSettings || !state.siteSettings.discord_link) {
+    fetchSiteSettings().then(s => {
+      state.siteSettings = s || { discord_link: '', telegram_link: '', support_email: '' };
+      if (state.activeTab === 'settings') renderPage();
     });
   }
 
@@ -1343,6 +1352,35 @@ export function renderAdminPanel(params) {
           </ul>
         </div>
 
+        <!-- CONTACT & SOCIAL LINKS -->
+        <div class="glass-panel" style="padding:var(--space-xl); border-radius:var(--radius-lg); border:1px solid rgba(0,212,255,0.15);">
+          <h3 style="margin:0 0 4px 0;">📱 Contact & Social Links</h3>
+          <p class="text-sm text-secondary" style="margin:0 0 var(--space-xl) 0;">
+            Update your Discord, Telegram, and Support Email. These links are used in the footer and contact pages.
+          </p>
+
+          <div style="display:grid; grid-template-columns:1fr; gap:var(--space-md); margin-bottom:var(--space-lg);">
+            <div>
+              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Discord Invite Link</label>
+              <input type="url" class="input" id="ss-discord" value="${state.siteSettings?.discord_link || ''}" placeholder="https://discord.gg/..." />
+              <p class="text-xs text-muted" style="margin-top:4px;">💡 Tip: Set your invite to <strong>"Never Expire"</strong> in Discord settings.</p>
+            </div>
+            <div>
+              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Telegram Link</label>
+              <input type="url" class="input" id="ss-telegram" value="${state.siteSettings?.telegram_link || ''}" placeholder="https://t.me/..." />
+            </div>
+            <div>
+              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Support Email</label>
+              <input type="email" class="input" id="ss-email" value="${state.siteSettings?.support_email || ''}" placeholder="support@yourdomain.com" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-md); align-items:center;">
+            <button class="btn btn-primary" id="btn-save-site-settings" style="min-width:160px;">💾 Save Links</button>
+            <span id="site-settings-save-status" class="text-sm"></span>
+          </div>
+        </div>
+
       </div>
     `;
   }
@@ -1796,6 +1834,34 @@ export function renderAdminPanel(params) {
     const previewPay = document.getElementById('discount-preview-pay');
     const exampleEl  = document.getElementById('discount-example');
     const sliderEl   = document.getElementById('discount-slider');
+
+    // Save Site Settings
+    document.getElementById('btn-save-site-settings')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-save-site-settings');
+      const status = document.getElementById('site-settings-save-status');
+      const settings = {
+        discord_link: document.getElementById('ss-discord').value.trim(),
+        telegram_link: document.getElementById('ss-telegram').value.trim(),
+        support_email: document.getElementById('ss-email').value.trim()
+      };
+      
+      try {
+        btn.disabled = true; btn.textContent = '⏳ Saving...';
+        await updateSiteSettings(settings);
+        state.siteSettings = settings;
+        await loadSiteSettings(); // Sync global store
+        status.textContent = '✅ Saved!';
+        status.style.color = 'var(--neon-green)';
+        showToast('Site settings updated!', 'success');
+        setTimeout(() => { if (status) status.textContent = ''; }, 3000);
+      } catch (err) {
+        showToast('Failed to save: ' + err.message, 'error');
+        status.textContent = '❌ Error';
+        status.style.color = '#ff4444';
+      } finally {
+        btn.disabled = false; btn.textContent = '💾 Save Links';
+      }
+    });
 
     function updateDiscountUI(pct) {
       const p = Math.max(1, Math.min(99, Math.round(pct)));

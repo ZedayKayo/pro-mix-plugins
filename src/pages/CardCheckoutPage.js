@@ -3,7 +3,7 @@
 // 5-Step: Contact → Card Details → Billing → 3D Secure → Result
 // ═══════════════════════════════════════════════════════
 
-import { getCart, getCartTotal, clearCart, addPurchaseAsync, getUser } from '../core/store.js';
+import { getCart, getCartTotal, clearCart, addPurchaseAsync, getUser, getSiteSettings } from '../core/store.js';
 import { formatPrice } from '../core/utils.js';
 import { navigate } from '../core/router.js';
 import { showToast } from '../components/Toast.js';
@@ -726,7 +726,7 @@ function renderDeclineStep() {
       </div>
 
       <div class="scp-decline-help">
-        <strong>Need help?</strong> Contact us at <a href="mailto:support@promixplugins.com" class="scp-link">support@promixplugins.com</a>
+        <strong>Need help?</strong> Contact us at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" class="scp-link">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>
       </div>
     </div>
   `;

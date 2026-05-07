@@ -5,6 +5,7 @@
 
 import { getDiscountPct } from '../services/discountService.js';
 import { setPageMeta } from '../core/utils.js';
+import { getSiteSettings } from '../core/store.js';
 
 // ── ABOUT PAGE ─────────────────────────────────────────
 export function renderAboutPage() {
@@ -348,7 +349,7 @@ export function renderSupportPage() {
         <!-- Contact info -->
         <div style="margin-top:var(--space-2xl);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-xl);text-align:center;">
           ${[
-            { icon: '✉️', label: 'Email', value: 'support@promixplugins.com' },
+            { icon: '✉️', label: 'Email', value: getSiteSettings().support_email || 'support@promixplugins.com' },
             { icon: '⏱️', label: 'Response Time', value: 'Within 24 hours' },
             { icon: '🌍', label: 'Coverage', value: '24/7 Global Support' },
           ].map(c => `
@@ -499,7 +500,7 @@ export function renderContactPage() {
           </form>
         </div>
         <div style="margin-top:var(--space-xl);text-align:center;color:var(--text-muted);font-size:var(--text-sm);">
-          <p>📧 support@promixplugins.com &nbsp;·&nbsp; ⏱ Usually within 24 hours</p>
+          <p>📧 ${getSiteSettings().support_email || 'support@promixplugins.com'} &nbsp;·&nbsp; ⏱ Usually within 24 hours</p>
         </div>
       </div>
     </div>
@@ -535,7 +536,7 @@ export function renderPrivacyPolicyPage() {
           <p style="margin-bottom:var(--space-xl);">
             ProMix Plugins ("we", "us", "our") operates the website <strong style="color:var(--text-primary);">promixplugins.com</strong>.
             We sell digital audio plugin software to music producers and engineers worldwide.
-            For questions about this policy, contact us at <a href="mailto:privacy@promixplugins.com" style="color:var(--neon-green)">privacy@promixplugins.com</a>.
+            For questions about this policy, contact us at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>.
           </p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">2. Information We Collect</h3>
@@ -577,7 +578,7 @@ export function renderPrivacyPolicyPage() {
             <li><strong style="color:var(--text-primary);">Object</strong> to or restrict certain types of processing</li>
             <li><strong style="color:var(--text-primary);">Withdraw consent</strong> for marketing communications at any time</li>
           </ul>
-          <p style="margin-bottom:var(--space-xl);">To exercise any of these rights, email <a href="mailto:privacy@promixplugins.com" style="color:var(--neon-green)">privacy@promixplugins.com</a>. We will respond within 30 days.</p>
+          <p style="margin-bottom:var(--space-xl);">To exercise any of these rights, email <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>. We will respond within 30 days.</p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">7. Data Retention</h3>
           <p style="margin-bottom:var(--space-xl);">We retain your account data for as long as your account is active. Purchase records are retained for 7 years for legal and accounting purposes. You may request deletion of your account at any time, subject to these minimum retention obligations.</p>
@@ -593,7 +594,7 @@ export function renderPrivacyPolicyPage() {
 
           <div style="margin-top:var(--space-xl);padding:var(--space-md) var(--space-lg);background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--text-sm);">
             <strong style="color:var(--text-primary);">Questions?</strong> Email us at
-            <a href="mailto:privacy@promixplugins.com" style="color:var(--neon-green);"> privacy@promixplugins.com</a>
+            <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green);"> ${getSiteSettings().support_email || 'support@promixplugins.com'}</a>
           </div>
 
         </div>
@@ -638,7 +639,7 @@ export function renderTermsPage() {
             <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
             <li>You must not share your account or allow others to use your login.</li>
             <li>You are responsible for all activity that occurs under your account.</li>
-            <li>You must notify us immediately at <a href="mailto:support@promixplugins.com" style="color:var(--neon-green)">support@promixplugins.com</a> if you suspect unauthorised access.</li>
+            <li>You must notify us immediately at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a> if you suspect unauthorised access.</li>
           </ul>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">4. Purchases and Payments</h3>
@@ -689,12 +690,12 @@ export function renderTermsPage() {
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">12. Contact</h3>
           <p style="margin-bottom:var(--space-xl);">
-            For questions about these Terms, contact us at <a href="mailto:legal@promixplugins.com" style="color:var(--neon-green)">legal@promixplugins.com</a>.
+            For questions about these Terms, contact us at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>.
           </p>
 
           <div style="margin-top:var(--space-xl);padding:var(--space-md) var(--space-lg);background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--text-sm);">
             <strong style="color:var(--text-primary);">Legal enquiries:</strong>
-            <a href="mailto:legal@promixplugins.com" style="color:var(--neon-green);"> legal@promixplugins.com</a>
+            <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green);"> ${getSiteSettings().support_email || 'support@promixplugins.com'}</a>
           </div>
 
         </div>
