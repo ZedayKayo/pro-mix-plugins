@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════
 
 import { createAuthLayout } from './AuthLayout.js';
-import { registerUser, loginWithGoogleUser, isLoggedIn } from '../../core/store.js';
+import { registerUser, loginWithGoogleUser, isLoggedIn, getUser } from '../../core/store.js';
 import { navigate } from '../../core/router.js';
 import { showToast } from '../../components/Toast.js';
 
@@ -31,6 +31,7 @@ export function renderRegisterPage() {
     <div class="auth-divider stagger-up" style="animation-delay: 0.5s;"><span>or use direct registration</span></div>
 
     <form class="auth-form" id="register-form">
+      <div id="register-form-area">
       <!-- Name -->
       <div class="form-group stagger-up" style="animation-delay: 0.6s;">
         <label>Producer Name</label>
@@ -69,6 +70,7 @@ export function renderRegisterPage() {
       <button type="submit" class="btn btn-primary btn-auth-submit stagger-up" style="animation-delay: 0.9s;" id="register-submit-btn">
         Create Studio Account
       </button>
+      </div>
     </form>
     
     <div class="auth-footer stagger-up" style="animation-delay: 1.0s;">
@@ -117,8 +119,49 @@ export function renderRegisterPage() {
 
       try {
         await registerUser(email, password, name);
-        showToast('System Authorized. Entering Studio.', 'success');
-        setTimeout(() => navigate('/dashboard'), 600);
+
+        // Check if user session was created immediately (auto-confirm ON)
+        // or if email confirmation is required (auto-confirm OFF)
+        const user = getUser();
+        if (user) {
+          // Auto-confirm is enabled — go straight to dashboard
+          showToast('Welcome! Account created.', 'success');
+          setTimeout(() => navigate('/dashboard'), 600);
+        } else {
+          // Email confirmation required — show in-page success screen
+          const formArea = document.getElementById('register-form-area');
+          if (formArea) {
+            formArea.innerHTML = `
+              <div style="
+                text-align: center;
+                padding: 32px 16px;
+                animation: fadeInUp 0.5s ease both;
+              ">
+                <div style="
+                  width: 72px; height: 72px;
+                  background: rgba(0,255,136,0.1);
+                  border: 2px solid var(--neon-green);
+                  border-radius: 50%;
+                  display: flex; align-items: center; justify-content: center;
+                  margin: 0 auto 20px;
+                  font-size: 32px;
+                ">📬</div>
+                <h3 style="margin-bottom: 10px; color: var(--text-primary);">Check Your Inbox</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
+                  We sent a confirmation link to<br/>
+                  <strong style="color: var(--neon-green);">${email}</strong><br/><br/>
+                  Click the link in that email to activate your account, then log in.
+                </p>
+                <a href="/login" class="btn btn-primary" style="display:inline-block; text-decoration:none;">
+                  Go to Login
+                </a>
+                <p style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">
+                  Didn't receive it? Check your spam folder.
+                </p>
+              </div>
+            `;
+          }
+        }
       } catch (err) {
         showToast(err.message || 'Creation failed. Verify credentials.', 'error');
         btn.innerText = originalText;

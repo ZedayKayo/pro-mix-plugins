@@ -5,7 +5,7 @@
 import { getProductBySlug, getProducts } from '../data/products.js';
 import { getProductReviews, saveUserReview, formatReviewDate } from '../data/reviews.js';
 import { formatPrice, formatCrypto, renderStars, getPluginImage, getCategoryName, calculateDiscount, setPageMeta } from '../core/utils.js';
-import { addToCart, isInCart } from '../core/store.js';
+import { addToCart, isInCart, isLoggedIn } from '../core/store.js';
 import { navigate } from '../core/router.js';
 import { showToast } from '../components/Toast.js';
 import { renderProductCard, initProductCardEvents } from '../components/ProductCard.js';
@@ -446,6 +446,12 @@ export function renderProductPage(params) {
 
   // ── Other Events ──────────────────────────────────────
   document.getElementById('product-download-free')?.addEventListener('click', () => {
+    if (!isLoggedIn()) {
+      showToast('Please log in or create a free account to download.', 'error');
+      sessionStorage.setItem('pm_redirect_after_login', `/product/${product.slug}`);
+      navigate('/login');
+      return;
+    }
     sessionStorage.setItem('pm_last_order', JSON.stringify({
       items: [product],
       total: 0,
@@ -712,6 +718,12 @@ export function renderProductPage(params) {
 
     // Sticky bar events
     document.getElementById('sticky-download-free')?.addEventListener('click', () => {
+      if (!isLoggedIn()) {
+        showToast('Please log in or create a free account to download.', 'error');
+        sessionStorage.setItem('pm_redirect_after_login', `/product/${product.slug}`);
+        navigate('/login');
+        return;
+      }
       sessionStorage.setItem('pm_last_order', JSON.stringify({
         items: [product],
         total: 0,

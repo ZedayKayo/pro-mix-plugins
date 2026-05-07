@@ -119,7 +119,9 @@ export function renderLoginPage() {
       try {
         await loginUser(email, password);
         showToast('Access Granted. Entering Session.', 'success');
-        setTimeout(() => navigate('/dashboard'), 600);
+        const redirectTo = sessionStorage.getItem('pm_redirect_after_login') || '/dashboard';
+        sessionStorage.removeItem('pm_redirect_after_login');
+        setTimeout(() => navigate(redirectTo), 600);
       } catch (err) {
         showToast(err.message || 'Authentication failed. Access Denied.', 'error');
         btn.innerText = originalText;

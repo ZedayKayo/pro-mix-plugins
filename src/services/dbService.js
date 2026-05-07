@@ -17,7 +17,12 @@ export const loginWithGoogleAuth = async () => {
 
 export const registerUserAuth = async (email, password, name) => {
   const { data, error } = await supabase.auth.signUp({
-    email, password, options: { data: { name } }
+    email,
+    password,
+    options: {
+      data: { name },
+      emailRedirectTo: `${window.location.origin}/dashboard`,
+    }
   });
   if (error) throw error;
   // Let the trigger create the profile, wait a heartbeat to fetch
