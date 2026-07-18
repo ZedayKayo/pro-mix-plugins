@@ -33,9 +33,27 @@ export function renderProductPage(params) {
   // Detect available OS download options
   const specs = product.specs || {};
   const osOptions = [];
-  if (specs.download_win)   osOptions.push({ id: 'windows', label: '🪟 Windows' });
-  if (specs.download_mac)   osOptions.push({ id: 'mac',     label: '🍎 macOS' });
-  if (specs.download_linux) osOptions.push({ id: 'linux',   label: '🐧 Linux' });
+  if (specs.download_win) {
+    osOptions.push({
+      id: 'windows',
+      name: 'Windows',
+      icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1.5px; margin-right:6px;"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zM0 12.45h9.75v9.45L0 20.551v-8.1zM10.8 1.95L24 0v11.55H10.8V1.95zM10.8 12.45H24v11.55l-13.2-1.95v-9.6z"/></svg>`
+    });
+  }
+  if (specs.download_mac) {
+    osOptions.push({
+      id: 'mac',
+      name: 'macOS',
+      icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1.5px; margin-right:6px;"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 4.17c.66-.81 1.11-1.93.99-3.06-1 .04-2.2.67-2.92 1.49-.62.71-1.16 1.85-1.01 2.96 1.12.09 2.27-.58 2.94-1.39z"/></svg>`
+    });
+  }
+  if (specs.download_linux) {
+    osOptions.push({
+      id: 'linux',
+      name: 'Linux',
+      icon: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1.5px; margin-right:6px;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`
+    });
+  }
   const needsOsSelect = osOptions.length > 1;
   let selectedOs = osOptions.length === 1 ? osOptions[0].id : null;
 
@@ -154,6 +172,20 @@ export function renderProductPage(params) {
               </div>
             </div>
 
+            <!-- OS Selector (above Actions) -->
+            ${needsOsSelect ? `
+            <div id="os-selector" style="margin-bottom: var(--space-md);">
+              <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Select Operating System</div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                ${osOptions.map(os => `
+                  <button class="os-option-btn btn btn-ghost" data-os="${os.id}"
+                    style="padding:10px 18px; font-size:0.875rem; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius-md); transition:all 0.2s; display:flex; align-items:center;">
+                    ${os.icon} ${os.name}
+                  </button>
+                `).join('')}
+              </div>
+            </div>` : ''}
+
             <!-- Actions -->
             <div class="product-actions">
               ${price === 0 ? `
@@ -161,18 +193,6 @@ export function renderProductPage(params) {
                   ⬇️ Download Free
                 </button>
               ` : `
-                ${needsOsSelect ? `
-                <div id="os-selector" style="margin-bottom:12px;">
-                  <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Select your operating system</div>
-                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    ${osOptions.map(os => `
-                      <button class="os-option-btn btn btn-ghost" data-os="${os.id}"
-                        style="padding:8px 16px; font-size:0.875rem; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius-md); transition:all 0.2s;">
-                        ${os.label}
-                      </button>
-                    `).join('')}
-                  </div>
-                </div>` : ''}
                 <button class="btn btn-primary btn-lg" id="product-add-cart"
                   ${inCart ? 'disabled style="opacity:0.5"' : ''}
                   ${needsOsSelect && !inCart ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''}>

@@ -30,7 +30,6 @@ export function renderCheckoutPage() {
   let paymentMethod = null; // null | 'crypto' | 'card'
   let selectedCoin = 'BTC';
   let useCredits = false;
-  let nudgeVisible = false;
   let appliedPromo = sessionStorage.getItem('pm_promo_code') || null;
   let guestEmailValue = sessionStorage.getItem('pm_guest_email') || '';
 
@@ -239,31 +238,6 @@ export function renderCheckoutPage() {
                   </div>
                 </button>
 
-                <!-- ── CARD CARD (Disabled/Blocked) ── -->
-                <button class="co-pm-card co-pm-card-method" id="pm-choose-card" aria-label="Pay with credit card" disabled style="opacity: 0.4; cursor: not-allowed; pointer-events: none; position: relative;">
-                  <div class="co-pm-card-inner" style="padding: 16px 20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                      <div style="display:flex; align-items:center; gap: 16px;">
-                        <div class="co-pm-icon co-pm-icon-card" style="width:40px; height:40px; margin:0; opacity: 0.6;">
-                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                            <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/>
-                            <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
-                            <rect x="5" y="14" width="4" height="2" rx="1" fill="currentColor"/>
-                          </svg>
-                        </div>
-                        <div style="text-align: left;">
-                          <div class="co-pm-title" style="font-size: 16px; margin-bottom: 2px;">Pay with Card</div>
-                          <div style="font-size: 12px; color: var(--neon-red); font-weight: 600;">Unavailable for now</div>
-                        </div>
-                      </div>
-                      <div style="display:flex; gap: 6px; opacity: 0.5;">
-                        <div class="co-pm-brand-logo" style="padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-primary); border-radius: 4px;"><svg viewBox="0 0 780 500" width="28" height="18"><rect width="780" height="500" rx="40" fill="#1A1F71"/><text x="390" y="320" text-anchor="middle" font-family="Arial" font-size="200" font-weight="900" fill="#fff" letter-spacing="-8">VISA</text></svg></div>
-                        <div class="co-pm-brand-logo" style="padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-primary); border-radius: 4px;"><svg viewBox="0 0 131.4 86" width="28" height="18"><rect width="131.4" height="86" rx="8" fill="#252525"/><circle cx="45.7" cy="43" r="27.9" fill="#EB001B"/><circle cx="85.7" cy="43" r="27.9" fill="#F79E1B"/><path d="M65.7 20.8a27.9 27.9 0 0 1 0 44.4 27.9 27.9 0 0 1 0-44.4z" fill="#FF5F00"/></svg></div>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-
               </div>
 
               <div class="co-method-footer">
@@ -343,102 +317,8 @@ export function renderCheckoutPage() {
                 </div>
               </div>
 
-              ` : `
-
-              <!-- ── CARD REDIRECT PANEL ── -->
-              <div class="co-card-redirect animate-fade-in-up">
-                <div class="co-crypto-widget-header">
-                  <button class="co-back-btn" id="back-to-chooser">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                  </button>
-                  <h3 class="co-crypto-title">Pay by Card</h3>
-                </div>
-
-                <div class="co-card-brands-row">
-                  <div class="co-card-brand-lg"><svg viewBox="0 0 780 500" width="62" height="40"><rect width="780" height="500" rx="40" fill="#1A1F71"/><text x="390" y="320" text-anchor="middle" font-family="Arial" font-size="200" font-weight="900" fill="#fff" letter-spacing="-8">VISA</text></svg></div>
-                  <div class="co-card-brand-lg"><svg viewBox="0 0 131.4 86" width="62" height="40"><rect width="131.4" height="86" rx="8" fill="#252525"/><circle cx="45.7" cy="43" r="27.9" fill="#EB001B"/><circle cx="85.7" cy="43" r="27.9" fill="#F79E1B"/><path d="M65.7 20.8a27.9 27.9 0 0 1 0 44.4 27.9 27.9 0 0 1 0-44.4z" fill="#FF5F00"/></svg></div>
-                  <div class="co-card-brand-lg"><svg viewBox="0 0 131.4 86" width="62" height="40"><rect width="131.4" height="86" rx="8" fill="#2E77BC"/><text x="65.7" y="56" text-anchor="middle" font-family="Arial" font-size="22" font-weight="900" fill="#fff" letter-spacing="2">AMEX</text></svg></div>
-                </div>
-
-                <div class="co-card-redirect-total">
-                  <div class="co-crt-row">
-                    <span>Subtotal</span>
-                    <span>${formatPrice(total)}</span>
-                  </div>
-                  <div class="co-crt-row co-crt-fee">
-                    <span>Processing fee (4.9%)</span>
-                    <span style="color:var(--neon-orange);">+${formatPrice(total * 0.049)}</span>
-                  </div>
-                  <div class="co-crt-row co-crt-total">
-                    <span>Total due</span>
-                    <span>${formatPrice(cardTotalWithFee)}</span>
-                  </div>
-                </div>
-
-                <div class="co-card-warnings">
-                  <div class="co-card-warn-item">
-                    <span class="co-card-warn-icon">⚠️</span>
-                    <span>Identity verification (KYC) may be required by your bank</span>
-                  </div>
-                  <div class="co-card-warn-item">
-                    <span class="co-card-warn-icon">⚠️</span>
-                    <span>Some banks block plugin / software purchases</span>
-                  </div>
-                  <div class="co-card-warn-item">
-                    <span class="co-card-warn-icon">⚠️</span>
-                    <span>Card processing is slower than direct crypto</span>
-                  </div>
-                </div>
-
-                <button class="co-card-proceed-btn" id="go-to-card-checkout">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="2"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/></svg>
-                  Continue to Secure Card Checkout
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                </button>
-
-                <div class="co-card-redirect-notice">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6l-8-4z" fill="currentColor"/></svg>
-                  Secured by 3D Secure 2.0 · 256-bit SSL · Mock Stripe
-                </div>
-
-                <div class="co-crypto-switch-nudge">
-                  ⚡ Save 4.9% — <button class="co-nudge-switch-btn" id="switch-to-crypto">Switch to crypto instead</button>
-                </div>
               </div>
-              `}
-
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── NUDGE MODAL ── -->
-      ${nudgeVisible ? `
-      <div class="nudge-modal-overlay" id="nudge-overlay">
-        <div class="nudge-modal">
-          <div class="nudge-modal-icon">⚡</div>
-          <h3 class="nudge-modal-title">Crypto is faster & cheaper</h3>
-          <p class="nudge-modal-body">
-            Direct crypto payment has <strong>zero extra fees</strong>, no KYC, and instant delivery.
-            Card payments add 4.9% and may require identity verification.
-          </p>
-          <div class="nudge-comparison">
-            <div class="nudge-col nudge-col-crypto">
-              <div class="nudge-col-title">🟢 Crypto</div>
-              <div class="nudge-col-item">✅ Zero extra fees</div>
-              <div class="nudge-col-item">✅ No ID needed</div>
-              <div class="nudge-col-item">✅ Instant settlement</div>
-            </div>
-            <div class="nudge-col nudge-col-card">
-              <div class="nudge-col-title">🟡 Card</div>
-              <div class="nudge-col-item">⚠️ +4.9% fee</div>
-              <div class="nudge-col-item">⚠️ KYC may apply</div>
-              <div class="nudge-col-item">⚠️ Slower process</div>
-            </div>
-          </div>
-          <div class="nudge-modal-actions">
-            <button class="btn btn-primary" id="nudge-go-back" style="width:100%;">← Stay with Crypto (Save ${formatPrice(total * 0.049)})</button>
-            <button class="btn btn-ghost nudge-continue-btn" id="nudge-confirm-card">Continue with Card anyway</button>
           </div>
         </div>
       </div>
@@ -488,19 +368,6 @@ export function renderCheckoutPage() {
       render();
     });
 
-    // Choose card — show nudge first
-    document.getElementById('pm-choose-card')?.addEventListener('click', () => {
-      nudgeVisible = true;
-      paymentMethod = 'card';
-      render();
-    });
-
-    // Switch to crypto from card panel
-    document.getElementById('switch-to-crypto')?.addEventListener('click', () => {
-      paymentMethod = 'crypto';
-      render();
-    });
-
     // Nudge — go back to crypto
     document.getElementById('nudge-go-back')?.addEventListener('click', () => {
       nudgeVisible = false;
@@ -517,14 +384,9 @@ export function renderCheckoutPage() {
       }
     });
 
-    // Nudge — confirmed card
     document.getElementById('nudge-confirm-card')?.addEventListener('click', () => {
       nudgeVisible = false;
       render();
-    });
-
-    document.getElementById('go-to-card-checkout')?.addEventListener('click', () => {
-      navigate('/checkout/card');
     });
 
     // Coin tabs

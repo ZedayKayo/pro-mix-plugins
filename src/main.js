@@ -28,7 +28,6 @@ import { renderStorePage } from './pages/StorePage.js';
 import { renderProductPage } from './pages/ProductPage.js';
 import { renderCartPage } from './pages/CartPage.js';
 import { renderCheckoutPage } from './pages/CheckoutPage.js';
-import { renderCardCheckoutPage } from './pages/CardCheckoutPage.js';
 import { renderDashboardPage } from './pages/DashboardPage.js';
 import { renderAdminPanel } from './pages/AdminPanelPage.js';
 import { renderLoginPage } from './pages/auth/LoginPage.js';
@@ -75,7 +74,6 @@ async function bootstrap() {
   registerRoute('/product/:slug', (params) => renderProductPage(params));
   registerRoute('/cart', () => renderCartPage());
   registerRoute('/checkout', () => renderCheckoutPage());
-  registerRoute('/checkout/card', () => renderCardCheckoutPage());
   registerRoute('/dashboard', () => renderDashboardPage());
   registerRoute('/admin', (params) => renderAdminPanel(params));
   registerRoute('/login', () => renderLoginPage());
