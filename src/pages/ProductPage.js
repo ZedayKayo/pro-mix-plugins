@@ -175,7 +175,7 @@ export function renderProductPage(params) {
             <!-- OS Selector (above Actions) -->
             ${needsOsSelect ? `
             <div id="os-selector" style="margin-bottom: var(--space-md);">
-              <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Select Operating System</div>
+              <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Select Operating System</div>
               <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 ${osOptions.map(os => `
                   <button class="os-option-btn btn btn-ghost" data-os="${os.id}"
@@ -770,90 +770,8 @@ export function renderProductPage(params) {
       renderReviews();
     }, 600);
   });
-  // ── Sticky Add-to-Cart Bar ─────────────────────────────────
-  const mainCta = document.getElementById('product-add-cart');
-  if (mainCta) {
-    // Create the sticky bar
-    const stickyBar = document.createElement('div');
-    stickyBar.id = 'sticky-atc-bar';
-    stickyBar.className = 'sticky-atc-bar';
-    stickyBar.innerHTML = `
-      <div class="sticky-atc-info">
-        <span class="sticky-atc-name">${product.name}</span>
-        <span class="sticky-atc-price">${formatPrice(price)}</span>
-      </div>
-      <div class="sticky-atc-actions">
-        ${price === 0 ? `
-          <button class="btn btn-primary" id="sticky-download-free">
-            ⬇️ Download Free
-          </button>
-        ` : `
-          <button class="btn btn-primary" id="sticky-atc-btn" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
-            ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
-          </button>
-          <button class="btn" style="background:rgba(247,147,26,0.1);border:1px solid rgba(247,147,26,0.3);color:#f7931a;" id="sticky-buy-btn">
-            ⚡ Buy Now
-          </button>
-        `}
-      </div>
-    `;
-    // Append to page content so it's auto-cleaned up on route change
-    document.getElementById('page-content').appendChild(stickyBar);
-
-    // Show/hide based on whether main CTA is in viewport
-    const observer = new IntersectionObserver(
-      ([entry]) => stickyBar.classList.toggle('sticky-atc-visible', !entry.isIntersecting),
-      { threshold: 0, rootMargin: '-68px 0px 0px 0px' } // account for header height
-    );
-    observer.observe(mainCta);
-
-    // Sticky bar events
-    document.getElementById('sticky-download-free')?.addEventListener('click', () => {
-      if (!isLoggedIn()) {
-        showToast('Please log in or create a free account to download.', 'error');
-        sessionStorage.setItem('pm_redirect_after_login', `/product/${product.slug}`);
-        navigate('/login');
-        return;
-      }
-      sessionStorage.setItem('pm_last_order', JSON.stringify({
-        items: [product],
-        total: 0,
-        isFree: true
-      }));
-      navigate('/order-success');
-    });
-
-    document.getElementById('sticky-atc-btn')?.addEventListener('click', () => {
-      if (needsOsSelect && !selectedOs) {
-        showToast('Please select your operating system first.', 'error');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      if (!isInCart(product.id)) {
-        addToCart({ ...product, selectedOs: selectedOs || null });
-        showToast(`${product.name} added to cart!`, 'success');
-        document.getElementById('sticky-atc-btn').textContent = '✓ In Cart';
-        document.getElementById('sticky-atc-btn').disabled = true;
-        document.getElementById('sticky-atc-btn').style.opacity = '0.5';
-        // Sync main button too
-        if (mainCta) { mainCta.textContent = '✓ In Cart'; mainCta.disabled = true; mainCta.style.opacity = '0.5'; }
-      }
-    });
-    document.getElementById('sticky-buy-btn')?.addEventListener('click', () => {
-      if (needsOsSelect && !selectedOs) {
-        showToast('Please select your operating system first.', 'error');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
-      }
-      if (!isInCart(product.id)) addToCart({ ...product, selectedOs: selectedOs || null });
-      navigate('/checkout');
-    });
-
-
-    // Clean up observer when navigating away
-    window.addEventListener('popstate', () => { observer.disconnect(); stickyBar?.remove(); }, { once: true });
-  }
 }
+
 
 function initAudioPlayer() {
   const playBtn = document.getElementById('demo-play-btn');
