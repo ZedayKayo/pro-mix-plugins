@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Forgot Password Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Forgot Password Page
 // ═══════════════════════════════════════════════════════
 
 import { createAuthLayout } from './AuthLayout.js';

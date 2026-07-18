@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Toast Notification Component
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Toast Notification Component
 // ═══════════════════════════════════════════════════════
 
 let container = null;

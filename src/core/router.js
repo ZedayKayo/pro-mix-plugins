@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — SPA Router (History API)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — SPA Router (History API)
 // ═══════════════════════════════════════════════════════
 
 import { fetchSessionProfile } from '../services/dbService.js';

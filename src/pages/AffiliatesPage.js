@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Affiliates Page (Router Entrypoint)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Affiliates Page (Router Entrypoint)
 // ═══════════════════════════════════════════════════════
 
 import { getUser, isLoggedIn } from '../core/store.js';

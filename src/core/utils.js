@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Utility Helpers
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Utility Helpers
 // ═══════════════════════════════════════════════════════
 
 export function formatPrice(amount) {
@@ -122,8 +122,8 @@ const DEFAULT_OG_IMAGE = '/images/og-default.jpg';
 
 export function setPageMeta(title, description, ogImage) {
   const fullTitle = title
-    ? `${title} — ProMix Plugins`
-    : 'ProMix Plugins — Professional Audio Tools for Music Production';
+    ? `${title} — Afford Plugins`
+    : 'Afford Plugins — Professional Audio Tools for Music Production';
   const desc = description ||
     'Access professional audio plugins — EQs, compressors, reverbs, synthesizers — at up to 70% off retail. Pay with crypto. Download instantly.';
   const img = ogImage || DEFAULT_OG_IMAGE;
@@ -147,7 +147,7 @@ export function setPageMeta(title, description, ogImage) {
     'og:image':       img,
     'og:url':         window.location.href,
     'og:type':        'website',
-    'og:site_name':   'ProMix Plugins',
+    'og:site_name':   'Afford Plugins',
     // Twitter Card
     'twitter:card':        'summary_large_image',
     'twitter:title':       fullTitle,
@@ -222,7 +222,7 @@ export function getPluginImage(product, index = 0) {
       <circle cx="193" cy="160" r="8" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.5"/>
       <circle cx="231" cy="160" r="8" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.5"/>
       <text x="200" y="230" text-anchor="middle" fill="${c1}" font-family="sans-serif" font-size="16" font-weight="600" opacity="0.9">${name}</text>
-      <text x="200" y="255" text-anchor="middle" fill="#6a6a82" font-family="sans-serif" font-size="11">PRO-MIX PLUGINS</text>
+      <text x="200" y="255" text-anchor="middle" fill="#6a6a82" font-family="sans-serif" font-size="11">Afford Plugins</text>
     </svg>
   `)}`;
 }

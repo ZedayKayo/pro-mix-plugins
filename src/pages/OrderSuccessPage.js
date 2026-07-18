@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Order Success / Installation Guide Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Order Success / Installation Guide Page
 // ═══════════════════════════════════════════════════════
 
 import { navigate } from '../core/router.js';

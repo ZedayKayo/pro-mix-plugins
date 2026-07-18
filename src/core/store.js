@@ -1,14 +1,14 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Global State Store (Supabase + localStorage cache)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Global State Store (Supabase + localStorage cache)
 // ═══════════════════════════════════════════════════════
 
 const STORAGE_KEYS = {
-  CART: 'promix_cart',
-  USER: 'promix_user',
-  PURCHASES: 'promix_purchases',
-  THEME: 'promix_theme',
-  CUSTOM_PRODUCTS: 'promix_custom_products',
-  HIDDEN_PRODUCTS: 'promix_hidden_products',
+  CART: 'Afford Plugins_cart',
+  USER: 'Afford Plugins_user',
+  PURCHASES: 'Afford Plugins_purchases',
+  THEME: 'Afford Plugins_theme',
+  CUSTOM_PRODUCTS: 'Afford Plugins_custom_products',
+  HIDDEN_PRODUCTS: 'Afford Plugins_hidden_products',
 };
 
 // Import Supabase service
@@ -43,10 +43,10 @@ export function on(event, callback) {
 
 // ── Session ──
 function getSessionId() {
-  let sid = localStorage.getItem('promix_session');
+  let sid = localStorage.getItem('Afford Plugins_session');
   if (!sid) {
     sid = 'sess_' + Date.now() + Math.random().toString(36).substring(2);
-    localStorage.setItem('promix_session', sid);
+    localStorage.setItem('Afford Plugins_session', sid);
   }
   return sid;
 }

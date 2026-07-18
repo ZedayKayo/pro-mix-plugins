@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Blog / Tutorials Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Blog / Tutorials Page
 // ═══════════════════════════════════════════════════════
 
 import { getDiscountPct } from '../services/discountService.js';
@@ -39,7 +39,7 @@ const ARTICLES = [
 
       <h2>4. Dynamic EQ Instead of Static Cuts</h2>
       <p>Static EQ cuts work well for consistent problems, but what about resonances that only appear on certain notes? Dynamic EQ only applies the cut when the problem frequency exceeds a threshold — giving you the correction when needed without dulling the sound when it's behaving.</p>
-      <div class="tip-box"><strong>Plugin Pick:</strong> FabFilter Pro-Q 3's dynamic mode is industry-standard for this technique. Available on ProMix for ${getDiscountPct()}% off retail.</div>
+      <div class="tip-box"><strong>Plugin Pick:</strong> FabFilter Pro-Q 3's dynamic mode is industry-standard for this technique. Available on Afford Plugins for ${getDiscountPct()}% off retail.</div>
 
       <h2>5. Reference Against Commercial Tracks</h2>
       <p>No EQ technique matters if you can't hear your mistakes. Build a habit of A/B referencing against commercial tracks in the same genre. Use a spectrum analyzer to see how your frequency balance compares — and adjust ruthlessly until your mix lives in the same ballpark.</p>
@@ -312,7 +312,7 @@ function renderArticle(container, article) {
   history.pushState(null, '', `/blog?article=${article.id}`);
   setPageMeta(
     article.title,
-    article.excerpt + ' — ProMix Blog: professional mixing and production guides.'
+    article.excerpt + ' — Afford Plugins Blog: professional mixing and production guides.'
   );
   container.innerHTML = `
     <div class="section">
@@ -333,7 +333,7 @@ function renderArticle(container, article) {
                 <div class="blog-card-avatar">${article.authorInitial}</div>
                 <div>
                   <div style="font-weight:600;font-size:var(--text-sm);color:var(--text-primary);">${article.author}</div>
-                  <div style="font-size:var(--text-xs);color:var(--text-muted);">ProMix Staff Engineer</div>
+                  <div style="font-size:var(--text-xs);color:var(--text-muted);">Afford Plugins Staff Engineer</div>
                 </div>
               </div>
               <span style="font-size:var(--text-sm);color:var(--text-muted);">${article.date}</span>

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Cart Drawer Component (Fix #5)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Cart Drawer Component (Fix #5)
 // Slide-out off-canvas cart drawer
 // ═══════════════════════════════════════════════════════
 

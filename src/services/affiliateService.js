@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Affiliate Service
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Affiliate Service
 // All Supabase queries for the affiliate program
 // ═══════════════════════════════════════════════════════
 
@@ -564,7 +564,7 @@ export function exportCommissionsCSV(commissions) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `promix-commissions-${Date.now()}.csv`;
+  a.download = `affordplugins-commissions-${Date.now()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -585,7 +585,7 @@ export function exportAffiliatesCSV(affiliates) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `promix-affiliates-${Date.now()}.csv`;
+  a.download = `affordplugins-affiliates-${Date.now()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }

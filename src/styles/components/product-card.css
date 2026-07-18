@@ -1,4 +1,4 @@
-/* ══════════════ PRODUCT CARDS ══════════════ */
+﻿/* ══════════════ PRODUCT CARDS ══════════════ */
 
 .product-card {
   position: relative;
@@ -224,7 +224,7 @@
   justify-content: center;
 }
 
-/* Why Pro-Mix / Stats Row */
+/* Why afford-plugins / Stats Row */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

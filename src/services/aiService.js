@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — AI Data Population Service
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — AI Data Population Service
 // DEV:  Calls Gemini directly using VITE_GEMINI_API_KEY from .env
 // PROD: Proxies through the secure Vercel /api/extract-plugin function
 

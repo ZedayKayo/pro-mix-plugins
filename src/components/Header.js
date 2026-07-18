@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Header Component
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Header Component
 // Fix #1: Mobile Hamburger Menu
 // Fix #5: Cart button opens drawer (not navigates)
 // Fix #15: Admin link hidden for non-admin users
@@ -22,7 +22,7 @@ export function renderHeader() {
     <header class="site-header" id="site-header">
       <div class="header-inner">
         <a href="/" class="header-logo" id="header-logo">
-          <img src="/images/logo.png" alt="ProMix" style="height: 38px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
+          <img src="/images/logo.png" alt="Afford Plugins" style="height: 38px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
         </a>
 
         <nav class="header-nav" id="header-nav" aria-label="Main navigation">
@@ -71,7 +71,7 @@ export function renderHeader() {
     <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true"></div>
     <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation" aria-hidden="true">
       <div class="mobile-menu-header">
-        <img src="/images/logo.png" alt="ProMix" style="height:28px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
+        <img src="/images/logo.png" alt="Afford Plugins" style="height:28px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
         <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close navigation menu">✕</button>
       </div>
 

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Information Pages (Enhanced)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Information Pages (Enhanced)
 // About, FAQ, Support, Refund Policy, Contact
 // ═══════════════════════════════════════════════════════
 
@@ -9,7 +9,7 @@ import { getSiteSettings } from '../core/store.js';
 
 // ── ABOUT PAGE ─────────────────────────────────────────
 export function renderAboutPage() {
-  setPageMeta('About ProMix Plugins', 'ProMix was founded to make studio-grade audio software affordable for every producer. Learn how we deliver top plugins at up to ' + getDiscountPct() + '% off retail.');
+  setPageMeta('About Afford Plugins', 'Afford Plugins was founded to make studio-grade audio software affordable for every producer. Learn how we deliver top plugins at up to ' + getDiscountPct() + '% off retail.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -19,7 +19,7 @@ export function renderAboutPage() {
           Our Story
         </span>
         <h1>Built for Producers,<br/>Priced for Everyone</h1>
-        <p>ProMix was founded on a single belief: studio-quality tools should not be a luxury. We struck exclusive partnerships so you don't have to pay full retail — ever.</p>
+        <p>Afford Plugins was founded on a single belief: studio-quality tools should not be a luxury. We struck exclusive partnerships so you don't have to pay full retail — ever.</p>
       </div>
     </div>
 
@@ -30,7 +30,7 @@ export function renderAboutPage() {
         <div class="about-story animate-fade-in-up">
           <div class="about-story-text">
             <div class="section-title"><h2>Why Are Our Prices ${getDiscountPct()}% Lower?</h2></div>
-            <p>ProMix has established direct licensing agreements and bulk partnership deals with leading audio software developers. These are the same studios, engineers, and brands behind the plugins you already use — FabFilter, iZotope, Arturia, Waves, and more.</p>
+            <p>Afford Plugins has established direct licensing agreements and bulk partnership deals with leading audio software developers. These are the same studios, engineers, and brands behind the plugins you already use — FabFilter, iZotope, Arturia, Waves, and more.</p>
             <p>Because we sell volume, our partners pass extraordinary savings directly to us. We pass every cent of that saving directly to you. There are no middlemen, no subscriptions, no hidden fees.</p>
             <p>Our mission is to democratize music production. A bedroom producer in Lagos or Lahore should have access to the same tools as an engineer at Abbey Road — and now they do.</p>
             <div style="margin-top:var(--space-xl);">
@@ -75,7 +75,7 @@ export function renderAboutPage() {
             <div class="about-value-card">
               <span class="about-value-icon">🎯</span>
               <h3>Quality</h3>
-              <p>We only partner with developers who meet our standard. Every plugin on ProMix is industry-validated and professionally reviewed.</p>
+              <p>We only partner with developers who meet our standard. Every plugin on Afford Plugins is industry-validated and professionally reviewed.</p>
             </div>
           </div>
         </div>
@@ -110,13 +110,13 @@ const FAQ_ITEMS = [
   { cat: 'Installation', q: 'How do I install my plugins after purchase?', a: 'After purchase, go to your Dashboard and find the plugin under "My Plugins." Click Download to get the installer for your OS (Windows or macOS). Run the installer, then open your DAW. The plugin will appear in your VST/AU/AAX folder automatically. Enter your license key on first launch — it\'s displayed in your Dashboard.' },
   { cat: 'Installation', q: 'Which DAWs are supported?', a: 'Our plugins are distributed in VST3, AU, and AAX formats, making them compatible with virtually all major DAWs including FL Studio, Ableton Live, Logic Pro, Pro Tools, Cubase, Studio One, Reaper, and Reason. Check each plugin\'s product page for specific DAW compatibility details.' },
   { cat: 'Installation', q: 'Can I install on both Windows and macOS?', a: 'Yes. A single license covers both operating systems. Download the appropriate installer from your Dashboard for each machine you want to install on.' },
-  { cat: 'Pricing', q: `Why are your prices ${getDiscountPct()}% lower than other stores?`, a: `ProMix has established exclusive bulk licensing and direct partnership agreements with audio software developers. Because we move significant volume, developers pass major savings to us — which we pass directly to you. There are no hidden fees, no subscriptions, and no catch.` },
-  { cat: 'Pricing', q: 'Are these legitimate, fully licensed plugins?', a: 'Absolutely. Every plugin sold through ProMix comes with a genuine, full commercial license issued directly by the developer. You receive the exact same product as buying at full retail price — just at a fraction of the cost. All licenses are lifetime, not subscription-based.' },
+  { cat: 'Pricing', q: `Why are your prices ${getDiscountPct()}% lower than other stores?`, a: `Afford Plugins has established exclusive bulk licensing and direct partnership agreements with audio software developers. Because we move significant volume, developers pass major savings to us — which we pass directly to you. There are no hidden fees, no subscriptions, and no catch.` },
+  { cat: 'Pricing', q: 'Are these legitimate, fully licensed plugins?', a: 'Absolutely. Every plugin sold through Afford Plugins comes with a genuine, full commercial license issued directly by the developer. You receive the exact same product as buying at full retail price — just at a fraction of the cost. All licenses are lifetime, not subscription-based.' },
   { cat: 'Pricing', q: 'Can I use one license on multiple computers?', a: 'Yes. A single license covers up to 3 of your personal machines simultaneously — for example, a studio desktop and a touring laptop. This matches or exceeds the standard policy of most plugin developers.' },
   { cat: 'Payment', q: 'How does crypto payment work?', a: 'At checkout, select your preferred cryptocurrency (BTC, ETH, or USDT). You\'ll be shown a wallet address and QR code with the exact amount to send. Once your transaction is confirmed on-chain, your plugins are instantly unlocked in your Dashboard. The whole process typically takes under 10 minutes for ETH/USDT, slightly longer for BTC.' },
   { cat: 'Payment', q: 'Can I pay with a credit or debit card?', a: 'Yes. We offer a full card checkout flow accepting Visa, Mastercard, and AMEX. Card payments are processed securely with 3D Secure verification for your protection.' },
-  { cat: 'Payment', q: 'What if I send the wrong amount of crypto?', a: 'If you send less than the required amount, your order will remain pending. If you send more, we credit the overpayment to your ProMix account balance which can be used on future purchases. Please always send the exact amount shown to avoid delays.' },
-  { cat: 'Licensing', q: 'Do my licenses expire?', a: 'Never. All ProMix licenses are lifetime, perpetual licenses. You own the plugin version you purchased indefinitely. Major version upgrades (e.g., v2 → v3) may require a separate upgrade purchase, but your existing version remains fully licensed and functional.' },
+  { cat: 'Payment', q: 'What if I send the wrong amount of crypto?', a: 'If you send less than the required amount, your order will remain pending. If you send more, we credit the overpayment to your Afford Plugins account balance which can be used on future purchases. Please always send the exact amount shown to avoid delays.' },
+  { cat: 'Licensing', q: 'Do my licenses expire?', a: 'Never. All Afford Plugins licenses are lifetime, perpetual licenses. You own the plugin version you purchased indefinitely. Major version upgrades (e.g., v2 → v3) may require a separate upgrade purchase, but your existing version remains fully licensed and functional.' },
   { cat: 'Licensing', q: 'Can I sell or transfer my license?', a: 'License transfers depend on the individual developer\'s policy. Most of our partners allow one-time transfers. Contact support with the plugin name and we\'ll guide you through the process.' },
   { cat: 'Support', q: 'What if a plugin isn\'t working in my DAW?', a: 'First, ensure your DAW is scanning the correct plugin folder (VST3 on Windows is typically C:\\Program Files\\Common Files\\VST3). If the issue persists, contact our support team with your OS, DAW version, and the specific plugin. We typically respond within 24 hours and have a 30-day fix guarantee for compatibility issues.' },
   { cat: 'Support', q: 'Do you offer refunds?', a: 'Due to the nature of digital goods, all sales are final. However, if a plugin is verified by our support team as fundamentally broken and incompatible with a listed OS/DAW that we cannot fix within 30 days, we will issue a full refund or store credit. See our full Refund Policy for details.' },
@@ -125,7 +125,7 @@ const FAQ_ITEMS = [
 const FAQ_CATS = ['All', ...new Set(FAQ_ITEMS.map(f => f.cat))];
 
 export function renderFaqPage() {
-  setPageMeta('FAQ — ProMix Plugins', 'Answers to the most common questions about purchasing, installing, and licensing ProMix audio plugins. Installation guides, payment help, and more.');
+  setPageMeta('FAQ — Afford Plugins', 'Answers to the most common questions about purchasing, installing, and licensing Afford Plugins audio plugins. Installation guides, payment help, and more.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -135,7 +135,7 @@ export function renderFaqPage() {
           Got Questions?
         </span>
         <h1>Frequently Asked Questions</h1>
-        <p>Everything you need to know about purchasing, installing, and using ProMix plugins.</p>
+        <p>Everything you need to know about purchasing, installing, and using Afford Plugins.</p>
       </div>
     </div>
 
@@ -221,7 +221,7 @@ export function renderFaqPage() {
 
 // ── SUPPORT PAGE ────────────────────────────────────────
 export function renderSupportPage() {
-  setPageMeta('Support Center — ProMix Plugins', 'Get help with plugin installation, license keys, payment issues, and DAW compatibility. Live chat, email support, and a full knowledge base available 24/7.');
+  setPageMeta('Support Center — Afford Plugins', 'Get help with plugin installation, license keys, payment issues, and DAW compatibility. Live chat, email support, and a full knowledge base available 24/7.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -349,7 +349,7 @@ export function renderSupportPage() {
         <!-- Contact info -->
         <div style="margin-top:var(--space-2xl);display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-xl);text-align:center;">
           ${[
-            { icon: '✉️', label: 'Email', value: getSiteSettings().support_email || 'support@promixplugins.com' },
+            { icon: '✉️', label: 'Email', value: getSiteSettings().support_email || 'dr.zed19999@gmail.com' },
             { icon: '⏱️', label: 'Response Time', value: 'Within 24 hours' },
             { icon: '🌍', label: 'Coverage', value: '24/7 Global Support' },
           ].map(c => `
@@ -400,7 +400,7 @@ export function renderSupportPage() {
 
 // ── REFUND POLICY PAGE ──────────────────────────────────
 export function renderRefundPolicyPage() {
-  setPageMeta('Refund Policy — ProMix Plugins', 'ProMix Plugins refund policy for digital audio software purchases. All sales are final once a license is issued, with exceptions for verified broken products.');
+  setPageMeta('Refund Policy — Afford Plugins', 'Afford Plugins refund policy for digital audio software purchases. All sales are final once a license is issued, with exceptions for verified broken products.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -424,7 +424,7 @@ export function renderRefundPolicyPage() {
 
           <h3 style="margin-bottom:var(--space-sm);">Digital Software Downloads</h3>
           <p class="text-secondary" style="line-height:1.7;margin-bottom:var(--space-xl);">
-            Once a plugin is purchased and a license key is issued to your Dashboard, the transaction is complete and non-reversible. We do not offer refunds, returns, or exchanges for any digital product accessed from ProMix — regardless of whether the download has been initiated.
+            Once a plugin is purchased and a license key is issued to your Dashboard, the transaction is complete and non-reversible. We do not offer refunds, returns, or exchanges for any digital product accessed from Afford Plugins — regardless of whether the download has been initiated.
           </p>
 
           <h3 style="margin-bottom:var(--space-sm);">Cryptocurrency Transactions</h3>
@@ -454,7 +454,7 @@ export function renderRefundPolicyPage() {
 
 // ── CONTACT PAGE ────────────────────────────────────────
 export function renderContactPage() {
-  setPageMeta('Contact ProMix Plugins', 'Get in touch with the ProMix team for technical support, payment questions, partnership enquiries, or general help. We respond within 24 hours.');
+  setPageMeta('Contact Afford Plugins', 'Get in touch with the Afford Plugins team for technical support, payment questions, partnership enquiries, or general help. We respond within 24 hours.');
   const container = document.getElementById('page-content');
   container.innerHTML = `
     <div class="info-hero">
@@ -500,7 +500,7 @@ export function renderContactPage() {
           </form>
         </div>
         <div style="margin-top:var(--space-xl);text-align:center;color:var(--text-muted);font-size:var(--text-sm);">
-          <p>📧 ${getSiteSettings().support_email || 'support@promixplugins.com'} &nbsp;·&nbsp; ⏱ Usually within 24 hours</p>
+          <p>📧 ${getSiteSettings().support_email || 'dr.zed19999@gmail.com'} &nbsp;·&nbsp; ⏱ Usually within 24 hours</p>
         </div>
       </div>
     </div>
@@ -517,7 +517,7 @@ export function renderContactPage() {
 
 // ── PRIVACY POLICY PAGE ─────────────────────────────────
 export function renderPrivacyPolicyPage() {
-  setPageMeta('Privacy Policy — ProMix Plugins', 'How ProMix Plugins collects, uses, and protects your personal data. GDPR and CCPA compliant. Learn about your rights and how to contact us.');
+  setPageMeta('Privacy Policy — Afford Plugins', 'How Afford Plugins collects, uses, and protects your personal data. GDPR and CCPA compliant. Learn about your rights and how to contact us.');
   const container = document.getElementById('page-content');
   const lastUpdated = 'April 5, 2026';
   container.innerHTML = `
@@ -534,9 +534,9 @@ export function renderPrivacyPolicyPage() {
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">1. Who We Are</h3>
           <p style="margin-bottom:var(--space-xl);">
-            ProMix Plugins ("we", "us", "our") operates the website <strong style="color:var(--text-primary);">promixplugins.com</strong>.
+            Afford Plugins ("we", "us", "our") operates the website <strong style="color:var(--text-primary);">affordplugins.vercel.app</strong>.
             We sell digital audio plugin software to music producers and engineers worldwide.
-            For questions about this policy, contact us at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>.
+            For questions about this policy, contact us at <a href="mailto:${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}</a>.
           </p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">2. Information We Collect</h3>
@@ -550,7 +550,7 @@ export function renderPrivacyPolicyPage() {
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">3. How We Use Your Information</h3>
           <ul style="margin-bottom:var(--space-xl);padding-left:1.5rem;">
-            <li>To create and manage your ProMix account</li>
+            <li>To create and manage your Afford Plugins account</li>
             <li>To process and fulfil your digital plugin purchases</li>
             <li>To deliver download links and license keys to your Dashboard</li>
             <li>To send transactional emails (order confirmations, support responses)</li>
@@ -578,7 +578,7 @@ export function renderPrivacyPolicyPage() {
             <li><strong style="color:var(--text-primary);">Object</strong> to or restrict certain types of processing</li>
             <li><strong style="color:var(--text-primary);">Withdraw consent</strong> for marketing communications at any time</li>
           </ul>
-          <p style="margin-bottom:var(--space-xl);">To exercise any of these rights, email <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>. We will respond within 30 days.</p>
+          <p style="margin-bottom:var(--space-xl);">To exercise any of these rights, email <a href="mailto:${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}</a>. We will respond within 30 days.</p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">7. Data Retention</h3>
           <p style="margin-bottom:var(--space-xl);">We retain your account data for as long as your account is active. Purchase records are retained for 7 years for legal and accounting purposes. You may request deletion of your account at any time, subject to these minimum retention obligations.</p>
@@ -587,14 +587,14 @@ export function renderPrivacyPolicyPage() {
           <p style="margin-bottom:var(--space-xl);">We use only essential cookies required for authentication and cart functionality. These cookies are strictly necessary and do not require consent under GDPR. We do not use advertising, analytics, or fingerprinting cookies. You can disable cookies in your browser settings, but this will prevent login and checkout from functioning.</p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">9. Children's Privacy</h3>
-          <p style="margin-bottom:var(--space-xl);">ProMix Plugins is not directed at children under 16. We do not knowingly collect personal data from children. If you believe a minor has provided us data, please contact us immediately.</p>
+          <p style="margin-bottom:var(--space-xl);">Afford Plugins is not directed at children under 16. We do not knowingly collect personal data from children. If you believe a minor has provided us data, please contact us immediately.</p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">10. Changes to This Policy</h3>
           <p style="margin-bottom:var(--space-xl);">We may update this Privacy Policy from time to time. Significant changes will be communicated by email or a prominent notice on the website. Continued use of the site after changes constitutes acceptance of the updated policy.</p>
 
           <div style="margin-top:var(--space-xl);padding:var(--space-md) var(--space-lg);background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--text-sm);">
             <strong style="color:var(--text-primary);">Questions?</strong> Email us at
-            <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green);"> ${getSiteSettings().support_email || 'support@promixplugins.com'}</a>
+            <a href="mailto:${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}" style="color:var(--neon-green);"> ${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}</a>
           </div>
 
         </div>
@@ -605,7 +605,7 @@ export function renderPrivacyPolicyPage() {
 
 // ── TERMS OF SERVICE PAGE ───────────────────────────────
 export function renderTermsPage() {
-  setPageMeta('Terms of Service — ProMix Plugins', 'Terms of Service governing use of ProMix Plugins. Covers purchases, digital licenses, refund eligibility, affiliate program, and prohibited use.');
+  setPageMeta('Terms of Service — Afford Plugins', 'Terms of Service governing use of Afford Plugins. Covers purchases, digital licenses, refund eligibility, affiliate program, and prohibited use.');
   const container = document.getElementById('page-content');
   const lastUpdated = 'April 5, 2026';
   container.innerHTML = `
@@ -613,7 +613,7 @@ export function renderTermsPage() {
       <div class="container">
         <span class="info-hero-eyebrow">Legal</span>
         <h1>Terms of Service</h1>
-        <p>Last updated: ${lastUpdated}. Please read these terms carefully before using ProMix Plugins.</p>
+        <p>Last updated: ${lastUpdated}. Please read these terms carefully before using Afford Plugins.</p>
       </div>
     </div>
     <div class="section">
@@ -621,17 +621,17 @@ export function renderTermsPage() {
         <div class="card" style="padding:var(--space-2xl); line-height:1.8; color:var(--text-secondary);">
 
           <div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.18);border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);margin-bottom:var(--space-xl);font-size:var(--text-sm);">
-            By creating an account or making a purchase on promixplugins.com, you agree to be bound by these Terms of Service.
+            By creating an account or making a purchase on affordplugins.vercel.app, you agree to be bound by these Terms of Service.
           </div>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">1. Acceptance of Terms</h3>
           <p style="margin-bottom:var(--space-xl);">
-            These Terms of Service ("Terms") govern your use of the ProMix Plugins website and all associated services. By accessing or using our platform, you confirm that you are at least 18 years old and have the legal capacity to enter into a binding agreement.
+            These Terms of Service ("Terms") govern your use of the Afford Plugins website and all associated services. By accessing or using our platform, you confirm that you are at least 18 years old and have the legal capacity to enter into a binding agreement.
           </p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">2. Our Service</h3>
           <p style="margin-bottom:var(--space-xl);">
-            ProMix Plugins provides digital audio plugin software to music producers, engineers, and artists at significantly reduced prices through direct partnership and bulk licensing arrangements with software developers. All products sold are digital goods delivered electronically to your ProMix account Dashboard.
+            Afford Plugins provides digital audio plugin software to music producers, engineers, and artists at significantly reduced prices through direct partnership and bulk licensing arrangements with software developers. All products sold are digital goods delivered electronically to your Afford Plugins account Dashboard.
           </p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">3. Account Responsibilities</h3>
@@ -639,7 +639,7 @@ export function renderTermsPage() {
             <li>You are responsible for maintaining the confidentiality of your account credentials.</li>
             <li>You must not share your account or allow others to use your login.</li>
             <li>You are responsible for all activity that occurs under your account.</li>
-            <li>You must notify us immediately at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a> if you suspect unauthorised access.</li>
+            <li>You must notify us immediately at <a href="mailto:${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}</a> if you suspect unauthorised access.</li>
           </ul>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">4. Purchases and Payments</h3>
@@ -664,7 +664,7 @@ export function renderTermsPage() {
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">7. Affiliate Program</h3>
           <p style="margin-bottom:var(--space-xl);">
-            Participation in the ProMix Affiliates Program is subject to separate Affiliate Terms provided upon approval. We reserve the right to suspend or terminate affiliate accounts for fraudulent referrals, policy violations, or abusive behaviour.
+            Participation in the Afford Plugins Affiliates Program is subject to separate Affiliate Terms provided upon approval. We reserve the right to suspend or terminate affiliate accounts for fraudulent referrals, policy violations, or abusive behaviour.
           </p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">8. Prohibited Use</h3>
@@ -679,7 +679,7 @@ export function renderTermsPage() {
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">9. Limitation of Liability</h3>
           <p style="margin-bottom:var(--space-xl);">
-            To the maximum extent permitted by law, ProMix Plugins shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services. Our total liability for any claim shall not exceed the amount you paid for the specific product giving rise to the claim.
+            To the maximum extent permitted by law, Afford Plugins shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of our services. Our total liability for any claim shall not exceed the amount you paid for the specific product giving rise to the claim.
           </p>
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">10. Changes to Terms</h3>
@@ -690,12 +690,12 @@ export function renderTermsPage() {
 
           <h3 style="color:var(--text-primary);margin-bottom:var(--space-sm);">12. Contact</h3>
           <p style="margin-bottom:var(--space-xl);">
-            For questions about these Terms, contact us at <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'support@promixplugins.com'}</a>.
+            For questions about these Terms, contact us at <a href="mailto:${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}" style="color:var(--neon-green)">${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}</a>.
           </p>
 
           <div style="margin-top:var(--space-xl);padding:var(--space-md) var(--space-lg);background:var(--bg-tertiary);border-radius:var(--radius-md);font-size:var(--text-sm);">
             <strong style="color:var(--text-primary);">Legal enquiries:</strong>
-            <a href="mailto:${getSiteSettings().support_email || 'support@promixplugins.com'}" style="color:var(--neon-green);"> ${getSiteSettings().support_email || 'support@promixplugins.com'}</a>
+            <a href="mailto:${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}" style="color:var(--neon-green);"> ${getSiteSettings().support_email || 'dr.zed19999@gmail.com'}</a>
           </div>
 
         </div>

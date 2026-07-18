@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Product Seed Data
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Product Seed Data
 // Full catalogue of known plugins. Used by Admin Panel
 // "Restore Missing Products" to re-populate Supabase
 // without deleting anything that already exists.

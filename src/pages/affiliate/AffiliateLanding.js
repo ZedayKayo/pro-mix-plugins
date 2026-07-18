@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════
 // Affiliate Landing Page (Guests, Pending, Rejected)
 // ═══════════════════════════════════════════════════════
 
@@ -15,10 +15,10 @@ export function renderAffiliateLanding(container, user, affiliate) {
       <div class="container">
         <span class="info-hero-eyebrow">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          Earn With ProMix
+          Earn With Afford Plugins
         </span>
-        <h1>The ProMix Affiliate Program</h1>
-        <p>Refer producers and engineers to ProMix and earn <strong style="color:var(--neon-green)">up to 50% commission</strong> on every sale — paid in your preferred crypto.</p>
+        <h1>The Afford Plugins Affiliate Program</h1>
+        <p>Refer producers and engineers to Afford Plugins and earn <strong style="color:var(--neon-green)">up to 50% commission</strong> on every sale — paid in your preferred crypto.</p>
         <div style="display:flex;gap:var(--space-md);justify-content:center;margin-top:var(--space-xl);flex-wrap:wrap;">
           <a href="#aff-signup" class="btn btn-primary btn-lg">Start Earning Now</a>
           <a href="#how-it-works" class="btn btn-ghost btn-lg">How It Works</a>
@@ -70,7 +70,7 @@ export function renderAffiliateLanding(container, user, affiliate) {
 
         <!-- Perks -->
         <div style="margin-top:var(--space-3xl);">
-          <div class="section-title"><h2>Why Affiliates Love ProMix</h2></div>
+          <div class="section-title"><h2>Why Affiliates Love Afford Plugins</h2></div>
           <div class="affiliates-perks">
             <div class="aff-perk">
               <span class="aff-perk-icon">💰</span>
@@ -107,7 +107,7 @@ export function renderAffiliateLanding(container, user, affiliate) {
         <div class="affiliates-cta-box" id="aff-signup">
           <span style="font-size:40px;display:block;margin-bottom:var(--space-md);">🚀</span>
           <h2>Ready to Start Earning?</h2>
-          <p>Join creators already earning with ProMix. Fill in your details and we'll approve your application within 24 hours.</p>
+          <p>Join creators already earning with Afford Plugins. Fill in your details and we'll approve your application within 24 hours.</p>
           ${!isLoggedIn() ? `
             <div style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:var(--radius-md);padding:var(--space-md);margin-bottom:var(--space-lg);font-size:var(--text-sm);color:var(--neon-blue);">
               You need an account to apply. <a href="/register" style="color:var(--neon-green);font-weight:600;">Register free</a> or <a href="/login" style="color:var(--neon-green);font-weight:600;">log in</a> first.
@@ -118,7 +118,7 @@ export function renderAffiliateLanding(container, user, affiliate) {
               <input type="url" class="input" placeholder="Your website or profile URL" id="aff-url" />
             </div>
             <select class="input" id="aff-platform" style="margin-bottom:var(--space-md)">
-              <option value="">How will you promote ProMix?</option>
+              <option value="">How will you promote Afford Plugins?</option>
               <option>YouTube Channel</option>
               <option>Music Production Blog</option>
               <option>Discord / Community Server</option>

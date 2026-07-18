@@ -1,10 +1,11 @@
-import { getSiteSettings, on } from '../core/store.js';
+﻿import { getSiteSettings, on } from '../core/store.js';
 
 export function renderFooter() {
   const settings = getSiteSettings();
-  const discordLink = settings.discord_link || 'https://discord.gg/promixplugins';
-  const telegramLink = settings.telegram_link || 'https://t.me/promixplugins';
-  const supportEmail = settings.support_email || 'support@promixplugins.com';
+  const discordLink = settings.discord_link || 'https://discord.gg/affordplugins';
+  const telegramLink = settings.telegram_link || 'https://t.me/affordplugins';
+  const instaLink = settings.instagram_link || 'https://www.instagram.com/affordplugins/';
+  const supportEmail = settings.support_email || 'dr.zed19999@gmail.com';
 
   return `
     <footer class="site-footer" id="site-footer">
@@ -12,7 +13,7 @@ export function renderFooter() {
         <div class="footer-grid">
           <div class="footer-brand">
             <a href="/" class="header-logo" style="margin-bottom: var(--space-sm); display: inline-flex;">
-              <img src="/images/logo.png" alt="ProMix" style="height: 34px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
+              <img src="/images/logo.png" alt="Afford Plugins" style="height: 34px; width: auto; max-width: none; object-fit: contain; flex-shrink: 0;" />
             </a>
             <p>Professional audio plugins crafted for producers, engineers, and artists. Pushing the boundaries of digital sound since 2023.</p>
             <div class="footer-social">
@@ -21,6 +22,9 @@ export function renderFooter() {
               </a>
               <a href="${telegramLink}" target="_blank" rel="noopener noreferrer" title="Telegram" aria-label="Telegram">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .33z"/></svg>
+              </a>
+              <a href="${instaLink}" target="_blank" rel="noopener noreferrer" title="Instagram" aria-label="Instagram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
               </a>
             </div>
           </div>
@@ -56,7 +60,7 @@ export function renderFooter() {
 
         <div class="footer-bottom">
           <div style="display:flex; flex-direction:column; gap:4px;">
-            <span>© 2026 ProMix Plugins. All rights reserved.</span>
+            <span>© 2026 Afford Plugins. All rights reserved.</span>
             <span style="font-size:12px; color:var(--text-muted);">Contact: <a href="mailto:${supportEmail}" style="color:inherit;">${supportEmail}</a></span>
           </div>
           <div class="footer-crypto">

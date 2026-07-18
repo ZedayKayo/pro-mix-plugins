@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Checkout Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Checkout Page
 // Payment Method Selection: Crypto vs Card (separate premium cards)
 // ═══════════════════════════════════════════════════════
 

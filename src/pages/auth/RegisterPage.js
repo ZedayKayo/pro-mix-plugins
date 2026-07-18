@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Register Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Register Page
 // ═══════════════════════════════════════════════════════
 
 import { createAuthLayout } from './AuthLayout.js';

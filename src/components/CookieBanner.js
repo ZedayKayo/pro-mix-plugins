@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Cookie Consent Banner
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Cookie Consent Banner
 // GDPR-compliant banner shown on first visit
 // ═══════════════════════════════════════════════════════
 

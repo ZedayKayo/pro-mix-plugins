@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Realistic Mock Review Generator
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Realistic Mock Review Generator
 // Generates deterministic product reviews per product
 // ═══════════════════════════════════════════════════════
 

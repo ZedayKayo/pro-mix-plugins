@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Dashboard Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Dashboard Page
 // ═══════════════════════════════════════════════════════
 
 import { getUser, getPurchases, getLicenses, logoutUserAuthAsync, isLoggedIn } from '../core/store.js';

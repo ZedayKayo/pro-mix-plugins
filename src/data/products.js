@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Product Data (Real DB Adapter)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Product Data (Real DB Adapter)
 // ═══════════════════════════════════════════════════════
 
 import { allPlugins, bundlesDB } from './index.js';
@@ -90,8 +90,8 @@ const newIds = new Set([
   'baby-audio-ihny2','kilohearts-phase-plant','output-portal',
 ]);
 
-// Pro-Mix dynamic discount (controlled from Admin Panel → Settings)
-function promixPrice(msrp) {
+// afford-plugins dynamic discount (controlled from Admin Panel → Settings)
+function affordPluginsPrice(msrp) {
   return applyDiscount(msrp);
 }
 function buildCryptoPrices(usd) {
@@ -100,7 +100,7 @@ function buildCryptoPrices(usd) {
 
 function adapt(p) {
   const msrp = p.official_price_usd || 0;
-  const sp = promixPrice(msrp);
+  const sp = affordPluginsPrice(msrp);
   const effectivePrice = sp < msrp && msrp > 0 ? sp : msrp;
   // Resolve UI category: subcategory first, then top-level category, then fallback
   const uiCategory = subcatMap[p.subcategory] || catMap[p.category] || 'utility';
@@ -154,7 +154,7 @@ function adapt(p) {
 
 function adaptBundle(b) {
   const msrp = b.official_price_usd || 0;
-  const sp = b.average_sale_price || promixPrice(msrp);
+  const sp = b.average_sale_price || affordPluginsPrice(msrp);
   return {
     id: b.id,
     name: b.name,

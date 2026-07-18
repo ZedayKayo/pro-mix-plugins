@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Changelog / Release Notes Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Changelog / Release Notes Page
 // ═══════════════════════════════════════════════════════
 
 const RELEASES = [

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Premium Home Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Premium Home Page
 // ═══════════════════════════════════════════════════════
 
 import { getFeaturedProducts, getTrendingProducts, getNewProducts } from '../data/products.js';
@@ -37,7 +37,7 @@ export function renderHomePage() {
           <div class="hp-hero-content animate-fade-in-up">
             <div class="hp-badge">
               <span class="hp-badge-dot"></span>
-              <span>50,000+ producers trust Pro-Mix</span>
+              <span>50,000+ producers trust afford-plugins</span>
             </div>
 
             <h1 class="hp-headline">
@@ -196,7 +196,7 @@ export function renderHomePage() {
     <section class="hp-section" style="background: var(--bg-secondary)">
       <div class="container">
         <div class="hp-section-head centered">
-          <div class="hp-section-label">Why Pro-Mix?</div>
+          <div class="hp-section-label">Why afford-plugins?</div>
           <h2 class="hp-section-title">Built for Serious Producers</h2>
         </div>
         <div class="hp-features">
@@ -269,7 +269,7 @@ export function renderHomePage() {
           </div>
           <div class="hp-testimonial animate-fade-in-up delay-2">
             <div class="hp-testimonial-stars">★★★★★</div>
-            <p class="hp-testimonial-text">"I run a home studio and can't afford full retail prices. Pro-Mix gave me iZotope Ozone and Serum for less than a single plugin costs elsewhere. Incredible."</p>
+            <p class="hp-testimonial-text">"I run a home studio and can't afford full retail prices. afford-plugins gave me iZotope Ozone and Serum for less than a single plugin costs elsewhere. Incredible."</p>
             <div class="hp-testimonial-author">
               <div class="hp-testimonial-avatar" style="background: linear-gradient(135deg,#a855f7,#ff3b5c)">S</div>
               <div>

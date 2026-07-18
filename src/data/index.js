@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════
-// PRO-MIX PLUGINS — Master Data Index
+﻿// ═══════════════════════════════════════════
+// Afford Plugins — Master Data Index
 // Merges all plugin data and provides unified API
 // ═══════════════════════════════════════════
 

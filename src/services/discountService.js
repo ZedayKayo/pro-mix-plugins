@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Global Discount Service
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Global Discount Service
 // Single source of truth for the site-wide discount %
 // READ  — direct Supabase (public table, anon key fine)
 // WRITE — via /api/admin-product (service role, no RLS hangs)
@@ -7,7 +7,7 @@
 
 import { supabase } from '../lib/supabase.js';
 
-const LS_KEY = 'promix_discount_pct';
+const LS_KEY = 'affordplugins_discount_pct';
 const DEFAULT_DISCOUNT = 70;
 
 let _discountPct = null;

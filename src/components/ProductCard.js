@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Product Card (Full-featured)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Product Card (Full-featured)
 // ═══════════════════════════════════════════════════════
 
 import { formatPrice, renderStars, getPluginImage, getCategoryName, sanitizeHTML, calculateDiscount } from '../core/utils.js';
@@ -103,7 +103,7 @@ export function renderProductCard(product, animDelay = 0) {
         <div class="pc-title">
           <a href="/product/${product.slug}">${sanitizeHTML(product.name)}</a>
         </div>
-        <div class="pc-developer">${product.brand || product.developer || 'Pro-Mix'}</div>
+        <div class="pc-developer">${product.brand || product.developer || 'afford-plugins'}</div>
 
         <div class="pc-footer">
           ${starsHtml}

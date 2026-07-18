@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Crypto Payment Config
+// Afford Plugins — Crypto Payment Config
 // ═══════════════════════════════════════════════════════
 
 export const wallets = {
@@ -8,7 +8,7 @@ export const wallets = {
     symbol: 'BTC',
     icon: '₿',
     color: '#f7931a',
-    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    address: '16AcpP7KnCVSNwG2y4CdrYemxFLdbycoJq',
     network: 'Bitcoin Mainnet',
     confirmations: 3,
     estimatedTime: '~30 min',
@@ -18,7 +18,7 @@ export const wallets = {
     symbol: 'ETH',
     icon: 'Ξ',
     color: '#627eea',
-    address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+    address: '0xc36500131013843449e9efff381d827411643841',
     network: 'Ethereum Mainnet (ERC-20)',
     confirmations: 12,
     estimatedTime: '~5 min',
@@ -28,12 +28,13 @@ export const wallets = {
     symbol: 'USDT',
     icon: '₮',
     color: '#26a17b',
-    address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
-    network: 'Ethereum Mainnet (ERC-20)',
-    confirmations: 12,
-    estimatedTime: '~5 min',
+    address: 'TCc8hhqEJdjZnmaHUEMtepkbScnvrPPgS8',
+    network: 'Tron Network (TRC-20)',
+    confirmations: 19,
+    estimatedTime: '~3 min',
   },
 };
+
 
 export const supportedCoins = Object.keys(wallets);
 

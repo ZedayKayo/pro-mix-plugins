@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Cart Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Cart Page
 // ═══════════════════════════════════════════════════════
 
 import { getCart, removeFromCart, getCartTotal, clearCart } from '../core/store.js';

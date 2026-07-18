@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX — Wishlist & Recently Viewed (localStorage)
+﻿// ═══════════════════════════════════════════════════════
+// afford-plugins — Wishlist & Recently Viewed (localStorage)
 // ═══════════════════════════════════════════════════════
 
 const WL_KEY = 'pmx_wishlist';

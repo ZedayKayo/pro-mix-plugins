@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Mock Transactional Email Service
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Mock Transactional Email Service
 // Simulates order fulfillment via Resend/SendGrid.
 // ═══════════════════════════════════════════════════════
 
@@ -40,7 +40,7 @@ export async function sendAffiliateApplicationReceived(emailAddress) {
 export async function sendAffiliateStatusChanged(emailAddress, status, reason = '') {
   await new Promise(r => setTimeout(r, 1000));
   console.log(`[MOCK EMAIL SERVICE] Affiliate Status update [${status}] sent to: ${emailAddress}`);
-  const title = status === 'approved' ? 'Welcome to ProMix Affiliates!' : 'Application Update';
+  const title = status === 'approved' ? 'Welcome to Afford Plugins Affiliates!' : 'Application Update';
   const desc = status === 'approved' 
     ? `Your application was approved! Start promoting now.`
     : `Application not approved. Reason: ${reason}`;

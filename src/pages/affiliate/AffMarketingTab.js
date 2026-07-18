@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════
+﻿// ═══════════════════════════════════════════════════════
 // Affiliate Marketing Tab
 // ═══════════════════════════════════════════════════════
 
@@ -41,7 +41,7 @@ export async function renderMarketingTab(affiliate, refUrl) {
     <div class="aff-content-header">
       <div>
         <h2 class="aff-content-title">Marketing Resources</h2>
-        <p class="aff-content-subtitle">Ready-made assets to promote ProMix — one-click copy</p>
+        <p class="aff-content-subtitle">Ready-made assets to promote Afford Plugins — one-click copy</p>
       </div>
     </div>
 

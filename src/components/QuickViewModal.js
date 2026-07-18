@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX — Quick View Modal Component
+﻿// ═══════════════════════════════════════════════════════
+// afford-plugins — Quick View Modal Component
 // ═══════════════════════════════════════════════════════
 
 import { formatPrice, renderStars, getCategoryName, sanitizeHTML, getPluginImage, calculateDiscount } from '../core/utils.js';
@@ -68,7 +68,7 @@ export function openQuickView(product) {
     <div class="qv-info">
       <div class="qv-category">${getCategoryName(product.category)}</div>
       <h2 class="qv-title">${sanitizeHTML(product.name)}</h2>
-      <div class="qv-developer">${product.brand || product.developer || 'Pro-Mix'}</div>
+      <div class="qv-developer">${product.brand || product.developer || 'afford-plugins'}</div>
 
       <div class="qv-rating">
         <span class="qv-stars">${renderStars(product.rating)}</span>

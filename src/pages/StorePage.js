@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Store Page (Full-featured)
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Store Page (Full-featured)
 // ═══════════════════════════════════════════════════════
 
 import { filterProducts, categories, pluginTypes, dawList, getBrandList, getFeaturedProducts } from '../data/products.js';

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Email Capture Popup
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Email Capture Popup
 // Shown to first-time visitors after 10 seconds
 // ═══════════════════════════════════════════════════════
 

@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Product Detail Page
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Product Detail Page
 // ═══════════════════════════════════════════════════════
 
 import { getProductBySlug, getProducts } from '../data/products.js';

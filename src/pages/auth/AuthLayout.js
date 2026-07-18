@@ -1,5 +1,5 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Custom Auth Layout Wrapper
+﻿// ═══════════════════════════════════════════════════════
+// Afford Plugins — Custom Auth Layout Wrapper
 // ═══════════════════════════════════════════════════════
 
 export function createAuthLayout(contentHtml, mode = 'login') {
