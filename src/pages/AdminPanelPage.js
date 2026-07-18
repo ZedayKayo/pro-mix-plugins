@@ -13,6 +13,11 @@ import { SEED_PRODUCTS } from '../data/seed-products.js';
 import { fetchTelegramSettings, updateTelegramSettings, fetchSiteSettings, updateSiteSettings } from '../services/dbService.js';
 import { getDiscountPct, saveDiscount, loadDiscount, bulkUpdateSalePrices } from '../services/discountService.js';
 import { supabase } from '../lib/supabase.js';
+import {
+  createAffiliatesAdminTabState,
+  renderAffiliatesAdminTab,
+  bindAffiliatesAdminTabEvents
+} from './admin/AffiliatesAdminTab.js';
 
 export function renderAdminPanel(params) {
   if (!isAdmin()) {
@@ -39,6 +44,8 @@ export function renderAdminPanel(params) {
     notificationLogsLoading: false,
     botInfo: null,
     discountPct: getDiscountPct(), // live discount %
+    // Delegate affiliate sub-state
+    ...createAffiliatesAdminTabState()
   };
 
   // Pre-fetch telegram settings ONCE
@@ -844,6 +851,7 @@ export function renderAdminPanel(params) {
                 <button class="btn ${state.activeTab === 'visitors' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="visitors" style="padding:6px 14px; font-size:0.875rem;">👥 Visitors</button>
                 <button class="btn ${state.activeTab === 'telegram' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="telegram" style="padding:6px 14px; font-size:0.875rem;">🤖 Telegram</button>
                 <button class="btn ${state.activeTab === 'settings' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="settings" style="padding:6px 14px; font-size:0.875rem;">⚙️ Settings</button>
+                <button class="btn ${state.activeTab === 'affiliates' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="affiliates" style="padding:6px 14px; font-size:0.875rem;">🤝 Affiliates</button>
               </div>
             </div>
             ${state.activeTab === 'inventory' ? `<button class="btn btn-primary" id="admin-add-product" style="font-size:1rem;">+ Add New Product</button>` : ''}
@@ -931,6 +939,8 @@ export function renderAdminPanel(params) {
           ${state.activeTab === 'visitors' ? renderVisitorsTab() : ''}
 
           ${state.activeTab === 'settings' ? renderSettingsTab() : ''}
+
+          ${state.activeTab === 'affiliates' ? renderAffiliatesAdminTab(state, renderPage) : ''}
 
           ${state.activeTab === 'telegram' ? `
           <div style="max-width:860px; margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
@@ -1023,9 +1033,10 @@ export function renderAdminPanel(params) {
     if (state.activeTab === 'users' && !state.users && !state.usersLoading) loadUsers();
     if (state.activeTab === 'visitors' && !state.visitors && !state.visitorsLoading) loadVisitors();
     if (state.activeTab === 'visitors' && !state.notificationLogs && !state.notificationLogsLoading) loadNotificationLogs();
+    if (state.activeTab === 'affiliates' && !state.affiliates && !state.affiliatesLoading) {
+      loadAffiliateTab();
+    }
   }
-
-  // ── ORDERS TAB ───────────────────────────────────────────
   function renderOrdersTab() {
     if (state.ordersLoading) {
       return `<div class="glass-panel" style="padding:var(--space-3xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><div style="font-size:2rem;">⏳</div><p class="text-muted" style="margin-top:var(--space-md);">Loading orders...</p></div>`;
@@ -1386,6 +1397,22 @@ export function renderAdminPanel(params) {
   }
 
   // ── DATA LOADERS ──────────────────────────────────────────
+  async function loadAffiliateTab() {
+    state.affiliatesLoading = true;
+    renderPage();
+    try {
+      const { fetchAllAffiliates, fetchAffiliateSettings } = await import('../services/affiliateService.js');
+      const { data } = await fetchAllAffiliates({ page: 0, limit: 100 });
+      state.affiliates = data || [];
+      state.affiliateSettings = await fetchAffiliateSettings();
+    } catch (err) {
+      showToast('Failed to load affiliate information: ' + err.message, 'error');
+    } finally {
+      state.affiliatesLoading = false;
+      renderPage();
+    }
+  }
+
   async function loadOrders() {
     state.ordersLoading = true;
     renderPage();
@@ -1657,6 +1684,10 @@ export function renderAdminPanel(params) {
         renderPage();
       });
     });
+
+    if (state.activeTab === 'affiliates') {
+      bindAffiliatesAdminTabEvents(state, renderPage);
+    }
 
     // Telegram Settings
     document.getElementById('ts-save')?.addEventListener('click', async () => {

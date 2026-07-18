@@ -32,6 +32,7 @@ export function renderHeader() {
           <a href="/blog">Blog</a>
           <a href="/support">Support</a>
           <a href="/about">About</a>
+          <a href="/affiliates">Affiliates</a>
           ${loggedIn ? `<a href="/dashboard">Dashboard</a>` : ''}
           ${admin ? `<a href="/admin" style="color: var(--neon-orange);">Admin</a>` : ''}
         </nav>
@@ -65,7 +66,7 @@ export function renderHeader() {
         </div>
       </div>
     </header>
-
+ 
     <!-- Mobile Navigation Menu -->
     <div class="mobile-menu-overlay" id="mobile-menu-overlay" aria-hidden="true"></div>
     <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation" aria-hidden="true">
@@ -105,6 +106,9 @@ export function renderHeader() {
         </a>
         <a href="/support" class="mobile-nav-link">
           <span class="mobile-nav-link-icon">🎧</span> Support
+        </a>
+        <a href="/affiliates" class="mobile-nav-link">
+          <span class="mobile-nav-link-icon">🤝</span> Affiliates
         </a>
         ${loggedIn ? `
           <a href="/dashboard" class="mobile-nav-link">

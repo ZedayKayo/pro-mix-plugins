@@ -14,6 +14,7 @@ import './styles/pages/auth.css';
 import './styles/pages/order-success.css';
 import './styles/pages/info-pages.css';
 import './styles/animations.css';
+import './styles/pages/affiliate.css';
 
 import { initStore } from './core/store.js';
 import { initRouter, registerRoute } from './core/router.js';
@@ -96,6 +97,10 @@ async function bootstrap() {
   registerRoute('/changelog', () => renderChangelogPage());
   registerRoute('/affiliates', () => renderAffiliatesPage());
   registerRoute('/bundles', () => renderBundlesPage());
+  registerRoute('/ref/:code', () => {
+    // The router's route-change interception automatically detects '/ref/username',
+    // sets the cookies, and navigates home. We just register it here to avoid 404.
+  });
 
   initRouter('#page-content');
 }

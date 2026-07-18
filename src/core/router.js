@@ -4,6 +4,7 @@
 
 import { fetchSessionProfile } from '../services/dbService.js';
 import { isLoggedIn } from './store.js';
+import { setAffiliateCookie, getAffiliateCookie, trackClick } from '../services/affiliateService.js';
 
 const routes = {};
 let currentPage = null;
@@ -90,6 +91,39 @@ export function initRouter(containerSelector) {
           link.classList.remove('active');
         }
       });
+
+      // ── Affiliate Referral Tracking ──
+      // Check for ?ref=CODE query param or /ref/username path
+      const urlParams = new URLSearchParams(window.location.search);
+      const refFromParam = urlParams.get('ref');
+      const refFromPath  = path.startsWith('/ref/') ? path.split('/ref/')[1] : null;
+      const refCode = refFromParam || refFromPath;
+
+      if (refCode && refCode.length > 2) {
+        // Store cookie (30 days default — settings override applied server-side)
+        setAffiliateCookie(refCode, 30);
+        // Fire tracking request in background (non-blocking)
+        const utmParams = {
+          utm_source:   urlParams.get('utm_source')   || null,
+          utm_medium:   urlParams.get('utm_medium')   || null,
+          utm_campaign: urlParams.get('utm_campaign') || null,
+          utm_content:  urlParams.get('utm_content')  || null,
+          utm_term:     urlParams.get('utm_term')      || null,
+        };
+        trackClick({
+          refCode,
+          landingPage:  window.location.href,
+          referrerUrl:  document.referrer || '',
+          utmParams,
+          sessionId:    getVisitorSessionId(),
+        }).catch(() => {}); // fail silently
+
+        // If this is a /ref/username URL, redirect to home with cookie already set
+        if (refFromPath) {
+          navigate('/');
+          return;
+        }
+      }
 
       // Track Visitor Navigation
       clearTimeout(debounceTrackTimeout);

@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import { getAffiliateCookie, lookupCouponAffiliate } from './affiliateService.js';
 
 // ── AUTH & PROFILES ──
 export const loginUserAuth = async (email, password) => {
@@ -154,6 +155,48 @@ export const processSecureCheckout = async (userId, items, paymentMethod, useCre
     .single();
 
   if (orderErr) throw orderErr;
+
+  // ── Affiliate Attribution ──
+  try {
+    // 1. Try cookie-based referral
+    const refCookie = typeof document !== 'undefined' ? getAffiliateCookie() : null;
+    // 2. Try coupon-based referral
+    const couponAttr = couponCode ? await lookupCouponAffiliate(couponCode) : null;
+
+    if (refCookie || couponAttr) {
+      // Find affiliate by ref_code (cookie) or coupon's affiliate_id
+      let affiliateId = couponAttr?.affiliate_id || null;
+
+      if (!affiliateId && refCookie) {
+        const { data: aff } = await supabase
+          .from('affiliates')
+          .select('id, user_id')
+          .eq('ref_code', refCookie)
+          .eq('status', 'approved')
+          .maybeSingle();
+        // Anti-fraud: skip self-referral
+        if (aff && aff.user_id !== userId) {
+          affiliateId = aff.id;
+        }
+      }
+
+      if (affiliateId) {
+        const productNames = items.map(i => i.name).join(', ');
+        await supabase.rpc('attribute_affiliate_sale', {
+          p_order_id:       order.id,
+          p_affiliate_id:   affiliateId,
+          p_order_amount:   finalTotal > 0 ? finalTotal : total,
+          p_product_names:  productNames,
+          p_customer_email: null,
+          p_click_id:       null,
+          p_coupon_code:    couponCode || null,
+        });
+      }
+    }
+  } catch (affErr) {
+    // Affiliate attribution failure must never break checkout
+    console.warn('Affiliate attribution failed (non-fatal):', affErr);
+  }
 
   return { success: true, order_id: order.id, total_charged: finalTotal };
 };

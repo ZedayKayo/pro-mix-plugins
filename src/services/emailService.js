@@ -19,12 +19,56 @@ export async function sendOrderConfirmation(emailAddress, items, orderId) {
   console.log(`[MOCK EMAIL SERVICE] Payload included ${items.length} items for Order #${orderId}`);
 
   // Create a highly visible bespoke DOM overlay notification confirming email sent
-  showEmailDispatchedNotification(emailAddress);
+  showEmailDispatchedNotification(emailAddress, 'Order Receipt Delivered!', `Order receipt and download links sent to <strong style="color:white;">${emailAddress}</strong>`);
   
   return { success: true };
 }
 
-function showEmailDispatchedNotification(email) {
+/**
+ * Simulates affiliate registration email.
+ */
+export async function sendAffiliateApplicationReceived(emailAddress) {
+  await new Promise(r => setTimeout(r, 1000));
+  console.log(`[MOCK EMAIL SERVICE] Affiliate Application Received sent to: ${emailAddress}`);
+  showEmailDispatchedNotification(emailAddress, 'Application Received!', `We received your affiliate application for <strong style="color:white;">${emailAddress}</strong>`);
+  return { success: true };
+}
+
+/**
+ * Simulates affiliate status change email (approve/reject).
+ */
+export async function sendAffiliateStatusChanged(emailAddress, status, reason = '') {
+  await new Promise(r => setTimeout(r, 1000));
+  console.log(`[MOCK EMAIL SERVICE] Affiliate Status update [${status}] sent to: ${emailAddress}`);
+  const title = status === 'approved' ? 'Welcome to ProMix Affiliates!' : 'Application Update';
+  const desc = status === 'approved' 
+    ? `Your application was approved! Start promoting now.`
+    : `Application not approved. Reason: ${reason}`;
+  showEmailDispatchedNotification(emailAddress, title, desc);
+  return { success: true };
+}
+
+/**
+ * Simulates sale attribution email.
+ */
+export async function sendAffiliateSaleNotification(emailAddress, amount) {
+  await new Promise(r => setTimeout(r, 1000));
+  console.log(`[MOCK EMAIL SERVICE] Commission sale attributed email sent to: ${emailAddress}`);
+  showEmailDispatchedNotification(emailAddress, 'New Commission Earned! 💰', `You earned <strong style="color:white;">$${amount.toFixed(2)}</strong> commission!`);
+  return { success: true };
+}
+
+/**
+ * Simulates payout sent confirmation email.
+ */
+export async function sendAffiliatePayoutNotification(emailAddress, amount, address) {
+  await new Promise(r => setTimeout(r, 1000));
+  console.log(`[MOCK EMAIL SERVICE] Payout dispatched email sent to: ${emailAddress}`);
+  showEmailDispatchedNotification(emailAddress, 'Payout Dispatched! 💸', `A payout of <strong style="color:white;">$${amount.toFixed(2)}</strong> was sent to your wallet.`);
+  return { success: true };
+}
+
+function showEmailDispatchedNotification(email, title, bodyHTML) {
   const popup = document.createElement('div');
   popup.style.cssText = `
     position: fixed;
@@ -47,9 +91,9 @@ function showEmailDispatchedNotification(email) {
   popup.innerHTML = `
     <div style="font-size: 24px;">📧</div>
     <div>
-      <div style="font-weight: 700; color: var(--neon-green); margin-bottom: 2px;">Email Delivered!</div>
+      <div style="font-weight: 700; color: var(--neon-green); margin-bottom: 2px;">${title}</div>
       <div style="font-size: 13px; color: var(--text-secondary);">
-        Order receipt and download links sent to <strong style="color:white;">${email}</strong>
+        ${bodyHTML}
       </div>
     </div>
   `;
@@ -67,3 +111,4 @@ function showEmailDispatchedNotification(email) {
     setTimeout(() => popup.remove(), 400);
   }, 4500);
 }
+
