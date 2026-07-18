@@ -1,6 +1,6 @@
-// ═══════════════════════════════════════════════════════
-// PRO-MIX PLUGINS — Admin Panel
-// ═══════════════════════════════════════════════════════
+﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// PRO-MIX PLUGINS â€” Admin Panel
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 import { getInventory, saveProduct, deleteProduct, loadInventory, on, isAdmin, isLoggedIn, getSiteSettings, loadSiteSettings } from '../core/store.js';
 import { getBrandList, categories } from '../data/products.js';
@@ -18,6 +18,11 @@ import {
   renderAffiliatesAdminTab,
   bindAffiliatesAdminTabEvents
 } from './admin/AffiliatesAdminTab.js';
+import { renderOrdersTab, bindOrdersAdminTabEvents } from './admin/OrdersAdminTab.js';
+import { renderUsersTab, bindUsersAdminTabEvents } from './admin/UsersAdminTab.js';
+import { renderVisitorsTab, bindVisitorsAdminTabEvents } from './admin/VisitorsAdminTab.js';
+import { renderTelegramTab, bindTelegramAdminTabEvents } from './admin/TelegramAdminTab.js';
+import { renderSettingsTab, bindSettingsAdminTabEvents } from './admin/SettingsAdminTab.js';
 
 export function renderAdminPanel(params) {
   if (!isAdmin()) {
@@ -64,768 +69,7 @@ export function renderAdminPanel(params) {
     });
   }
 
-  // ── Modal: lives on document.body so re-renders can't destroy it ──
-  function ensureModal() {
-    let existing = document.getElementById('product-modal');
-    if (existing) existing.remove(); // Fix Stale Closure bug to prevent editing duplicates
-
-    const modalEl = document.createElement('div');
-    modalEl.id = 'product-modal';
-    modalEl.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1000; align-items:center; justify-content:center;';
-    modalEl.innerHTML = `
-      <div class="modal-content glass-panel" style="width:100%; max-width:620px; border-radius:var(--radius-lg); max-height:90vh; display:flex; flex-direction:column; margin:auto; overflow:hidden; position:relative;">
-        
-        <!-- HEADER (Fixed) -->
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-xl); border-bottom:1px solid var(--border-primary); background:var(--bg-card); z-index:10; flex-shrink:0;">
-          <h2 id="modal-title" style="margin:0;">Add Product</h2>
-          <button type="button" id="modal-close-x" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height:1;">✕</button>
-        </div>
-
-        <form id="product-form" style="display:flex; flex-direction:column; overflow:hidden; flex:1; min-height:0;">
-          
-          <!-- BODY (Scrollable) -->
-          <div style="padding:var(--space-lg) var(--space-xl); overflow-y:auto; flex:1;">
-            
-            <!-- QUICK FILL UI -->
-            <div style="background:rgba(0,255,136,0.07); padding:var(--space-md); border-radius:var(--radius-md); margin-bottom:var(--space-lg); border:1px solid rgba(0,255,136,0.2);">
-              <label class="text-sm" style="color:var(--neon-green); font-weight:600; display:block; margin-bottom:var(--space-xs);">🪄 Quick Fill — AI Auto-Fill</label>
-              <p class="text-xs text-secondary" style="margin:0 0 var(--space-xs) 0;">Paste a plugin name, any product URL, or a <strong style="color:var(--neon-blue);">RuTracker link</strong> — AI will extract &amp; translate all data automatically.</p>
-              <div style="display:flex; gap:var(--space-sm);">
-                <input type="text" class="input" id="f-quick-fill" placeholder="e.g. FabFilter Pro-Q 3  —or—  https://rutracker.org/forum/viewtopic.php?t=..." style="flex:1;" />
-                <button type="button" class="btn btn-primary" id="btn-quick-fill" style="white-space:nowrap;">✨ Auto-Fill</button>
-              </div>
-              <div id="quick-fill-status" class="text-sm" style="margin-top:6px; display:none;"></div>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); margin-bottom:var(--space-md);">
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Name *</label>
-                <input type="text" class="input" id="f-name" required />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Brand *</label>
-                <input type="text" class="input" id="f-brand" required list="brand-options" />
-                <datalist id="brand-options">
-                  ${getBrandList().map(b => `<option value="${b}">`).join('')}
-                </datalist>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Developer</label>
-                <input type="text" class="input" id="f-dev" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Category *</label>
-                <select class="input" id="f-category" required>
-                  ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Subcategory</label>
-                <input type="text" class="input" id="f-subcat" placeholder="e.g. Wavetable Synth" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Formats (comma-separated)</label>
-                <input type="text" class="input" id="f-type" placeholder="vst3, au, aax" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">DAWs (comma-separated)</label>
-                <input type="text" class="input" id="f-daw" placeholder="fl-studio, ableton, logic" />
-              </div>
-              <div id="image-manager" style="grid-column: span 2;">
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Images *</label>
-                
-                <div style="display:flex; gap:8px; margin-bottom:8px;">
-                  <input type="text" class="input" id="f-image-add-url" placeholder="Paste image URL..." style="flex:1;" />
-                  <button type="button" class="btn btn-ghost" id="btn-add-img-url" style="padding:0 12px; font-size:0.8rem; white-space:nowrap; border:1px solid var(--border-primary);">+ Add URL</button>
-                  <label for="f-image-upload" class="btn btn-ghost" style="padding:0 12px; font-size:0.8rem; cursor:pointer; margin:0; white-space:nowrap; display:flex; align-items:center; border:1px solid var(--border-primary);" title="Upload Files">📁 Upload</label>
-                  <input type="file" id="f-image-upload" accept="image/*" multiple style="display: none;" />
-                </div>
-
-                <textarea id="f-image" style="display:none;"></textarea>
-                
-                <div id="image-preview-strip" style="display:flex; gap:8px; flex-wrap:wrap; min-height:80px; padding:12px; background:rgba(0,0,0,0.2); border-radius:var(--radius-md); border:1px dashed var(--border-primary);">
-                  <!-- previews rendered here -->
-                </div>
-                <div class="text-xs text-muted" style="margin-top:6px;">Drag and drop to reorder. The first image is the main cover.</div>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Video Demo URL</label>
-                <input type="url" class="input" id="f-video" placeholder="https://youtube.com/..." />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Page URL</label>
-                <input type="url" class="input" id="f-url" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Source/RuTracker URL</label>
-                <input type="url" class="input" id="f-sourceurl" placeholder="https://rutracker.org/..." />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">MSRP (Original Price $)</label>
-                <input type="number" class="input" id="f-price" min="0" step="0.01" value="0" placeholder="0" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (−<span id="modal-discount-label">${state.discountPct}</span>% OFF)</label>
-                <input type="number" class="input" id="f-saleprice" min="0" step="0.01" value="0" placeholder="0" />
-              </div>
-            </div>
-            
-            <div style="margin-bottom:var(--space-md);">
-              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Short Description *</label>
-              <textarea class="input" id="f-desc" rows="2" required></textarea>
-            </div>
-
-            <div style="margin-bottom:var(--space-md);">
-              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Full Description</label>
-              <textarea class="input" id="f-fulldesc" rows="4"></textarea>
-            </div>
-
-            <div style="margin-bottom:var(--space-md);">
-              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Key Features (one per line)</label>
-              <textarea class="input" id="f-features" rows="3" placeholder="- Feature 1\\n- Feature 2"></textarea>
-            </div>
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); padding:var(--space-md); background:rgba(255,255,255,0.02); border-radius:var(--radius-md); margin-bottom:var(--space-md);">
-              <div>
-                <label class="text-sm" style="display:block; margin-bottom:8px; font-weight:bold;">Specs</label>
-                <div style="display:flex; flex-direction:column; gap:4px;">
-                  <input type="text" class="input input-sm" id="f-spec-format" placeholder="Format (e.g. VST3, AU, AAX)" />
-                  <input type="text" class="input input-sm" id="f-spec-os" placeholder="OS (e.g. Windows 10+ / macOS 11+)" />
-                  <input type="text" class="input input-sm" id="f-spec-cpu" placeholder="CPU Usage (e.g. Low, Medium, High)" />
-                  <input type="text" class="input input-sm" id="f-spec-dl" placeholder="Download Size (e.g. 1.2 GB)" />
-                  <input type="text" class="input input-sm" id="f-spec-ver" placeholder="Version (e.g. 1.5.0)" />
-                </div>
-              </div>
-              <div>
-                <label class="text-sm" style="display:block; margin-bottom:8px; font-weight:bold;">System Reqs</label>
-                <div style="display:flex; flex-direction:column; gap:4px;">
-                  <input type="text" class="input input-sm" id="f-req-os" placeholder="Min OS" />
-                  <input type="text" class="input input-sm" id="f-req-ram" placeholder="Min RAM (e.g. 4 GB)" />
-                  <input type="text" class="input input-sm" id="f-req-cpu" placeholder="Min CPU" />
-                  <input type="text" class="input input-sm" id="f-req-disk" placeholder="Disk Space" />
-                </div>
-              </div>
-            </div>
-
-            <!-- SECURE DOWNLOAD LINKS -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); padding:var(--space-md); background:rgba(255,100,100,0.05); border-radius:var(--radius-md); border:1px solid rgba(255,100,100,0.2); margin-bottom:var(--space-md);">
-              <div style="grid-column: span 2; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
-                <div>
-                  <h4 style="margin:0 0 4px 0; color:#ff6b2b;">Secure Download Files (Private)</h4>
-                  <p class="text-xs text-secondary" style="margin:0;">These paths will only be exposed to users holding a valid license.</p>
-                </div>
-                <label for="f-dl-all-input" class="btn" id="btn-upload-all" style="cursor:pointer; background:rgba(255,107,43,0.15); border:1px solid rgba(255,107,43,0.5); color:#ff6b2b; font-size:12px; padding:6px 14px; display:flex; align-items:center; gap:6px; white-space:nowrap; margin:0;">
-                  📦 Upload All Files at Once
-                </label>
-                <input type="file" id="f-dl-all-input" multiple style="display:none;"
-                  accept=".exe,.zip,.dmg,.pkg,.deb,.tar.gz,.tar,.gz,.pdf,.vsix,.vst3" />
-              </div>
-              <!-- Per-file progress bar (hidden by default) -->
-              <div id="bulk-upload-status" style="grid-column:span 2; display:none; flex-direction:column; gap:4px; font-size:12px;"></div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Windows (.exe / .zip)</label>
-                <div style="display:flex; gap:8px;">
-                  <input type="text" class="input" id="f-dl-win" placeholder="Bucket path or URL" style="flex:1;" />
-                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-win" style="padding: 0 12px; font-size:12px;">Upload</button>
-                </div>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">macOS (.dmg / .pkg)</label>
-                <div style="display:flex; gap:8px;">
-                  <input type="text" class="input" id="f-dl-mac" placeholder="Bucket path or URL" style="flex:1;" />
-                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-mac" style="padding: 0 12px; font-size:12px;">Upload</button>
-                </div>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Linux (.tar.gz / .deb)</label>
-                <div style="display:flex; gap:8px;">
-                  <input type="text" class="input" id="f-dl-linux" placeholder="Bucket path or URL" style="flex:1;" />
-                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-linux" style="padding: 0 12px; font-size:12px;">Upload</button>
-                </div>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">User Manual (.pdf)</label>
-                <div style="display:flex; gap:8px;">
-                  <input type="text" class="input" id="f-dl-manual" placeholder="Bucket path or URL" style="flex:1;" />
-                  <button type="button" class="btn btn-secondary upload-btn" data-target="f-dl-manual" style="padding: 0 12px; font-size:12px;">Upload</button>
-                </div>
-              </div>
-              <!-- Hidden input for single-file per-button uploads -->
-              <input type="file" id="f-dl-file-input" style="display:none;" />
-            </div>
-
-            <div style="display:flex; gap:var(--space-lg); padding:var(--space-sm) 0;">
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="f-isfeatured" /> <span style="color:var(--neon-purple);">★ Featured</span>
-              </label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="f-istrending" /> <span style="color:var(--neon-blue);">🔥 Trending</span>
-              </label>
-              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                <input type="checkbox" id="f-isnew" /> <span style="color:var(--neon-green);">✨ New</span>
-              </label>
-            </div>
-            
-          </div>
-
-          <!-- FOOTER (Fixed) -->
-          <div style="padding:var(--space-md) var(--space-xl); border-top:1px solid var(--border-primary); background:var(--bg-card); display:flex; gap:var(--space-sm); justify-content:flex-end; z-index:10; flex-shrink:0;">
-            <button type="button" class="btn btn-ghost" id="modal-cancel">Cancel</button>
-            <button type="submit" class="btn btn-primary" id="modal-submit">💾 Save Product</button>
-          </div>
-        </form>
-      </div>
-    `;
-    document.body.appendChild(modalEl);
-
-    // ── ALL modal events attached ONCE here — they read `state` at event time ──
-
-    // Close X button
-    modalEl.querySelector('#modal-close-x')?.addEventListener('click', closeModal);
-
-    // Cancel button
-    modalEl.querySelector('#modal-cancel')?.addEventListener('click', closeModal);
-
-    // ── Upload Logic ──
-    const fileInput = modalEl.querySelector('#f-dl-file-input');
-    let currentUploadTarget = null;
-    let currentUploadBtn = null;
-
-    modalEl.querySelectorAll('.upload-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentUploadTarget = btn.dataset.target;
-        currentUploadBtn = btn;
-        fileInput.click();
-      });
-    });
-
-    fileInput?.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file || !currentUploadTarget || !currentUploadBtn) return;
-
-      const nameField = document.getElementById('f-name');
-      const slug = (nameField?.value || 'plugin').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
-      const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-      const filePath = `${slug}/${fileName}`;
-
-      const originalText = currentUploadBtn.textContent;
-      currentUploadBtn.textContent = '⏳ 0%';
-      currentUploadBtn.disabled = true;
-
-      // ── Use service role key so RLS is fully bypassed for admin uploads ──
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const serviceKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
-      if (!supabaseUrl || !serviceKey) {
-        showToast('❌ Upload failed: VITE_SUPABASE_SERVICE_ROLE_KEY is missing from your .env file.', 'error');
-        currentUploadBtn.textContent = originalText;
-        currentUploadBtn.disabled = false;
-        fileInput.value = '';
-        return;
-      }
-
-      // ── Raw XHR upload — gives real progress events that fetch() does not ──
-      const uploadUrl = `${supabaseUrl}/storage/v1/object/plugin-downloads/${filePath}`;
-
-      try {
-        await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open('POST', uploadUrl, true);
-          xhr.setRequestHeader('Authorization', `Bearer ${serviceKey}`);
-          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-          xhr.setRequestHeader('x-upsert', 'true'); // allow overwrite if same path exists
-
-          // Live progress counter in the button
-          xhr.upload.addEventListener('progress', (ev) => {
-            if (ev.lengthComputable) {
-              const pct = Math.round((ev.loaded / ev.total) * 100);
-              currentUploadBtn.textContent = `⏳ ${pct}%`;
-            }
-          });
-
-          xhr.addEventListener('load', () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve();
-            } else {
-              let msg = `HTTP ${xhr.status}`;
-              try { msg = JSON.parse(xhr.responseText)?.message || msg; } catch {}
-              reject(new Error(msg));
-            }
-          });
-
-          xhr.addEventListener('error', () => reject(new Error('Network error — check your internet connection.')));
-          xhr.addEventListener('timeout', () => reject(new Error('Upload timed out after 10 minutes.')));
-          xhr.timeout = 600000; // 10 min
-
-          xhr.send(file);
-        });
-
-        // Public URL is deterministic — no extra request needed
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/plugin-downloads/${filePath}`;
-        document.getElementById(currentUploadTarget).value = publicUrl;
-        showToast(`✅ Upload complete! (${(file.size / 1024 / 1024).toFixed(1)} MB)`, 'success');
-
-      } catch (err) {
-        console.error('Upload error:', err);
-        showToast(`❌ Upload failed: ${err.message}`, 'error');
-      } finally {
-        currentUploadBtn.textContent = originalText;
-        currentUploadBtn.disabled = false;
-        fileInput.value = '';
-      }
-    });
-
-    // ── Bulk Upload All Files at Once ──
-    const allFilesInput = modalEl.querySelector('#f-dl-all-input');
-    allFilesInput?.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
-
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const serviceKey  = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-      if (!supabaseUrl || !serviceKey) {
-        showToast('❌ VITE_SUPABASE_SERVICE_ROLE_KEY missing from .env', 'error');
-        return;
-      }
-
-      // Auto-detect which slot each file belongs to by extension
-      const detectTarget = (filename) => {
-        const n = filename.toLowerCase();
-        if (n.endsWith('.pdf'))                          return 'f-dl-manual';
-        if (n.endsWith('.dmg') || n.endsWith('.pkg'))   return 'f-dl-mac';
-        if (n.endsWith('.deb') || n.endsWith('.tar.gz') || n.endsWith('.tar') || n.endsWith('.gz')) return 'f-dl-linux';
-        if (n.endsWith('.exe') || n.endsWith('.zip') || n.endsWith('.msi')) return 'f-dl-win';
-        return null; // unrecognised — skip
-      };
-
-      const nameField = document.getElementById('f-name');
-      const slug = (nameField?.value || 'plugin').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'unknown';
-
-      // Show bulk status panel
-      const statusPanel = document.getElementById('bulk-upload-status');
-      statusPanel.style.display = 'flex';
-      statusPanel.innerHTML = '';
-
-      // Build a status row per file
-      const rows = {};
-      const uploadTasks = [];
-
-      for (const file of files) {
-        const targetId = detectTarget(file.name);
-        if (!targetId) {
-          const row = document.createElement('div');
-          row.style.cssText = 'color:#aaa; padding:2px 0;';
-          row.textContent = `⚠️ ${file.name} — unrecognised extension, skipped`;
-          statusPanel.appendChild(row);
-          continue;
-        }
-
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex; align-items:center; gap:8px;';
-        row.innerHTML = `
-          <span style="min-width:120px; color:var(--text-secondary);">${file.name.length > 24 ? file.name.slice(0,21)+'...' : file.name}</span>
-          <div style="flex:1; height:6px; background:rgba(255,255,255,0.08); border-radius:4px; overflow:hidden;">
-            <div id="bar-${targetId}" style="height:100%; width:0%; background:#ff6b2b; border-radius:4px; transition:width 0.2s;"></div>
-          </div>
-          <span id="pct-${targetId}" style="min-width:36px; text-align:right; color:#ff6b2b;">0%</span>
-        `;
-        statusPanel.appendChild(row);
-        rows[targetId] = row;
-
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
-        const filePath = `${slug}/${fileName}`;
-        const uploadUrl = `${supabaseUrl}/storage/v1/object/plugin-downloads/${filePath}`;
-        const publicUrl = `${supabaseUrl}/storage/v1/object/public/plugin-downloads/${filePath}`;
-
-        uploadTasks.push(
-          new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', uploadUrl, true);
-            xhr.setRequestHeader('Authorization', `Bearer ${serviceKey}`);
-            xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-            xhr.setRequestHeader('x-upsert', 'true');
-            xhr.timeout = 600000;
-
-            xhr.upload.addEventListener('progress', (ev) => {
-              if (ev.lengthComputable) {
-                const pct = Math.round((ev.loaded / ev.total) * 100);
-                const bar = document.getElementById(`bar-${targetId}`);
-                const lbl = document.getElementById(`pct-${targetId}`);
-                if (bar) bar.style.width = pct + '%';
-                if (lbl) lbl.textContent = pct + '%';
-              }
-            });
-
-            xhr.addEventListener('load', () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                // Fill the corresponding URL field
-                const field = document.getElementById(targetId);
-                if (field) field.value = publicUrl;
-                // Mark row green
-                const lbl = document.getElementById(`pct-${targetId}`);
-                const bar = document.getElementById(`bar-${targetId}`);
-                if (lbl) { lbl.textContent = '✅'; lbl.style.color = 'var(--neon-green)'; }
-                if (bar) bar.style.background = 'var(--neon-green)';
-                resolve({ targetId, publicUrl });
-              } else {
-                let msg = `HTTP ${xhr.status}`;
-                try { msg = JSON.parse(xhr.responseText)?.message || msg; } catch {}
-                const lbl = document.getElementById(`pct-${targetId}`);
-                if (lbl) { lbl.textContent = '❌'; lbl.style.color = '#ff4444'; }
-                reject(new Error(`${file.name}: ${msg}`));
-              }
-            });
-
-            xhr.addEventListener('error',   () => reject(new Error(`${file.name}: Network error`)));
-            xhr.addEventListener('timeout', () => reject(new Error(`${file.name}: Timed out`)));
-            xhr.send(file);
-          })
-        );
-      }
-
-      if (!uploadTasks.length) {
-        statusPanel.style.display = 'none';
-        allFilesInput.value = '';
-        return;
-      }
-
-      showToast(`📦 Uploading ${uploadTasks.length} file(s) in parallel...`, 'info');
-
-      const results = await Promise.allSettled(uploadTasks);
-      const failed  = results.filter(r => r.status === 'rejected');
-      const passed  = results.filter(r => r.status === 'fulfilled');
-
-      if (failed.length === 0) {
-        showToast(`✅ All ${passed.length} file(s) uploaded successfully!`, 'success');
-      } else {
-        showToast(`⚠️ ${passed.length} uploaded, ${failed.length} failed: ${failed.map(r=>r.reason?.message).join(' | ')}`, 'error');
-      }
-
-      allFilesInput.value = '';
-    });
-
-    // Global renderer for the image preview strip
-    window.renderImagePreviewStrip = function() {
-      const el = document.getElementById('f-image');
-      if (!el) return;
-      const raw = el.value.trim();
-      const images = raw ? raw.split('\n').map(s=>s.trim()).filter(Boolean) : []; // DO NOT split by comma; breaks base64
-      const strip = document.getElementById('image-preview-strip');
-      if (!strip) return;
-      strip.innerHTML = '';
-      
-      if (images.length === 0) {
-        strip.innerHTML = '<span class="text-sm text-muted" style="margin:auto;">No images added yet.</span>';
-        return;
-      }
-      
-      images.forEach((imgSrc, idx) => {
-        const item = document.createElement('div');
-        item.style.cssText = 'position:relative; width:80px; height:80px; border-radius:8px; overflow:hidden; border:2px solid transparent; cursor:grab; background:#0a0a0f; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s ease;';
-        if (idx === 0) item.style.borderColor = 'var(--neon-green)'; // Highlight first as main
-        item.title = idx === 0 ? 'Main Cover Image' : 'Gallery Image';
-        item.draggable = true;
-        
-        item.innerHTML = `
-          <img src="${imgSrc}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" onerror="this.src='https://placehold.co/400x400/1a1a2e/ff4444?text=Error'" />
-          <button type="button" class="img-delete-btn" style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.7); color:#fff; border:1px solid rgba(255,255,255,0.2); border-radius:50%; width:22px; height:22px; font-size:12px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s;">✕</button>
-          ${idx===0 ? `<div style="position:absolute; bottom:0; left:0; right:0; background:var(--neon-green); color:#000; font-size:10px; font-weight:bold; text-align:center; padding:2px 0;">MAIN</div>` : ''}
-        `;
-        
-        // Drag events
-        item.addEventListener('dragstart', (e) => {
-          e.dataTransfer.effectAllowed = 'move';
-          e.dataTransfer.setData('text/plain', idx);
-          item.style.opacity = '0.5';
-        });
-        item.addEventListener('dragend', () => item.style.opacity = '1');
-        item.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; item.style.border = '2px dashed var(--neon-blue)'; });
-        item.addEventListener('dragleave', () => item.style.border = (idx===0 ? '2px solid var(--neon-green)' : '2px solid transparent'));
-        item.addEventListener('drop', (e) => {
-          e.preventDefault();
-          const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
-          const toIdx = idx;
-          if (fromIdx !== toIdx) {
-            const arr = [...images];
-            const [moved] = arr.splice(fromIdx, 1);
-            arr.splice(toIdx, 0, moved);
-            document.getElementById('f-image').value = arr.join('\n');
-            window.renderImagePreviewStrip();
-          }
-        });
-        
-        // Delete event
-        item.querySelector('.img-delete-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          const arr = [...images];
-          arr.splice(idx, 1);
-          document.getElementById('f-image').value = arr.join('\n');
-          window.renderImagePreviewStrip();
-        });
-        
-        // Hover effects
-        item.querySelector('.img-delete-btn').addEventListener('mouseenter', function() { this.style.background = '#ff4444'; });
-        item.querySelector('.img-delete-btn').addEventListener('mouseleave', function() { this.style.background = 'rgba(0,0,0,0.7)'; });
-        
-        strip.appendChild(item);
-      });
-    };
-
-    // Add Image URL Manual Button
-    modalEl.querySelector('#btn-add-img-url')?.addEventListener('click', () => {
-      const input = document.getElementById('f-image-add-url');
-      const val = input.value.trim();
-      if (val) {
-        const el = document.getElementById('f-image');
-        const cur = el.value.trim();
-        el.value = cur ? cur + '\n' + val : val;
-        input.value = '';
-        window.renderImagePreviewStrip();
-      }
-    });
-
-    // MSRP → auto-calc sale price (uses live discount %)
-    modalEl.querySelector('#f-price')?.addEventListener('input', (e) => {
-      const msrp = parseFloat(e.target.value);
-      if (!isNaN(msrp)) {
-        const mult = (100 - state.discountPct) / 100;
-        document.getElementById('f-saleprice').value = (msrp * mult).toFixed(2);
-      }
-    });
-
-    // Image Upload Logic (Base64) - Compresses images before storing
-    modalEl.querySelector('#f-image-upload')?.addEventListener('change', async (e) => {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
-      
-      const compressImage = (file) => new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          const img = new Image();
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_SIZE = 800; // max width/height to drastically reduce Base64 size
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height && width > MAX_SIZE) {
-              height *= MAX_SIZE / width;
-              width = MAX_SIZE;
-            } else if (height > width && height > MAX_SIZE) {
-              width *= MAX_SIZE / height;
-              height = MAX_SIZE;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            
-            // WebP preserves alpha transparency (unlike JPEG) and compresses beautifully
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/webp', 0.85)); 
-          };
-          img.src = ev.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
-
-      const btn = document.getElementById('modal-submit');
-      const ogText = btn.textContent;
-      try {
-        btn.disabled = true;
-        btn.textContent = '⏳ Optimizing Images...';
-        
-        const base64Strings = await Promise.all(files.map(compressImage));
-        
-        const el = document.getElementById('f-image');
-        const cur = el.value.trim();
-        
-        // Append new strings to the bottom of the list
-        const newLines = base64Strings.join('\n');
-        el.value = cur ? cur + '\n' + newLines : newLines;
-        window.renderImagePreviewStrip();
-        
-      } catch (err) {
-        showToast('❌ Failed to process images.', 'error');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = ogText;
-        e.target.value = ''; // Reset input
-      }
-    });
-
-    // Quick Fill — AI auto-fill
-    modalEl.querySelector('#btn-quick-fill')?.addEventListener('click', async () => {
-      const inputVal = document.getElementById('f-quick-fill').value.trim();
-      if (!inputVal) { showToast('Enter a plugin name or URL first', 'error'); return; }
-      const statusEl = document.getElementById('quick-fill-status');
-      const btn = document.getElementById('btn-quick-fill');
-      try {
-        btn.disabled = true; btn.textContent = '⏳ Loading...';
-        statusEl.style.display = 'block';
-        const isRuTracker = inputVal.includes('rutracker.org');
-        statusEl.textContent = isRuTracker
-          ? '🌐 Fetching RuTracker page & translating from Russian...'
-          : '🤖 AI is analyzing...';
-        statusEl.style.color = 'var(--neon-blue)';
-        const data = await autoFillPluginData(inputVal);
-        if (data.name) document.getElementById('f-name').value = data.name;
-        if (data.brand) document.getElementById('f-brand').value = data.brand;
-        if (data.developer) document.getElementById('f-dev').value = data.developer;
-        if (data.category && document.querySelector(`#f-category option[value="${data.category}"]`)) {
-          document.getElementById('f-category').value = data.category;
-        }
-        if (data.subcategory) document.getElementById('f-subcat').value = data.subcategory;
-        if (data.type) document.getElementById('f-type').value = data.type.join(', ');
-        if (data.dawCompat) document.getElementById('f-daw').value = data.dawCompat.join(', ');
-        if (data.images && Array.isArray(data.images)) {
-          document.getElementById('f-image').value = data.images.join('\n');
-        } else if (data.image) { // Fallback to old format
-          document.getElementById('f-image').value = data.image;
-        }
-        window.renderImagePreviewStrip();
-        if (data.videoDemo) document.getElementById('f-video').value = data.videoDemo;
-        if (data.productPage) document.getElementById('f-url').value = data.productPage;
-        if (inputVal.startsWith('http')) document.getElementById('f-sourceurl').value = inputVal;
-        
-        if (data.price) {
-          document.getElementById('f-price').value = data.price;
-          const mult = (100 - state.discountPct) / 100;
-          document.getElementById('f-saleprice').value = (data.price * mult).toFixed(2);
-        }
-        if (data.shortDesc) document.getElementById('f-desc').value = data.shortDesc;
-        if (data.description) document.getElementById('f-fulldesc').value = data.description;
-        if (data.features) document.getElementById('f-features').value = data.features.map(f => '- ' + f).join('\n');
-        
-        if (data.specs) {
-          document.getElementById('f-spec-format').value = data.specs.Format || '';
-          document.getElementById('f-spec-os').value = data.specs.OS || '';
-          document.getElementById('f-spec-cpu').value = data.specs['CPU Usage'] || '';
-          document.getElementById('f-spec-dl').value = data.specs.Download || '';
-          document.getElementById('f-spec-ver').value = data.specs.Version || '';
-          if (data.specs.download_win) document.getElementById('f-dl-win').value = data.specs.download_win;
-          if (data.specs.download_mac) document.getElementById('f-dl-mac').value = data.specs.download_mac;
-          if (data.specs.download_linux) document.getElementById('f-dl-linux').value = data.specs.download_linux;
-          if (data.specs.download_manual) document.getElementById('f-dl-manual').value = data.specs.download_manual;
-        }
-        if (data.systemReqs) {
-          document.getElementById('f-req-os').value = data.systemReqs.os || '';
-          document.getElementById('f-req-ram').value = data.systemReqs.ram || '';
-          document.getElementById('f-req-cpu').value = data.systemReqs.cpu || '';
-          document.getElementById('f-req-disk').value = data.systemReqs.disk || '';
-        }
-
-        statusEl.textContent = '✅ Done! Review and save.'; statusEl.style.color = 'var(--neon-green)';
-        showToast('Data extracted!', 'success');
-      } catch (err) {
-        statusEl.textContent = '❌ ' + err.message; statusEl.style.color = '#ff4444';
-        showToast('Auto-fill failed: ' + err.message, 'error');
-      } finally {
-        btn.disabled = false; btn.textContent = '✨ Auto-Fill';
-      }
-    });
-
-    modalEl.querySelector('#product-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const isEditing = !!state.editingProduct;
-      const newId = isEditing ? state.editingProduct.id : 'custom-' + Date.now();
-      const msrp = parseFloat(document.getElementById('f-price').value) || 0;
-      const sp = parseFloat(document.getElementById('f-saleprice').value) || 0;
-      
-      const imgRaw = document.getElementById('f-image').value.trim();
-      const imageList = imgRaw ? imgRaw.split('\n').map(s=>s.trim()).filter(Boolean) : ['https://placehold.co/400x400/1a1a2e/00ff88?text=Plugin'];
-
-      // Parse comma-separated inputs
-      const typeList = document.getElementById('f-type').value.split(',').map(s=>s.trim()).filter(Boolean);
-      const dawList = document.getElementById('f-daw').value.split(',').map(s=>s.trim()).filter(Boolean);
-      const featureList = document.getElementById('f-features').value.split('\n').filter(s=>s.trim()).map(s => s.replace(/^- /, '').trim());
-
-      const productToSave = {
-        ...(isEditing ? state.editingProduct : {
-          rating: 5.0, reviews: 0,
-          releaseDate: new Date().toISOString().split('T')[0],
-          color: '#00ff88', tags: [], audioDemo: null
-        }),
-        id: newId,
-        slug: isEditing ? state.editingProduct.slug : document.getElementById('f-name').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-') || newId,
-        name: document.getElementById('f-name').value.trim(),
-        brand: document.getElementById('f-brand').value.trim(),
-        developer: document.getElementById('f-dev').value.trim() || document.getElementById('f-brand').value.trim(),
-        category: document.getElementById('f-category').value,
-        subcategory: document.getElementById('f-subcat').value.trim(),
-        price: msrp,
-        salePrice: sp,
-        cryptoPrices: { BTC: +(msrp / 90000).toFixed(6), ETH: +(msrp / 3200).toFixed(5), USDT: sp },
-        images: imageList,
-        videoDemo: document.getElementById('f-video').value.trim() || null,
-        productPage: document.getElementById('f-url').value.trim() || '#',
-        shortDesc: document.getElementById('f-desc').value.trim(),
-        description: document.getElementById('f-fulldesc').value.trim(),
-        type: typeList.length ? typeList : ['vst3', 'au'],
-        dawCompat: dawList.length ? dawList : ['fl-studio', 'ableton', 'logic'],
-        features: featureList,
-        specs: {
-          Format: document.getElementById('f-spec-format').value.trim(),
-          OS: document.getElementById('f-spec-os').value.trim(),
-          'CPU Usage': document.getElementById('f-spec-cpu').value.trim(),
-          Download: document.getElementById('f-spec-dl').value.trim(),
-          Version: document.getElementById('f-spec-ver').value.trim(),
-          source_url: document.getElementById('f-sourceurl').value.trim(),
-          download_win: document.getElementById('f-dl-win').value.trim(),
-          download_mac: document.getElementById('f-dl-mac').value.trim(),
-          download_linux: document.getElementById('f-dl-linux').value.trim(),
-          download_manual: document.getElementById('f-dl-manual').value.trim(),
-        },
-        systemReqs: {
-          os: document.getElementById('f-req-os').value.trim(),
-          ram: document.getElementById('f-req-ram').value.trim(),
-          cpu: document.getElementById('f-req-cpu').value.trim(),
-          disk: document.getElementById('f-req-disk').value.trim(),
-        },
-        isFeatured: document.getElementById('f-isfeatured').checked,
-        isTrending: document.getElementById('f-istrending').checked,
-        isNew: document.getElementById('f-isnew').checked,
-      };
-
-      const btn = document.getElementById('modal-submit');
-      const originalText = btn.textContent;
-      // Mark the modal as busy so inventory:updated can't destroy it mid-save
-      const modal = document.getElementById('product-modal');
-      if (modal) modal.dataset.saving = '1';
-      try {
-        btn.disabled = true;
-        btn.textContent = '⏳ Saving...';
-
-        // Race against a 20s timeout — prevents button getting permanently stuck
-        // if the Supabase connection drops or stalls mid-request
-        const saveTimeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error(
-            'Save timed out (20s). Check your network or Supabase connection and try again.'
-          )), 20000)
-        );
-        await Promise.race([saveProduct(productToSave), saveTimeout]);
-
-        showToast(isEditing ? '✅ Product Updated!' : '✅ Product Added!', 'success');
-        closeModal();
-      } catch (err) {
-        console.error("Save product UI catch:", err);
-        showToast('❌ ' + (err.message || 'Failed to save — Unknown error'), 'error');
-      } finally {
-        // Clear busy flag
-        const modalEl = document.getElementById('product-modal');
-        if (modalEl) delete modalEl.dataset.saving;
-        // Re-fetch btn in case DOM was touched; re-enable it
-        const freshBtn = document.getElementById('modal-submit');
-        if (freshBtn) {
-          freshBtn.disabled = false;
-          freshBtn.textContent = originalText;
-        }
-      }
-    });
-
-    return modalEl;
-  }
+  // â”€â”€ Modal: lives on document.body so re-renders can't destroy it â”€â”€
 
   function getStats() {
     const total = state.products.length;
@@ -845,13 +89,13 @@ export function renderAdminPanel(params) {
             <div>
               <h1>Admin Dashboard</h1>
               <div style="display:flex; gap:var(--space-xs); margin-top:var(--space-md); flex-wrap:wrap;">
-                <button class="btn ${state.activeTab === 'inventory' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="inventory" style="padding:6px 14px; font-size:0.875rem;">📦 Inventory</button>
-                <button class="btn ${state.activeTab === 'orders' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="orders" style="padding:6px 14px; font-size:0.875rem;">📋 Orders</button>
-                <button class="btn ${state.activeTab === 'users' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="users" style="padding:6px 14px; font-size:0.875rem;">👤 Users</button>
-                <button class="btn ${state.activeTab === 'visitors' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="visitors" style="padding:6px 14px; font-size:0.875rem;">👥 Visitors</button>
-                <button class="btn ${state.activeTab === 'telegram' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="telegram" style="padding:6px 14px; font-size:0.875rem;">🤖 Telegram</button>
-                <button class="btn ${state.activeTab === 'settings' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="settings" style="padding:6px 14px; font-size:0.875rem;">⚙️ Settings</button>
-                <button class="btn ${state.activeTab === 'affiliates' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="affiliates" style="padding:6px 14px; font-size:0.875rem;">🤝 Affiliates</button>
+                <button class="btn ${state.activeTab === 'inventory' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="inventory" style="padding:6px 14px; font-size:0.875rem;">ðŸ“¦ Inventory</button>
+                <button class="btn ${state.activeTab === 'orders' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="orders" style="padding:6px 14px; font-size:0.875rem;">ðŸ“‹ Orders</button>
+                <button class="btn ${state.activeTab === 'users' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="users" style="padding:6px 14px; font-size:0.875rem;">ðŸ‘¤ Users</button>
+                <button class="btn ${state.activeTab === 'visitors' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="visitors" style="padding:6px 14px; font-size:0.875rem;">ðŸ‘¥ Visitors</button>
+                <button class="btn ${state.activeTab === 'telegram' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="telegram" style="padding:6px 14px; font-size:0.875rem;">ðŸ¤– Telegram</button>
+                <button class="btn ${state.activeTab === 'settings' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="settings" style="padding:6px 14px; font-size:0.875rem;">âš™ï¸ Settings</button>
+                <button class="btn ${state.activeTab === 'affiliates' ? 'btn-primary' : 'btn-ghost'} admin-tab" data-tab="affiliates" style="padding:6px 14px; font-size:0.875rem;">ðŸ¤ Affiliates</button>
               </div>
             </div>
             ${state.activeTab === 'inventory' ? `<button class="btn btn-primary" id="admin-add-product" style="font-size:1rem;">+ Add New Product</button>` : ''}
@@ -879,7 +123,7 @@ export function renderAdminPanel(params) {
             <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
               <h3 style="margin:0;">Inventory Management</h3>
               <div class="input-group" style="width:300px;">
-                <span class="search-input-icon">🔍</span>
+                <span class="search-input-icon">ðŸ”</span>
                 <input type="text" class="input search-input" id="admin-search" placeholder="Search products..." value="${state.search}" />
               </div>
             </div>
@@ -909,7 +153,7 @@ export function renderAdminPanel(params) {
             <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-lg);">
               <div>
                 <h4 style="margin:0 0 4px 0; color:var(--neon-green);">&#128260; Restore Missing Products</h4>
-                <p class="text-xs text-secondary" style="margin:0;">Re-adds all catalogue plugins that are missing from Supabase. Safe to run — existing products are never touched or duplicated.</p>
+                <p class="text-xs text-secondary" style="margin:0;">Re-adds all catalogue plugins that are missing from Supabase. Safe to run â€” existing products are never touched or duplicated.</p>
               </div>
               <button class="btn" id="admin-restore-products" style="background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.4); color:var(--neon-green); white-space:nowrap; flex-shrink:0;">
                 &#10227; Restore Products
@@ -923,7 +167,7 @@ export function renderAdminPanel(params) {
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div>
                 <h4 style="margin:0 0 4px 0; color:#ff4444;">&#9888; Danger Zone</h4>
-                <p class="text-xs text-secondary" style="margin:0;">Permanently remove ALL products from Supabase. This cannot be undone — use Restore above to recover.</p>
+                <p class="text-xs text-secondary" style="margin:0;">Permanently remove ALL products from Supabase. This cannot be undone â€” use Restore above to recover.</p>
               </div>
               <button class="btn" id="admin-clear-all" style="background:rgba(255,68,68,0.1); border:1px solid rgba(255,68,68,0.4); color:#ff4444; white-space:nowrap;">
                 &#128465; Delete All Products
@@ -932,89 +176,18 @@ export function renderAdminPanel(params) {
           </div>
           ` : ''}
 
-          ${state.activeTab === 'orders' ? renderOrdersTab() : ''}
+          ${state.activeTab === 'orders' ? renderOrdersTab(state) : ''}
 
-          ${state.activeTab === 'users' ? renderUsersTab() : ''}
+          ${state.activeTab === 'users' ? renderUsersTab(state) : ''}
 
-          ${state.activeTab === 'visitors' ? renderVisitorsTab() : ''}
+          ${state.activeTab === 'visitors' ? renderVisitorsTab(state) : ''}
 
-          ${state.activeTab === 'settings' ? renderSettingsTab() : ''}
+          ${state.activeTab === 'settings' ? renderSettingsTab(state) : ''}
 
           ${state.activeTab === 'affiliates' ? renderAffiliatesAdminTab(state, renderPage) : ''}
 
-          ${state.activeTab === 'telegram' ? `
-          <div style="max-width:860px; margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
+          ${state.activeTab === 'telegram' ? renderTelegramTab(state) : ''}
 
-            <!-- BOT STATUS CARD -->
-            <div class="glass-panel" style="padding:var(--space-xl); border-radius:var(--radius-lg); border:1px solid rgba(0,255,136,0.15);">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
-                <h3 style="margin:0;">🤖 Bot Connection Status</h3>
-                <button type="button" class="btn" id="ts-verify" style="border:1px solid var(--neon-green); color:var(--neon-green); background:rgba(0,255,136,0.08); font-size:0.85rem;">🔍 Verify Connection</button>
-              </div>
-              <div id="ts-bot-status">
-                ${state.botInfo ? `
-                  <div style="display:flex; align-items:center; gap:var(--space-md); padding:var(--space-md); background:rgba(0,255,136,0.08); border-radius:var(--radius-md); border:1px solid rgba(0,255,136,0.2);">
-                    <div style="width:48px; height:48px; background:var(--neon-green); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">🤖</div>
-                    <div>
-                      <div style="font-weight:700; color:var(--neon-green); font-size:1rem;">${state.botInfo.first_name}</div>
-                      <div style="color:var(--text-muted); font-size:0.85rem;">@${state.botInfo.username}</div>
-                      <div style="color:var(--neon-green); font-size:0.75rem; margin-top:2px;">✅ Connected</div>
-                    </div>
-                  </div>
-                ` : `
-                  <div style="padding:var(--space-md); background:rgba(255,255,255,0.03); border-radius:var(--radius-md); color:var(--text-muted); font-size:0.875rem;">
-                    Click <strong>Verify Connection</strong> to check your bot status.
-                  </div>
-                `}
-              </div>
-            </div>
-
-            <!-- HOW TO SETUP -->
-            <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,200,0,0.15);">
-              <h4 style="margin:0 0 var(--space-sm) 0; color:#ffc000;">📋 Setup Checklist</h4>
-              <ol style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:0.875rem; color:var(--text-secondary);">
-                <li>Create a bot via <strong style="color:#fff;">@BotFather</strong> on Telegram — copy the token below</li>
-                <li>Send <code style="background:rgba(255,255,255,0.1); padding:1px 6px; border-radius:4px;">/start</code> to your bot in Telegram (required for personal chats)</li>
-                <li>Get your Chat ID: message <strong style="color:#fff;">@userinfobot</strong> on Telegram</li>
-                <li>Paste token + Chat ID below, click <strong style="color:#fff;">Save</strong> then <strong style="color:#fff;">Verify</strong></li>
-              </ol>
-            </div>
-
-            <!-- CONFIG FORM -->
-            <div class="glass-panel" style="padding:var(--space-xl); border-radius:var(--radius-lg);">
-              <h3 style="margin:0 0 var(--space-lg) 0;">⚙️ Configuration</h3>
-              <form id="telegram-form" style="display:flex; flex-direction:column; gap:var(--space-md);">
-                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:bold; color:var(--neon-green); font-size:1.1rem; line-height:1;">
-                  <input type="checkbox" id="ts-enabled" ${state.telegramSettings?.is_enabled ? 'checked' : ''} style="width:20px; height:20px; margin:0; flex-shrink:0;" />
-                  <span style="position:relative; top:1px;">Enable Real-Time Notifications</span>
-                </label>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md);">
-                  <div>
-                    <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Bot Token</label>
-                    <input type="password" class="input" id="ts-token" value="${state.telegramSettings?.bot_token || ''}" placeholder="123456789:ABCdef..." />
-                  </div>
-                  <div>
-                    <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Your Chat ID</label>
-                    <input type="text" class="input" id="ts-chat" value="${state.telegramSettings?.chat_id || ''}" placeholder="e.g. 8728649355" />
-                  </div>
-                </div>
-
-                <div style="padding:var(--space-md); border:1px solid rgba(255,255,255,0.1); border-radius:var(--radius-md); background:rgba(0,0,0,0.2);">
-                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:bold; margin-bottom:6px;">
-                    <input type="checkbox" id="ts-all-pages" ${state.telegramSettings?.notify_all_pages ? 'checked' : ''} />
-                    Notify on ALL Page Views
-                  </label>
-                  <p class="text-xs text-muted" style="margin:0 0 0 24px;">When ON: every page view (except /admin) triggers a message. When OFF: only new visitor sessions are reported.</p>
-                </div>
-                
-                <div style="display:flex; gap:var(--space-md); align-items:center; flex-wrap:wrap;">
-                  <button type="button" class="btn" id="ts-test" style="border:1px solid var(--neon-blue); color:var(--neon-blue); background:rgba(0,255,255,0.1);">💬 Send Test</button>
-                  <button type="button" class="btn btn-primary" id="ts-save">💾 Save Config</button>
-                  <span id="ts-status" class="text-sm"></span>
-                </div>
-              </form>
-            </div>
           </div>
           ` : ''}
 
@@ -1022,12 +195,19 @@ export function renderAdminPanel(params) {
       </div>
     `;
 
-    // Modal is NOT recreated here — ensureModal() is called only inside openModal()
+    // Modal is NOT recreated here â€” ensureModal() is called only inside openModal()
     // so a renderPage() triggered by a tab switch can never destroy an in-progress save.
     if (state.activeTab === 'inventory') {
       renderTable();
     }
     attachEvents();
+    // Bind tab-specific event handlers via their modules
+    if (state.activeTab === 'orders')   bindOrdersAdminTabEvents(state, loadOrders, showToast);
+    if (state.activeTab === 'users')    bindUsersAdminTabEvents(state, loadUsers, showToast);
+    if (state.activeTab === 'visitors') bindVisitorsAdminTabEvents(state, loadVisitors, loadNotificationLogs);
+    if (state.activeTab === 'telegram') bindTelegramAdminTabEvents(state, renderPage, showToast, updateTelegramSettings);
+    if (state.activeTab === 'settings') bindSettingsAdminTabEvents(state, showToast, saveDiscount, bulkUpdateSalePrices, loadInventory, updateSiteSettings, loadSiteSettings);
+    if (state.activeTab === 'affiliates') bindAffiliatesAdminTabEvents(state, renderPage);
     // Auto-load data for new tabs
     if (state.activeTab === 'orders' && !state.orders && !state.ordersLoading) loadOrders();
     if (state.activeTab === 'users' && !state.users && !state.usersLoading) loadUsers();
@@ -1037,366 +217,10 @@ export function renderAdminPanel(params) {
       loadAffiliateTab();
     }
   }
-  function renderOrdersTab() {
-    if (state.ordersLoading) {
-      return `<div class="glass-panel" style="padding:var(--space-3xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><div style="font-size:2rem;">⏳</div><p class="text-muted" style="margin-top:var(--space-md);">Loading orders...</p></div>`;
-    }
-    if (!state.orders) {
-      return `<div class="glass-panel" style="padding:var(--space-xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><button class="btn btn-primary" id="btn-load-orders">Load Orders</button></div>`;
-    }
-    const orders = state.orders;
-    const totalRevenue = orders.reduce((acc, o) => acc + (parseFloat(o.total) || 0), 0);
-    const pendingCount = orders.filter(o => o.status === 'pending').length;
-    const completedCount = orders.filter(o => o.status === 'completed').length;
-    return `
-      <div style="margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--space-md);">
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Orders</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${orders.length}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Revenue</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-green);">${formatPrice(totalRevenue)}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">⏳ Pending</div><div style="font-size:2rem;font-weight:bold;color:#ff6b2b;">${pendingCount}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">✅ Completed</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-green);">${completedCount}</div></div>
-        </div>
-        <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
-          <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
-            <h3 style="margin:0;">All Orders</h3>
-            <button class="btn btn-ghost" id="btn-refresh-orders" style="font-size:0.8rem;">🔄 Refresh</button>
-          </div>
-          ${orders.length === 0 ? `<div style="padding:var(--space-3xl); text-align:center; color:var(--text-muted);">No orders yet.</div>` : `
-          <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse;" class="admin-table">
-              <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.8rem;">
-                <th style="padding:10px 16px;">Order ID</th>
-                <th style="padding:10px 8px;">Customer</th>
-                <th style="padding:10px 8px;">Items</th>
-                <th style="padding:10px 8px;">Total</th>
-                <th style="padding:10px 8px;">Payment</th>
-                <th style="padding:10px 8px;">Status</th>
-                <th style="padding:10px 8px;">Date</th>
-                <th style="padding:10px 8px; text-align:right;">Actions</th>
-              </tr></thead>
-              <tbody>
-                ${orders.map(o => `
-                  <tr style="border-bottom:1px solid rgba(255,255,255,0.05);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding:10px 16px; font-family:monospace; font-size:0.75rem; color:var(--text-muted);">#${(o.id||'').substring(0,8)}</td>
-                    <td style="padding:10px 8px; font-size:0.85rem;">${sanitizeHTML(o.profiles?.name || o.profiles?.email || (o.user_id||'').substring(0,8) || '—')}</td>
-                    <td style="padding:10px 8px; font-size:0.85rem; color:var(--text-secondary);">${Array.isArray(o.items) ? o.items.length : '—'} item(s)</td>
-                    <td style="padding:10px 8px; font-weight:bold; color:var(--neon-green);">${formatPrice(parseFloat(o.total)||0)}</td>
-                    <td style="padding:10px 8px; font-size:0.8rem; text-transform:capitalize; color:var(--text-secondary);">${sanitizeHTML(o.payment_method||'—')}</td>
-                    <td style="padding:10px 8px;"><span style="padding:2px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; background:${o.status==='completed'?'rgba(0,255,136,0.15)':'rgba(255,107,43,0.15)'}; color:${o.status==='completed'?'var(--neon-green)':'#ff6b2b'};">${o.status||'unknown'}</span></td>
-                    <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${o.created_at ? new Date(o.created_at).toLocaleDateString() : '—'}</td>
-                    <td style="padding:10px 8px; text-align:right;">
-                      ${o.status === 'pending' ? `
-                        <button class="btn btn-primary btn-xs admin-approve-order-btn" data-id="${o.id}" style="padding:4px 10px; font-size:11px;">Approve</button>
-                      ` : `
-                        <span style="color:var(--text-muted); font-size:11px;">Done</span>
-                      `}
-                    </td>
-                  </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>`}
-        </div>
-        ${pendingCount > 0 ? `<div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,107,43,0.3);"><h4 style="margin:0 0 8px 0; color:#ff6b2b;">⚠️ ${pendingCount} Pending Order(s) Need Verification</h4><p class="text-sm text-secondary" style="margin:0;">Use the Approve button above to finalize orders and release licenses.</p></div>` : ''}
-      </div>`;
-  }
 
-  // ── USERS TAB ─────────────────────────────────────────────
-  function renderUsersTab() {
-    if (state.usersLoading) {
-      return `<div class="glass-panel" style="padding:var(--space-3xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><div style="font-size:2rem;">⏳</div><p class="text-muted" style="margin-top:var(--space-md);">Loading users...</p></div>`;
-    }
-    if (!state.users) {
-      return `<div class="glass-panel" style="padding:var(--space-xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><button class="btn btn-primary" id="btn-load-users">Load Users</button></div>`;
-    }
-    const users = state.users;
-    const totalCredits = users.reduce((a, u) => a + (u.credits || 0), 0);
-    const totalRevenue = users.reduce((a, u) => a + (u.totalSpent || 0), 0);
-    return `
-      <div style="margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:var(--space-md);">
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Users</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${users.length}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Revenue</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-green);">${formatPrice(totalRevenue)}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Credits Issued</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-purple);">${totalCredits}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">With Orders</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-orange);">${users.filter(u => u.orderCount > 0).length}</div></div>
-        </div>
-        <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
-          <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
-            <h3 style="margin:0;">Registered Users</h3>
-            <button class="btn btn-ghost" id="btn-refresh-users" style="font-size:0.8rem;">🔄 Refresh</button>
-          </div>
-          ${users.length === 0
-            ? `<div style="padding:var(--space-3xl); text-align:center; color:var(--text-muted);">No users registered yet.</div>`
-            : `<div style="overflow-x:auto;">
-              <table style="width:100%; border-collapse:collapse;" class="admin-table">
-                <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.8rem;">
-                  <th style="padding:10px 16px;">User</th>
-                  <th style="padding:10px 8px;">Email</th>
-                  <th style="padding:10px 8px;">Credits</th>
-                  <th style="padding:10px 8px;">Orders</th>
-                  <th style="padding:10px 8px;">Total Spent</th>
-                  <th style="padding:10px 8px;">Last Order</th>
-                  <th style="padding:10px 8px;">Joined</th>
-                  <th style="padding:10px 8px; text-align:right;">Actions</th>
-                </tr></thead>
-                <tbody>
-                  ${users.map(u => `
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                      <td style="padding:10px 16px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--neon-blue),var(--neon-purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;flex-shrink:0;">${sanitizeHTML((u.name||u.email||'?')[0].toUpperCase())}</div>
-                          <div style="font-weight:500;font-size:0.875rem;">${sanitizeHTML(u.name || '(no name)')}</div>
-                        </div>
-                      </td>
-                      <td style="padding:10px 8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(u.email || '—')}</td>
-                      <td style="padding:10px 8px;">
-                        <span style="padding:2px 10px;border-radius:20px;font-size:0.78rem;font-weight:600;background:rgba(168,85,247,0.15);color:var(--neon-purple);">$${u.credits ?? 0}</span>
-                      </td>
-                      <td style="padding:10px 8px; font-size:0.85rem; color:var(--neon-blue); font-weight:600;">${u.orderCount || 0}</td>
-                      <td style="padding:10px 8px; font-weight:bold; color:var(--neon-green);">${formatPrice(u.totalSpent || 0)}</td>
-                      <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${u.lastOrder ? new Date(u.lastOrder).toLocaleDateString() : '—'}</td>
-                      <td style="padding:10px 8px; font-size:0.8rem; color:var(--text-muted);">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
-                      <td style="padding:10px 8px; text-align:right;">
-                        <button class="btn btn-ghost btn-xs admin-add-credits-btn" data-id="${u.id}" data-name="${sanitizeHTML(u.name || u.email || 'User')}" style="padding:4px 8px; font-size:11px; white-space:nowrap; border: 1px solid rgba(168,85,247,0.4); color:var(--neon-purple);">+ Gift Credits</button>
-                      </td>
-                    </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>`
-          }
-        </div>
-      </div>`;
-  }
 
-  // ── VISITORS TAB ──────────────────────────────────────────
-  function renderVisitorsTab() {
-    if (state.visitorsLoading) {
-      return `<div class="glass-panel" style="padding:var(--space-3xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><div style="font-size:2rem;">⏳</div><p class="text-muted" style="margin-top:var(--space-md);">Loading visitor data...</p></div>`;
-    }
-    if (!state.visitors) {
-      return `<div class="glass-panel" style="padding:var(--space-xl); text-align:center; border-radius:var(--radius-lg); margin-top:var(--space-xl);"><button class="btn btn-primary" id="btn-load-visitors">Load Visitor Data</button></div>`;
-    }
-    const sessions = state.visitors.sessions || [];
-    const topPages = state.visitors.topPages || [];
-    const today = new Date().toDateString();
-    const todayCount = sessions.filter(s => new Date(s.last_seen).toDateString() === today).length;
-    const countries = [...new Set(sessions.map(s => s.country).filter(Boolean))];
-    const uniqueIps = [...new Set(sessions.map(s => s.ip_address).filter(Boolean))];
-    return `
-      <div style="margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:var(--space-md);">
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Sessions</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${sessions.length}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Unique IPs</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-purple);">${uniqueIps.length}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Today</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-green);">${todayCount}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Countries</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-blue);">${countries.length}</div></div>
-          <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg);"><div class="text-sm text-muted">Total Page Views</div><div style="font-size:2rem;font-weight:bold;color:var(--neon-orange);">${sessions.reduce((a,s)=>a+(s.page_views||0),0)}</div></div>
-        </div>
-        <div style="display:grid; grid-template-columns:2fr 1fr; gap:var(--space-lg);">
-          <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
-            <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
-              <h3 style="margin:0;">Recent Visitors</h3>
-              <div style="display:flex; gap:8px;">
-                <a href="/api/admin-logs-txt" target="_blank" download="visitor_activity.txt" class="btn btn-ghost" style="font-size:0.8rem; border:1px solid rgba(0,212,255,0.3); color:var(--neon-blue);">📥 Download .txt Log</a>
-                <button class="btn btn-ghost" id="btn-refresh-visitors" style="font-size:0.8rem;">🔄 Refresh</button>
-              </div>
-            </div>
-            <div style="overflow-x:auto;">
-              <table style="width:100%; border-collapse:collapse;" class="admin-table">
-                <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.78rem;">
-                  <th style="padding:8px 12px;">IP Address</th>
-                  <th style="padding:8px;">Location</th>
-                  <th style="padding:8px;">Device</th>
-                  <th style="padding:8px;">Browser</th>
-                  <th style="padding:8px;">Views</th>
-                  <th style="padding:8px;">Last Seen</th>
-                </tr></thead>
-                <tbody>
-                  ${sessions.slice(0,50).map(s => `
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                      <td style="padding:8px 12px; font-size:0.8rem; font-family:monospace; color:var(--text-secondary);">${sanitizeHTML(s.ip_address || '—')}</td>
-                      <td style="padding:8px; font-size:0.82rem;">${sanitizeHTML(s.city&&s.city!=='unknown'?s.city+', ':'')}${sanitizeHTML(s.country||'Unknown')}</td>
-                      <td style="padding:8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(s.os||'—')}</td>
-                      <td style="padding:8px; font-size:0.82rem; color:var(--text-secondary);">${sanitizeHTML(s.browser||'—')}</td>
-                      <td style="padding:8px; font-size:0.82rem; color:var(--neon-blue); font-weight:600;">${s.page_views||0}</td>
-                      <td style="padding:8px; font-size:0.78rem; color:var(--text-muted);">${s.last_seen ? new Date(s.last_seen).toLocaleString() : '—'}</td>
-                    </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="glass-panel" style="border-radius:var(--radius-lg); padding:var(--space-lg);">
-            <h3 style="margin:0 0 var(--space-md) 0;">🔝 Top Pages</h3>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              ${topPages.map(p => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
-                  <span style="font-size:0.8rem; color:var(--text-secondary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:140px;">${sanitizeHTML(p.page)}</span>
-                  <span style="font-size:0.8rem; font-weight:bold; color:var(--neon-blue); flex-shrink:0; margin-left:8px;">${p.views}</span>
-                </div>`).join('')}
-              ${topPages.length === 0 ? '<p class="text-muted text-sm">No page data yet.</p>' : ''}
-            </div>
-          </div>
-        </div>
-
-        <!-- NOTIFICATION HISTORY -->
-        <div class="glass-panel" style="border-radius:var(--radius-lg); overflow:hidden;">
-          <div style="padding:var(--space-md) var(--space-lg); border-bottom:1px solid var(--border-primary); display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2);">
-            <div>
-              <h3 style="margin:0;">📢 Notification History</h3>
-              <p class="text-xs text-muted" style="margin:4px 0 0 0;">Every Telegram notification attempt, newest first.</p>
-            </div>
-            <button class="btn btn-ghost" id="btn-refresh-notif-logs" style="font-size:0.8rem;">🔄 Refresh</button>
-          </div>
-          ${state.notificationLogsLoading ? `
-            <div style="padding:var(--space-xl); text-align:center; color:var(--text-muted);">⏳ Loading...</div>
-          ` : !state.notificationLogs || state.notificationLogs.length === 0 ? `
-            <div style="padding:var(--space-xl); text-align:center; color:var(--text-muted); font-size:0.875rem;">
-              No notifications logged yet. Notifications appear here once a visitor triggers one.
-            </div>
-          ` : `
-          <div style="overflow-x:auto;">
-            <table style="width:100%; border-collapse:collapse;" class="admin-table">
-              <thead><tr style="background:rgba(255,255,255,0.02); color:var(--text-muted); font-size:0.78rem;">
-                <th style="padding:8px 12px;">Type</th>
-                <th style="padding:8px;">Page</th>
-                <th style="padding:8px;">Location</th>
-                <th style="padding:8px;">Device</th>
-                <th style="padding:8px;">Status</th>
-                <th style="padding:8px;">Time</th>
-              </tr></thead>
-              <tbody>
-                ${(state.notificationLogs || []).slice(0, 100).map(log => `
-                  <tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding:8px 12px;">
-                      <span style="padding:2px 8px; border-radius:20px; font-size:0.72rem; font-weight:600; white-space:nowrap;
-                        background:${log.message_type === 'new_visitor' ? 'rgba(255,107,43,0.15)' : 'rgba(0,136,255,0.12)'};
-                        color:${log.message_type === 'new_visitor' ? '#ff6b2b' : 'var(--neon-blue)'};
-                      ">${log.message_type === 'new_visitor' ? '🆕 New Visitor' : '🧭 Page View'}</span>
-                    </td>
-                    <td style="padding:8px; font-size:0.78rem; font-family:monospace; color:var(--text-secondary); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${sanitizeHTML(log.page_url||'')}">\`${sanitizeHTML(log.page_url || '/')}</td>
-                    <td style="padding:8px; font-size:0.8rem;">${sanitizeHTML(log.city && log.city !== 'unknown' ? log.city + ', ' : '')}${sanitizeHTML(log.country || '—')}</td>
-                    <td style="padding:8px; font-size:0.78rem; color:var(--text-secondary);">${sanitizeHTML(log.os || '—')} / ${sanitizeHTML(log.browser || '—')}</td>
-                    <td style="padding:8px;">
-                      ${log.telegram_ok
-                        ? '<span style="color:var(--neon-green); font-size:0.8rem;">✅ Sent</span>'
-                        : `<span style="color:#ff4444; font-size:0.8rem;" title="${sanitizeHTML(log.error_message||'')}">❌ Failed</span>`
-                      }
-                    </td>
-                    <td style="padding:8px; font-size:0.75rem; color:var(--text-muted); white-space:nowrap;">${log.created_at ? new Date(log.created_at).toLocaleString() : '—'}</td>
-                  </tr>`).join('')}
-              </tbody>
-            </table>
-          </div>`}
-        </div>
-      </div>`;
-  }
-
-  // ── SETTINGS TAB ──────────────────────────────────────────
-  function renderSettingsTab() {
-    const pct = state.discountPct;
-    const payPct = 100 - pct;
-    const exampleSale = (100 * payPct / 100).toFixed(2);
-    return `
-      <div style="max-width:680px; margin-top:var(--space-xl); display:flex; flex-direction:column; gap:var(--space-lg);">
-
-        <!-- DISCOUNT CARD -->
-        <div class="glass-panel" style="padding:var(--space-xl); border-radius:var(--radius-lg); border:1px solid rgba(0,255,136,0.15);">
-          <h3 style="margin:0 0 4px 0;">🏷️ Global Discount Setting</h3>
-          <p class="text-sm text-secondary" style="margin:0 0 var(--space-xl) 0;">
-            This single value controls the sale price of <strong>every product</strong> in the store.
-            Changing it instantly recalculates all prices on the storefront.
-          </p>
-
-          <!-- Live Preview Badge -->
-          <div style="display:flex; align-items:center; justify-content:center; margin-bottom:var(--space-xl);">
-            <div style="text-align:center; padding:var(--space-xl) var(--space-2xl); background:linear-gradient(135deg,rgba(0,255,136,0.08),rgba(0,212,255,0.05)); border:1px solid rgba(0,255,136,0.25); border-radius:var(--radius-xl);">
-              <div id="discount-preview-pct" style="font-size:4rem; font-weight:900; color:var(--neon-green); line-height:1; font-variant-numeric:tabular-nums;">${pct}%</div>
-              <div style="color:var(--text-secondary); font-size:0.9rem; margin-top:6px;">OFF Retail Price</div>
-              <div style="color:var(--text-muted); font-size:0.78rem; margin-top:4px;">Customers pay <strong style="color:var(--neon-blue);" id="discount-preview-pay">${payPct}%</strong> of MSRP</div>
-            </div>
-          </div>
-
-          <!-- Slider -->
-          <div style="margin-bottom:var(--space-lg);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-sm);">
-              <label style="font-weight:600; font-size:0.95rem;">Discount Percentage</label>
-              <div style="display:flex; align-items:center; gap:8px;">
-                <input type="number" id="discount-input" min="1" max="99" value="${pct}"
-                  style="width:70px; text-align:center; font-size:1.1rem; font-weight:700; padding:4px 8px;"
-                  class="input" />
-                <span style="color:var(--text-muted); font-size:0.9rem;">%</span>
-              </div>
-            </div>
-            <input type="range" id="discount-slider" min="1" max="99" value="${pct}"
-              style="width:100%; height:6px; appearance:none; -webkit-appearance:none; background:linear-gradient(to right, var(--neon-green) 0%, var(--neon-green) ${pct}%, rgba(255,255,255,0.1) ${pct}%, rgba(255,255,255,0.1) 100%); border-radius:3px; cursor:pointer; outline:none;"
-            />
-            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:4px;">
-              <span>1%</span>
-              <span>50%</span>
-              <span>99%</span>
-            </div>
-          </div>
-
-          <!-- Example calculation -->
-          <div style="padding:var(--space-md); background:rgba(0,0,0,0.2); border-radius:var(--radius-md); margin-bottom:var(--space-lg);">
-            <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">💡 Example calculation</div>
-            <div style="display:flex; justify-content:space-between; font-size:0.875rem;">
-              <span>Plugin MSRP: <strong>$100.00</strong></span>
-              <span>→ Sale price: <strong style="color:var(--neon-green);" id="discount-example">$${exampleSale}</strong></span>
-            </div>
-          </div>
-
-          <!-- Save -->
-          <div style="display:flex; gap:var(--space-md); align-items:center;">
-            <button class="btn btn-primary" id="btn-save-discount" style="min-width:160px;">💾 Save Discount</button>
-            <span id="discount-save-status" class="text-sm"></span>
-          </div>
-        </div>
-
-        <!-- INFO CARD -->
-        <div class="glass-panel" style="padding:var(--space-lg); border-radius:var(--radius-lg); border:1px solid rgba(255,200,0,0.15);">
-          <h4 style="margin:0 0 var(--space-sm) 0; color:#ffc000;">⚠️ What changes when you save?</h4>
-          <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:0.875rem; color:var(--text-secondary);">
-            <li>All <strong style="color:#fff;">product sale prices</strong> on the Store, Home, and Product pages update immediately</li>
-            <li>All <strong style="color:#fff;">discount badges</strong> ("SALE −X%") on product cards recalculate automatically</li>
-            <li>The <strong style="color:#fff;">Quick View</strong> modal discount label updates</li>
-            <li>Admin product modal <strong style="color:#fff;">auto-fill</strong> uses the new % for new products</li>
-            <li>The setting is saved to <strong style="color:#fff;">Supabase</strong> and persists across all sessions</li>
-          </ul>
-        </div>
-
-        <!-- CONTACT & SOCIAL LINKS -->
-        <div class="glass-panel" style="padding:var(--space-xl); border-radius:var(--radius-lg); border:1px solid rgba(0,212,255,0.15);">
-          <h3 style="margin:0 0 4px 0;">📱 Contact & Social Links</h3>
-          <p class="text-sm text-secondary" style="margin:0 0 var(--space-xl) 0;">
-            Update your Discord, Telegram, and Support Email. These links are used in the footer and contact pages.
-          </p>
-
-          <div style="display:grid; grid-template-columns:1fr; gap:var(--space-md); margin-bottom:var(--space-lg);">
-            <div>
-              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Discord Invite Link</label>
-              <input type="url" class="input" id="ss-discord" value="${state.siteSettings?.discord_link || ''}" placeholder="https://discord.gg/..." />
-              <p class="text-xs text-muted" style="margin-top:4px;">💡 Tip: Set your invite to <strong>"Never Expire"</strong> in Discord settings.</p>
-            </div>
-            <div>
-              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Telegram Link</label>
-              <input type="url" class="input" id="ss-telegram" value="${state.siteSettings?.telegram_link || ''}" placeholder="https://t.me/..." />
-            </div>
-            <div>
-              <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Support Email</label>
-              <input type="email" class="input" id="ss-email" value="${state.siteSettings?.support_email || ''}" placeholder="support@yourdomain.com" />
-            </div>
-          </div>
-
-          <div style="display:flex; gap:var(--space-md); align-items:center;">
-            <button class="btn btn-primary" id="btn-save-site-settings" style="min-width:160px;">💾 Save Links</button>
-            <span id="site-settings-save-status" class="text-sm"></span>
-          </div>
-        </div>
-
-      </div>
-    `;
-  }
-
-  // ── DATA LOADERS ──────────────────────────────────────────
+  // â”€â”€ DATA LOADERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // â”€â”€ DATA LOADERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function loadAffiliateTab() {
     state.affiliatesLoading = true;
     renderPage();
@@ -1556,11 +380,11 @@ export function renderAdminPanel(params) {
         if (confirm(`Delete "${prod?.name || id}"? This cannot be undone.`)) {
           try {
             delBtn.disabled = true;
-            delBtn.textContent = '⏳';
+            delBtn.textContent = 'â³';
             await deleteProduct(id);
-            showToast('✅ Product deleted from Supabase', 'success');
+            showToast('âœ… Product deleted from Supabase', 'success');
           } catch (err) {
-            showToast('❌ Delete failed: ' + (err.message || 'Supabase error — check RLS policies'), 'error');
+            showToast('âŒ Delete failed: ' + (err.message || 'Supabase error â€” check RLS policies'), 'error');
             delBtn.disabled = false;
             delBtn.textContent = 'Delete';
           }
@@ -1574,47 +398,47 @@ export function renderAdminPanel(params) {
       openModal();
     });
 
-    // Delete ALL Products — triple-confirm with typed verification
+    // Delete ALL Products â€” triple-confirm with typed verification
     document.getElementById('admin-clear-all')?.addEventListener('click', async () => {
       // Step 1: initial confirm
-      const first = confirm('⚠️ WARNING: This will permanently delete ALL products from the database.\n\nClick OK only if you are absolutely sure.');
+      const first = confirm('âš ï¸ WARNING: This will permanently delete ALL products from the database.\n\nClick OK only if you are absolutely sure.');
       if (!first) return;
       // Step 2: typed confirmation
       const typed = prompt('Type DELETE to confirm you want to erase every product:');
       if (!typed || typed.trim().toUpperCase() !== 'DELETE') {
-        showToast('Cancelled — type DELETE to confirm.', 'error');
+        showToast('Cancelled â€” type DELETE to confirm.', 'error');
         return;
       }
       try {
         const btn = document.getElementById('admin-clear-all');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ Deleting...'; }
+        if (btn) { btn.disabled = true; btn.textContent = 'â³ Deleting...'; }
         await clearAllProducts();
         await loadInventory();
         state.products = getInventory();
         renderPage();
-        showToast('🗑️ All products deleted. Use Restore to recover.', 'success');
+        showToast('ðŸ—‘ï¸ All products deleted. Use Restore to recover.', 'success');
       } catch (err) {
         showToast('Failed to delete: ' + err.message, 'error');
         const btn = document.getElementById('admin-clear-all');
-        if (btn) { btn.disabled = false; btn.textContent = '🗑️ Delete All Products'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'ðŸ—‘ï¸ Delete All Products'; }
       }
     });
 
-    // Restore Missing Products — single batch insert with timeout guard
+    // Restore Missing Products â€” single batch insert with timeout guard
     document.getElementById('admin-restore-products')?.addEventListener('click', async () => {
       const btn = document.getElementById('admin-restore-products');
       const statusEl = document.getElementById('restore-status');
       if (!btn || !statusEl) return;
 
       btn.disabled = true;
-      btn.textContent = '⏳ Restoring...';
+      btn.textContent = 'â³ Restoring...';
       statusEl.style.display = 'block';
       statusEl.style.color = 'var(--text-secondary)';
-      statusEl.textContent = '🔍 Checking what is already in Supabase...';
+      statusEl.textContent = 'ðŸ” Checking what is already in Supabase...';
 
       try {
         // 1. Fetch current inventory with a 10s timeout
-        const invTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Supabase timeout — check your connection.')), 10000));
+        const invTimeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Supabase timeout â€” check your connection.')), 10000));
         await Promise.race([loadInventory(), invTimeout]);
 
         const existing = new Set(getInventory().map(p => p.id));
@@ -1622,10 +446,10 @@ export function renderAdminPanel(params) {
 
         if (missing.length === 0) {
           statusEl.style.color = 'var(--neon-green)';
-          statusEl.textContent = '✅ All catalogue products are already in Supabase — nothing to restore.';
+          statusEl.textContent = 'âœ… All catalogue products are already in Supabase â€” nothing to restore.';
           showToast('Everything is already up to date!', 'success');
           btn.disabled = false;
-          btn.textContent = '↻ Restore Products';
+          btn.textContent = 'â†» Restore Products';
           return;
         }
 
@@ -1652,7 +476,7 @@ export function renderAdminPanel(params) {
 
         // 3. Single bulk insert with a 15s hard timeout
         const insertTimeout = new Promise((_, rej) =>
-          setTimeout(() => rej(new Error('Insert timed out after 15s. Your Supabase RLS policy may be blocking inserts — check the Supabase dashboard.')), 15000)
+          setTimeout(() => rej(new Error('Insert timed out after 15s. Your Supabase RLS policy may be blocking inserts â€” check the Supabase dashboard.')), 15000)
         );
         await Promise.race([bulkInsertProducts(readyToInsert), insertTimeout]);
 
@@ -1663,17 +487,17 @@ export function renderAdminPanel(params) {
         renderPage();
 
         statusEl.style.color = 'var(--neon-green)';
-        statusEl.textContent = `✅ Successfully restored ${readyToInsert.length} product(s)!`;
-        showToast(`✅ Restored ${readyToInsert.length} missing products!`, 'success');
+        statusEl.textContent = `âœ… Successfully restored ${readyToInsert.length} product(s)!`;
+        showToast(`âœ… Restored ${readyToInsert.length} missing products!`, 'success');
 
       } catch (err) {
         statusEl.style.color = '#ff4444';
-        statusEl.textContent = '❌ ' + err.message;
+        statusEl.textContent = 'âŒ ' + err.message;
         showToast('Restore failed: ' + err.message, 'error');
         console.error('Restore error:', err);
       } finally {
         btn.disabled = false;
-        btn.textContent = '↻ Restore Products';
+        btn.textContent = 'â†» Restore Products';
       }
     });
 
@@ -1703,20 +527,20 @@ export function renderAdminPanel(params) {
 
       try {
         btn.disabled = true;
-        btn.textContent = '⏳ Saving...';
+        btn.textContent = 'â³ Saving...';
         await updateTelegramSettings(newSettings);
         state.telegramSettings = { ...state.telegramSettings, ...newSettings };
-        status.textContent = '✅ Saved';
+        status.textContent = 'âœ… Saved';
         status.style.color = 'var(--neon-green)';
         showToast('Settings saved successfully', 'success');
         setTimeout(() => { status.textContent = ''; }, 3000);
       } catch (err) {
-        status.textContent = '❌ Error';
+        status.textContent = 'âŒ Error';
         status.style.color = '#ff4444';
         showToast('Failed to save settings', 'error');
       } finally {
         btn.disabled = false;
-        btn.textContent = '💾 Save Config';
+        btn.textContent = 'ðŸ’¾ Save Config';
       }
     });
 
@@ -1728,7 +552,7 @@ export function renderAdminPanel(params) {
       const chat_id = document.getElementById('ts-chat')?.value.trim();
       if (!bot_token) { showToast('Enter a Bot Token first', 'error'); return; }
       try {
-        btn.disabled = true; btn.textContent = '⏳ Verifying...';
+        btn.disabled = true; btn.textContent = 'â³ Verifying...';
         const res = await fetch('/api/telegram-verify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1738,30 +562,30 @@ export function renderAdminPanel(params) {
         if (data.botValid) {
           state.botInfo = data.botInfo;
           const chatMsg = data.chatInfo
-            ? `<div style="margin-top:8px; font-size:0.8rem; color:var(--neon-green);">✅ Chat accessible — ${sanitizeHTML(data.chatInfo.type)} chat</div>`
+            ? `<div style="margin-top:8px; font-size:0.8rem; color:var(--neon-green);">âœ… Chat accessible â€” ${sanitizeHTML(data.chatInfo.type)} chat</div>`
             : data.chatError
-            ? `<div style="margin-top:8px; font-size:0.8rem; color:#ff6b2b;">⚠️ Chat issue: ${sanitizeHTML(data.chatError)}<br><span style='font-size:0.75rem;color:var(--text-muted)'>Make sure you sent /start to your bot in Telegram first.</span></div>`
+            ? `<div style="margin-top:8px; font-size:0.8rem; color:#ff6b2b;">âš ï¸ Chat issue: ${sanitizeHTML(data.chatError)}<br><span style='font-size:0.75rem;color:var(--text-muted)'>Make sure you sent /start to your bot in Telegram first.</span></div>`
             : '';
           statusDiv.innerHTML = `
             <div style="display:flex; align-items:center; gap:var(--space-md); padding:var(--space-md); background:rgba(0,255,136,0.08); border-radius:var(--radius-md); border:1px solid rgba(0,255,136,0.2);">
-              <div style="width:48px; height:48px; background:linear-gradient(135deg,var(--neon-green),var(--neon-blue)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">🤖</div>
+              <div style="width:48px; height:48px; background:linear-gradient(135deg,var(--neon-green),var(--neon-blue)); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0;">ðŸ¤–</div>
               <div>
                 <div style="font-weight:700; color:var(--neon-green); font-size:1rem;">${sanitizeHTML(data.botInfo.first_name)}</div>
                 <div style="color:var(--text-muted); font-size:0.85rem;">@${sanitizeHTML(data.botInfo.username)}</div>
-                <div style="color:var(--neon-green); font-size:0.75rem; margin-top:2px;">✅ Bot token valid</div>
+                <div style="color:var(--neon-green); font-size:0.75rem; margin-top:2px;">âœ… Bot token valid</div>
                 ${chatMsg}
               </div>
             </div>`;
-          showToast('✅ Bot verified: ' + data.botInfo.first_name, 'success');
+          showToast('âœ… Bot verified: ' + data.botInfo.first_name, 'success');
         } else {
           statusDiv.innerHTML = `<div style="padding:var(--space-md); background:rgba(255,68,68,0.08); border-radius:var(--radius-md); border:1px solid rgba(255,68,68,0.2); color:#ff4444;">
-            ❌ Invalid token: ${sanitizeHTML(data.error || 'Unknown error')}</div>`;
-          showToast('❌ ' + (data.error || 'Invalid bot token'), 'error');
+            âŒ Invalid token: ${sanitizeHTML(data.error || 'Unknown error')}</div>`;
+          showToast('âŒ ' + (data.error || 'Invalid bot token'), 'error');
         }
       } catch (err) {
         showToast('Network error: ' + err.message, 'error');
       } finally {
-        btn.disabled = false; btn.textContent = '🔍 Verify Connection';
+        btn.disabled = false; btn.textContent = 'ðŸ” Verify Connection';
       }
     });
 
@@ -1789,7 +613,7 @@ export function renderAdminPanel(params) {
         try {
           const ogText = approveBtn.textContent;
           approveBtn.disabled = true;
-          approveBtn.textContent = '⏳...';
+          approveBtn.textContent = 'â³...';
           
           const res = await fetch('/api/admin-orders', {
             method: 'PUT',
@@ -1799,16 +623,16 @@ export function renderAdminPanel(params) {
           
           const data = await res.json();
           if (res.ok) {
-            showToast('✅ Order approved successfully!', 'success');
+            showToast('âœ… Order approved successfully!', 'success');
             state.orders = null;
             loadOrders(); // Re-render the orders table automatically
           } else {
-            showToast('❌ Failed to approve: ' + data.error, 'error');
+            showToast('âŒ Failed to approve: ' + data.error, 'error');
             approveBtn.disabled = false;
             approveBtn.textContent = ogText;
           }
         } catch (err) {
-          showToast('❌ Network error', 'error');
+          showToast('âŒ Network error', 'error');
           approveBtn.disabled = false;
           approveBtn.textContent = 'Approve';
         }
@@ -1832,7 +656,7 @@ export function renderAdminPanel(params) {
         try {
           const ogText = creditBtn.textContent;
           creditBtn.disabled = true;
-          creditBtn.textContent = '⏳...';
+          creditBtn.textContent = 'â³...';
 
           const res = await fetch('/api/admin-users', {
             method: 'POST',
@@ -1842,23 +666,23 @@ export function renderAdminPanel(params) {
 
           const data = await res.json();
           if (res.ok) {
-            showToast(`✅ Added $${amount} credits to ${userName}!`, 'success');
+            showToast(`âœ… Added $${amount} credits to ${userName}!`, 'success');
             state.users = null;
             loadUsers(); // Re-render table
           } else {
-            showToast('❌ Failed to add credits: ' + data.error, 'error');
+            showToast('âŒ Failed to add credits: ' + data.error, 'error');
             creditBtn.disabled = false;
             creditBtn.textContent = ogText;
           }
         } catch (err) {
-          showToast('❌ Network error', 'error');
+          showToast('âŒ Network error', 'error');
           creditBtn.disabled = false;
           creditBtn.textContent = '+ Gift Credits';
         }
       }
     });
 
-    // Settings tab — discount slider & save
+    // Settings tab â€” discount slider & save
     const slider = document.getElementById('discount-slider');
     const input  = document.getElementById('discount-input');
     const previewPct = document.getElementById('discount-preview-pct');
@@ -1877,20 +701,20 @@ export function renderAdminPanel(params) {
       };
       
       try {
-        btn.disabled = true; btn.textContent = '⏳ Saving...';
+        btn.disabled = true; btn.textContent = 'â³ Saving...';
         await updateSiteSettings(settings);
         state.siteSettings = settings;
         await loadSiteSettings(); // Sync global store
-        status.textContent = '✅ Saved!';
+        status.textContent = 'âœ… Saved!';
         status.style.color = 'var(--neon-green)';
         showToast('Site settings updated!', 'success');
         setTimeout(() => { if (status) status.textContent = ''; }, 3000);
       } catch (err) {
         showToast('Failed to save: ' + err.message, 'error');
-        status.textContent = '❌ Error';
+        status.textContent = 'âŒ Error';
         status.style.color = '#ff4444';
       } finally {
-        btn.disabled = false; btn.textContent = '💾 Save Links';
+        btn.disabled = false; btn.textContent = 'ðŸ’¾ Save Links';
       }
     });
 
@@ -1923,11 +747,11 @@ export function renderAdminPanel(params) {
       const status = document.getElementById('discount-save-status');
       const pct    = parseInt(document.getElementById('discount-input')?.value || state.discountPct);
       if (isNaN(pct) || pct < 1 || pct > 99) {
-        showToast('Enter a valid discount between 1–99%', 'error'); return;
+        showToast('Enter a valid discount between 1â€“99%', 'error'); return;
       }
       try {
-        btn.disabled = true; btn.textContent = '⏳ Saving discount...';
-        status.textContent = '⏳ Saving setting...';
+        btn.disabled = true; btn.textContent = 'â³ Saving discount...';
+        status.textContent = 'â³ Saving setting...';
         status.style.color = 'var(--text-muted)';
 
         // Step 1: save the % to site_settings
@@ -1935,23 +759,23 @@ export function renderAdminPanel(params) {
         state.discountPct = pct;
 
         // Step 2: recalculate & write sale_price for every product in Supabase
-        btn.textContent = '⏳ Updating prices...';
-        status.textContent = '⏳ Recalculating all prices...';
+        btn.textContent = 'â³ Updating prices...';
+        status.textContent = 'â³ Recalculating all prices...';
         const { updated } = await bulkUpdateSalePrices(pct);
 
         // Step 3: reload inventory so the admin table reflects new prices
         await loadInventory();
 
-        status.textContent = `✅ Done! ${updated} product${updated !== 1 ? 's' : ''} updated.`;
+        status.textContent = `âœ… Done! ${updated} product${updated !== 1 ? 's' : ''} updated.`;
         status.style.color = 'var(--neon-green)';
-        showToast(`✅ Discount set to ${pct}% — ${updated} prices updated`, 'success');
+        showToast(`âœ… Discount set to ${pct}% â€” ${updated} prices updated`, 'success');
         setTimeout(() => { status.textContent = ''; }, 5000);
       } catch (err) {
-        status.textContent = '❌ ' + err.message;
+        status.textContent = 'âŒ ' + err.message;
         status.style.color = '#ff4444';
         showToast('Failed to save discount: ' + err.message, 'error');
       } finally {
-        btn.disabled = false; btn.textContent = '💾 Save Discount';
+        btn.disabled = false; btn.textContent = 'ðŸ’¾ Save Discount';
       }
     });
 
@@ -1968,7 +792,7 @@ export function renderAdminPanel(params) {
       try {
         const ogText = btn.innerHTML;
         btn.disabled = true;
-        btn.textContent = '⏳ Sending...';
+        btn.textContent = 'â³ Sending...';
         
         const res = await fetch('/api/telegram-test', {
           method: 'POST',
@@ -1979,94 +803,27 @@ export function renderAdminPanel(params) {
         const data = await res.json();
         
         if (res.ok) {
-          showToast('✅ Test message sent!', 'success');
+          showToast('âœ… Test message sent!', 'success');
         } else {
-          showToast(`❌ Error: ${data.error}`, 'error');
+          showToast(`âŒ Error: ${data.error}`, 'error');
         }
         btn.innerHTML = ogText;
         btn.disabled = false;
       } catch (err) {
-        showToast('❌ Network error', 'error');
-        btn.textContent = '💬 Send Test Message';
+        showToast('âŒ Network error', 'error');
+        btn.textContent = 'ðŸ’¬ Send Test Message';
         btn.disabled = false;
       }
     });
   }
 
 
-  function openModal() {
-    const modal = ensureModal();
-    const title = document.getElementById('modal-title');
-    
-    if (state.editingProduct) {
-      title.textContent = `Edit: ${state.editingProduct.name}`;
-      document.getElementById('f-name').value = state.editingProduct.name || '';
-      document.getElementById('f-brand').value = state.editingProduct.brand || '';
-      document.getElementById('f-dev').value = state.editingProduct.developer || state.editingProduct.brand || '';
-      document.getElementById('f-category').value = state.editingProduct.category || '';
-      document.getElementById('f-subcat').value = state.editingProduct.subcategory || '';
-      document.getElementById('f-type').value = (state.editingProduct.type || []).join(', ');
-      document.getElementById('f-daw').value = (state.editingProduct.dawCompat || []).join(', ');
-      document.getElementById('f-image').value = (state.editingProduct.images || []).join('\n');
-      if (window.renderImagePreviewStrip) window.renderImagePreviewStrip();
-      document.getElementById('f-video').value = state.editingProduct.videoDemo || '';
-      document.getElementById('f-url').value = state.editingProduct.productPage !== '#' ? (state.editingProduct.productPage || '') : '';
-      document.getElementById('f-price').value = state.editingProduct.price || '';
-      document.getElementById('f-saleprice').value = state.editingProduct.salePrice || '';
-      document.getElementById('f-desc').value = state.editingProduct.shortDesc || '';
-      document.getElementById('f-fulldesc').value = state.editingProduct.description || '';
-      document.getElementById('f-features').value = (state.editingProduct.features || []).map(f => '- ' + f).join('\n');
-      
-      const sp = state.editingProduct.specs || {};
-      document.getElementById('f-spec-format').value = sp.Format || '';
-      document.getElementById('f-spec-os').value = sp.OS || '';
-      document.getElementById('f-spec-cpu').value = sp['CPU Usage'] || '';
-      document.getElementById('f-spec-dl').value = sp.Download || '';
-      document.getElementById('f-spec-ver').value = sp.Version || '';
-      document.getElementById('f-sourceurl').value = sp.source_url || '';
-      document.getElementById('f-dl-win').value = sp.download_win || '';
-      document.getElementById('f-dl-mac').value = sp.download_mac || '';
-      document.getElementById('f-dl-linux').value = sp.download_linux || '';
-      document.getElementById('f-dl-manual').value = sp.download_manual || '';
 
-      const req = state.editingProduct.systemReqs || {};
-      document.getElementById('f-req-os').value = req.os || '';
-      document.getElementById('f-req-ram').value = req.ram || '';
-      document.getElementById('f-req-cpu').value = req.cpu || '';
-      document.getElementById('f-req-disk').value = req.disk || '';
-
-      document.getElementById('f-isfeatured').checked = !!state.editingProduct.isFeatured;
-      document.getElementById('f-istrending').checked = !!state.editingProduct.isTrending;
-      document.getElementById('f-isnew').checked = !!state.editingProduct.isNew;
-
-      document.getElementById('f-quick-fill').value = '';
-      document.getElementById('quick-fill-status').style.display = 'none';
-    } else {
-      title.textContent = 'Add New Product';
-      document.getElementById('product-form').reset();
-      document.getElementById('f-image').value = '';
-      if (window.renderImagePreviewStrip) window.renderImagePreviewStrip();
-      document.getElementById('f-quick-fill').value = '';
-      document.getElementById('quick-fill-status').style.display = 'none';
-      document.getElementById('f-isnew').checked = true;
-    }
-
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal() {
-    const modal = document.getElementById('product-modal');
-    if (modal) modal.style.display = 'none';
-    state.editingProduct = null;
-    document.body.style.overflow = '';
-  }
-
-  // Subscribe to inventory changes — only update state + table, NOT full re-render
+  // Subscribe to inventory changes â€” only update state + table, NOT full re-render
   const unsubscribe = on('inventory:updated', (newInventory) => {
     state.products = newInventory;
 
-    // If the modal is currently open and saving, do NOT touch the DOM at all —
+    // If the modal is currently open and saving, do NOT touch the DOM at all â€”
     // the save handler will call closeModal() and then we can update safely.
     const modal = document.getElementById('product-modal');
     const isSaving = modal && modal.dataset.saving === '1';
@@ -2085,7 +842,7 @@ export function renderAdminPanel(params) {
       if (el2) el2.textContent = stats.bundles;
       if (el3) el3.textContent = formatPrice(stats.value);
     } else {
-      // Table not in DOM — full re-render is safe since modal isn't open
+      // Table not in DOM â€” full re-render is safe since modal isn't open
       renderPage();
     }
   });

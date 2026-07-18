@@ -119,6 +119,11 @@ let declineReason = null;
 let orderId = null;
 
 export function renderCardCheckoutPage() {
+  // Since card checkout is disabled/unavailable for now, redirect back to checkout page
+  showToast('Card payment is currently unavailable. Please use crypto.', 'error');
+  navigate('/checkout');
+  return;
+
   // Reset state
   step = 1;
   formData = { email: '', nameOnCard: '', cardNumber: '', expiry: '', cvv: '', country: 'US', zip: '', saveCard: false };

@@ -30,6 +30,16 @@ export function renderProductPage(params) {
   const related = getProducts().filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
   const totalImages = product.images.length;
 
+  // Detect available OS download options
+  const specs = product.specs || {};
+  const osOptions = [];
+  if (specs.download_win)   osOptions.push({ id: 'windows', label: '🪟 Windows' });
+  if (specs.download_mac)   osOptions.push({ id: 'mac',     label: '🍎 macOS' });
+  if (specs.download_linux) osOptions.push({ id: 'linux',   label: '🐧 Linux' });
+  const needsOsSelect = osOptions.length > 1;
+  let selectedOs = osOptions.length === 1 ? osOptions[0].id : null;
+
+
   // Set unique SEO meta for this product
   setPageMeta(
     product.name,
@@ -151,7 +161,21 @@ export function renderProductPage(params) {
                   ⬇️ Download Free
                 </button>
               ` : `
-                <button class="btn btn-primary btn-lg" id="product-add-cart" ${inCart ? 'disabled style="opacity:0.5"' : ''}>
+                ${needsOsSelect ? `
+                <div id="os-selector" style="margin-bottom:12px;">
+                  <div style="font-size:0.78rem; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Select your operating system</div>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    ${osOptions.map(os => `
+                      <button class="os-option-btn btn btn-ghost" data-os="${os.id}"
+                        style="padding:8px 16px; font-size:0.875rem; border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius-md); transition:all 0.2s;">
+                        ${os.label}
+                      </button>
+                    `).join('')}
+                  </div>
+                </div>` : ''}
+                <button class="btn btn-primary btn-lg" id="product-add-cart"
+                  ${inCart ? 'disabled style="opacity:0.5"' : ''}
+                  ${needsOsSelect && !inCart ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : ''}>
                   ${inCart ? '✓ In Cart' : '🛒 Add to Cart'}
                 </button>
                 <button class="btn" style="background: rgba(247, 147, 26, 0.1); border: 1px solid rgba(247, 147, 26, 0.3); color: #f7931a;" id="product-buy-crypto">
@@ -252,6 +276,42 @@ export function renderProductPage(params) {
             </div>
           </div>
         ` : ''}
+      </div>
+    </div>
+
+    <!-- Write Review Modal (rendered at page root to avoid transform containment viewport issues) -->
+    <div id="review-modal" class="modal-overlay" style="display:none; z-index: 100000;">
+      <div class="modal" style="max-width:500px;">
+        <h2 style="margin-bottom:var(--space-sm);">Write a Review</h2>
+        <p style="color:var(--text-secondary); margin-bottom:var(--space-md);">Share your experience with this plugin.</p>
+        <form id="write-rev-form">
+          <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-size:12px;">Rating</label>
+            <select id="wr-rating" class="input" required>
+              <option value="5">5 Stars — Excellent</option>
+              <option value="4">4 Stars — Good</option>
+              <option value="3">3 Stars — Average</option>
+              <option value="2">2 Stars — Poor</option>
+              <option value="1">1 Star — Terrible</option>
+            </select>
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-size:12px;">Title</label>
+            <input type="text" id="wr-title" class="input" placeholder="Summarize your thoughts" required />
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-size:12px;">Review</label>
+            <textarea id="wr-text" class="input" rows="4" placeholder="How do you use it? What do you like or dislike?" required></textarea>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;margin-bottom:4px;font-size:12px;">Your Name</label>
+            <input type="text" id="wr-name" class="input" placeholder="e.g. John Doe" required />
+          </div>
+          <div style="display:flex; justify-content:flex-end; gap:12px;">
+            <button type="button" class="btn btn-ghost" id="btn-cancel-rev">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-submit-rev">Submit Review</button>
+          </div>
+        </form>
       </div>
     </div>
   `;
@@ -460,10 +520,45 @@ export function renderProductPage(params) {
     navigate('/order-success');
   });
 
+  // OS selector interaction
+  if (needsOsSelect) {
+    document.querySelectorAll('.os-option-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedOs = btn.dataset.os;
+        // Update pill styles
+        document.querySelectorAll('.os-option-btn').forEach(b => {
+          b.style.borderColor = 'rgba(255,255,255,0.15)';
+          b.style.color = '';
+          b.style.background = '';
+        });
+        btn.style.borderColor = 'var(--neon-green)';
+        btn.style.color = 'var(--neon-green)';
+        btn.style.background = 'rgba(0,255,136,0.08)';
+        // Unlock cart button
+        const cartBtn = document.getElementById('product-add-cart');
+        if (cartBtn && !inCart) {
+          cartBtn.disabled = false;
+          cartBtn.style.opacity = '1';
+          cartBtn.style.cursor = '';
+        }
+        const stickyBtn = document.getElementById('sticky-atc-btn');
+        if (stickyBtn && !inCart) {
+          stickyBtn.disabled = false;
+          stickyBtn.style.opacity = '1';
+        }
+      });
+    });
+  }
+
   const addCartBtn = document.getElementById('product-add-cart');
   if (!inCart && addCartBtn) {
     addCartBtn.addEventListener('click', () => {
-      const added = addToCart(product);
+      if (needsOsSelect && !selectedOs) {
+        showToast('Please select your operating system first.', 'error');
+        document.getElementById('os-selector')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+      const added = addToCart({ ...product, selectedOs: selectedOs || null });
       if (added) {
         showToast(`${product.name} added to cart!`, 'success');
         addCartBtn.textContent = '✓ In Cart';
@@ -474,7 +569,12 @@ export function renderProductPage(params) {
   }
 
   document.getElementById('product-buy-crypto')?.addEventListener('click', () => {
-    if (!isInCart(product.id)) addToCart(product);
+    if (needsOsSelect && !selectedOs) {
+      showToast('Please select your operating system first.', 'error');
+      document.getElementById('os-selector')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    if (!isInCart(product.id)) addToCart({ ...product, selectedOs: selectedOs || null });
     navigate('/checkout');
   });
 
@@ -567,42 +667,6 @@ export function renderProductPage(params) {
           </div>
         `).join('')}
       </div>
-
-      <!-- Write Review Modal -->
-      <div id="review-modal" class="modal-overlay" style="display:none;">
-        <div class="modal" style="max-width:500px;">
-          <h2 style="margin-bottom:var(--space-sm);">Write a Review</h2>
-          <p style="color:var(--text-secondary); margin-bottom:var(--space-md);">Share your experience with this plugin.</p>
-          <form id="write-rev-form">
-            <div style="margin-bottom:12px;">
-              <label style="display:block;margin-bottom:4px;font-size:12px;">Rating</label>
-              <select id="wr-rating" class="input" required>
-                <option value="5">5 Stars — Excellent</option>
-                <option value="4">4 Stars — Good</option>
-                <option value="3">3 Stars — Average</option>
-                <option value="2">2 Stars — Poor</option>
-                <option value="1">1 Star — Terrible</option>
-              </select>
-            </div>
-            <div style="margin-bottom:12px;">
-              <label style="display:block;margin-bottom:4px;font-size:12px;">Title</label>
-              <input type="text" id="wr-title" class="input" placeholder="Summarize your thoughts" required />
-            </div>
-            <div style="margin-bottom:12px;">
-              <label style="display:block;margin-bottom:4px;font-size:12px;">Review</label>
-              <textarea id="wr-text" class="input" rows="4" placeholder="How do you use it? What do you like or dislike?" required></textarea>
-            </div>
-            <div style="margin-bottom:16px;">
-              <label style="display:block;margin-bottom:4px;font-size:12px;">Your Name</label>
-              <input type="text" id="wr-name" class="input" placeholder="e.g. John Doe" required />
-            </div>
-            <div style="display:flex; justify-content:flex-end; gap:12px;">
-              <button type="button" class="btn btn-ghost" id="btn-cancel-rev">Cancel</button>
-              <button type="submit" class="btn btn-primary" id="btn-submit-rev">Submit Review</button>
-            </div>
-          </form>
-        </div>
-      </div>
     `;
 
     // Bind Dropdown
@@ -632,53 +696,60 @@ export function renderProductPage(params) {
       });
     });
 
-    // Modal behavior
+    // Modal behavior (open modal)
     document.getElementById('btn-write-review')?.addEventListener('click', () => {
       document.getElementById('review-modal').style.display = 'flex';
-    });
-    document.getElementById('btn-cancel-rev')?.addEventListener('click', () => {
-      document.getElementById('review-modal').style.display = 'none';
-      document.getElementById('write-rev-form').reset();
-    });
-    
-    // Form Submit
-    document.getElementById('write-rev-form')?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const wrBtn = document.getElementById('btn-submit-rev');
-      wrBtn.disabled = true;
-      wrBtn.textContent = 'Submitting...';
-
-      setTimeout(() => {
-        const title = document.getElementById('wr-title').value;
-        const text = document.getElementById('wr-text').value;
-        const name = document.getElementById('wr-name').value;
-        const stars = parseInt(document.getElementById('wr-rating').value, 10);
-        
-        let pName = name.split(' ');
-        let initials = pName[0]?.charAt(0);
-        if (pName[1]) initials += pName[1].charAt(0);
-
-        const newRev = {
-          title, text, author: name, initials: initials.toUpperCase(), stars
-        };
-
-        saveUserReview(product.id, newRev);
-        // Refresh
-        allReviews = getProductReviews(product.id, product.category);
-        
-        document.getElementById('review-modal').style.display = 'none';
-        showToast('Review approved instantly!', 'success');
-        
-        // Auto sort to Newest so they see it
-        activeSort = 'newest';
-        renderReviews();
-      }, 600);
     });
   }
 
   // Trigger initial review render
   renderReviews();
 
+  // Bind modal close/cancel and submit events ONCE (since the modal resides outside of reviews-container and isn't destroyed)
+  document.getElementById('btn-cancel-rev')?.addEventListener('click', () => {
+    document.getElementById('review-modal').style.display = 'none';
+    document.getElementById('write-rev-form')?.reset();
+  });
+  
+  // Form Submit
+  document.getElementById('write-rev-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const wrBtn = document.getElementById('btn-submit-rev');
+    if (!wrBtn) return;
+    wrBtn.disabled = true;
+    wrBtn.textContent = 'Submitting...';
+
+    setTimeout(() => {
+      const title = document.getElementById('wr-title').value;
+      const text = document.getElementById('wr-text').value;
+      const name = document.getElementById('wr-name').value;
+      const stars = parseInt(document.getElementById('wr-rating').value, 10);
+      
+      let pName = name.split(' ');
+      let initials = pName[0]?.charAt(0);
+      if (pName[1]) initials += pName[1].charAt(0);
+
+      const newRev = {
+        title, text, author: name, initials: initials.toUpperCase(), stars
+      };
+
+      saveUserReview(product.id, newRev);
+      // Refresh
+      allReviews = getProductReviews(product.id, product.category);
+      
+      document.getElementById('review-modal').style.display = 'none';
+      showToast('Review approved instantly!', 'success');
+      
+      // Reset submit button state for future uses
+      wrBtn.disabled = false;
+      wrBtn.textContent = 'Submit Review';
+      document.getElementById('write-rev-form')?.reset();
+
+      // Auto sort to Newest so they see it
+      activeSort = 'newest';
+      renderReviews();
+    }, 600);
+  });
   // ── Sticky Add-to-Cart Bar ─────────────────────────────────
   const mainCta = document.getElementById('product-add-cart');
   if (mainCta) {
@@ -733,8 +804,13 @@ export function renderProductPage(params) {
     });
 
     document.getElementById('sticky-atc-btn')?.addEventListener('click', () => {
+      if (needsOsSelect && !selectedOs) {
+        showToast('Please select your operating system first.', 'error');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       if (!isInCart(product.id)) {
-        addToCart(product);
+        addToCart({ ...product, selectedOs: selectedOs || null });
         showToast(`${product.name} added to cart!`, 'success');
         document.getElementById('sticky-atc-btn').textContent = '✓ In Cart';
         document.getElementById('sticky-atc-btn').disabled = true;
@@ -744,9 +820,15 @@ export function renderProductPage(params) {
       }
     });
     document.getElementById('sticky-buy-btn')?.addEventListener('click', () => {
-      if (!isInCart(product.id)) addToCart(product);
+      if (needsOsSelect && !selectedOs) {
+        showToast('Please select your operating system first.', 'error');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      if (!isInCart(product.id)) addToCart({ ...product, selectedOs: selectedOs || null });
       navigate('/checkout');
     });
+
 
     // Clean up observer when navigating away
     window.addEventListener('popstate', () => { observer.disconnect(); stickyBar?.remove(); }, { once: true });

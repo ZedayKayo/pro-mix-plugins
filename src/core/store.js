@@ -219,15 +219,17 @@ async function handleUserHydration(userProfile) {
   memoryUser = userProfile;
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userProfile));
 
-  const mergedCart = await linkSessionCartToUser(getSessionId(), userProfile.id);
-  const dbCart = mergedCart || await fetchUserCart(userProfile.id, false);
+  const [dbCart, orders] = await Promise.all([
+    linkSessionCartToUser(getSessionId(), userProfile.id).then(merged => merged || fetchUserCart(userProfile.id, false)),
+    fetchUserOrders(userProfile.id)
+  ]);
+
   if (dbCart) {
     memoryCart = dbCart;
     localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(dbCart));
     emit('cart:updated', dbCart);
   }
 
-  const orders = await fetchUserOrders(userProfile.id);
   if (orders) {
     memoryPurchases = orders;
     localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(orders));
@@ -393,13 +395,14 @@ export async function initStore() {
   const theme = getTheme();
   document.documentElement.setAttribute('data-theme', theme);
 
-  // Load discount % first so all pricing calculations are correct
-  await loadDiscount();
-  await loadSiteSettings();
-  await loadInventory();
+  // Run initial independent requests in parallel to minimize initial load time
+  const [,,, profile] = await Promise.all([
+    loadDiscount(),
+    loadSiteSettings(),
+    loadInventory(),
+    fetchSessionProfile()
+  ]);
 
-  // Load existing state from DB via Auth session
-  const profile = await fetchSessionProfile();
   if (profile) {
     try {
       await handleUserHydration(profile);
