@@ -1,4 +1,4 @@
-﻿// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // Admin Panel â€” Product Add/Edit Modal
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 import { getBrandList, categories } from '../../data/products.js';
@@ -12,7 +12,7 @@ import { supabase } from '../../lib/supabase.js';
  * Creates and appends the product add/edit modal to document.body.
  * Returns the modal element.
  */
-export   function ensureModal() {
+export function ensureModal(state, closeModal) {
     let existing = document.getElementById('product-modal');
     if (existing) existing.remove(); // Fix Stale Closure bug to prevent editing duplicates
 
@@ -25,7 +25,7 @@ export   function ensureModal() {
         <!-- HEADER (Fixed) -->
         <div style="display:flex; justify-content:space-between; align-items:center; padding:var(--space-xl); border-bottom:1px solid var(--border-primary); background:var(--bg-card); z-index:10; flex-shrink:0;">
           <h2 id="modal-title" style="margin:0;">Add Product</h2>
-          <button type="button" id="modal-close-x" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height:1;">âœ•</button>
+          <button type="button" id="modal-close-x" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer; line-height:1;">✖</button>
         </div>
 
         <form id="product-form" style="display:flex; flex-direction:column; overflow:hidden; flex:1; min-height:0;">
@@ -35,88 +35,42 @@ export   function ensureModal() {
             
             <!-- QUICK FILL UI -->
             <div style="background:rgba(0,255,136,0.07); padding:var(--space-md); border-radius:var(--radius-md); margin-bottom:var(--space-lg); border:1px solid rgba(0,255,136,0.2);">
-              <label class="text-sm" style="color:var(--neon-green); font-weight:600; display:block; margin-bottom:var(--space-xs);">ðŸª„ Quick Fill â€” AI Auto-Fill</label>
-              <p class="text-xs text-secondary" style="margin:0 0 var(--space-xs) 0;">Paste a plugin name, any product URL, or a <strong style="color:var(--neon-blue);">RuTracker link</strong> â€” AI will extract &amp; translate all data automatically.</p>
+              <label class="text-sm" style="color:var(--neon-green); font-weight:600; display:block; margin-bottom:var(--space-xs);">🪄 Quick Fill — AI Auto-Fill</label>
+              <p class="text-xs text-secondary" style="margin:0 0 var(--space-xs) 0;">Paste a plugin name, any product URL, or a <strong style="color:var(--neon-blue);">RuTracker link</strong> — AI will extract & translate all data automatically.</p>
               <div style="display:flex; gap:var(--space-sm);">
-                <input type="text" class="input" id="f-quick-fill" placeholder="e.g. FabFilter Pro-Q 3  â€”orâ€”  https://rutracker.org/forum/viewtopic.php?t=..." style="flex:1;" />
-                <button type="button" class="btn btn-primary" id="btn-quick-fill" style="white-space:nowrap;">âœ¨ Auto-Fill</button>
+                <input type="text" class="input" id="f-quick-fill" placeholder="e.g. FabFilter Pro-Q 3 —or— https://rutracker.org/..." style="flex:1;" />
+                <button type="button" class="btn btn-primary" id="btn-quick-fill" style="white-space:nowrap;">✨ Auto-Fill</button>
               </div>
               <div id="quick-fill-status" class="text-sm" style="margin-top:6px; display:none;"></div>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); margin-bottom:var(--space-md);">
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Name *</label>
-                <input type="text" class="input" id="f-name" required />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Brand *</label>
-                <input type="text" class="input" id="f-brand" required list="brand-options" />
-                <datalist id="brand-options">
-                  ${getBrandList().map(b => `<option value="${b}">`).join('')}
-                </datalist>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Developer</label>
-                <input type="text" class="input" id="f-dev" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Category *</label>
-                <select class="input" id="f-category" required>
-                  ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
-                </select>
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Subcategory</label>
-                <input type="text" class="input" id="f-subcat" placeholder="e.g. Wavetable Synth" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Formats (comma-separated)</label>
-                <input type="text" class="input" id="f-type" placeholder="vst3, au, aax" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">DAWs (comma-separated)</label>
-                <input type="text" class="input" id="f-daw" placeholder="fl-studio, ableton, logic" />
-              </div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Name *</label><input type="text" class="input" id="f-name" required /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Brand *</label><input type="text" class="input" id="f-brand" required list="brand-options" /><datalist id="brand-options">${getBrandList().map(b => `<option value="${b}">`).join('')}</datalist></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Developer</label><input type="text" class="input" id="f-dev" /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Category *</label><select class="input" id="f-category" required>${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Subcategory</label><input type="text" class="input" id="f-subcat" placeholder="e.g. Wavetable Synth" /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Formats (comma-separated)</label><input type="text" class="input" id="f-type" placeholder="vst3, au, aax" /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">DAWs (comma-separated)</label><input type="text" class="input" id="f-daw" placeholder="fl-studio, ableton, logic" /></div>
               <div id="image-manager" style="grid-column: span 2;">
                 <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Images *</label>
-                
                 <div style="display:flex; gap:8px; margin-bottom:8px;">
                   <input type="text" class="input" id="f-image-add-url" placeholder="Paste image URL..." style="flex:1;" />
                   <button type="button" class="btn btn-ghost" id="btn-add-img-url" style="padding:0 12px; font-size:0.8rem; white-space:nowrap; border:1px solid var(--border-primary);">+ Add URL</button>
-                  <label for="f-image-upload" class="btn btn-ghost" style="padding:0 12px; font-size:0.8rem; cursor:pointer; margin:0; white-space:nowrap; display:flex; align-items:center; border:1px solid var(--border-primary);" title="Upload Files">ðŸ“ Upload</label>
+                  <label for="f-image-upload" class="btn btn-ghost" style="padding:0 12px; font-size:0.8rem; cursor:pointer; margin:0; white-space:nowrap; display:flex; align-items:center; border:1px solid var(--border-primary);" title="Upload Files">📁 Upload</label>
                   <input type="file" id="f-image-upload" accept="image/*" multiple style="display: none;" />
                 </div>
-
                 <textarea id="f-image" style="display:none;"></textarea>
-                
-                <div id="image-preview-strip" style="display:flex; gap:8px; flex-wrap:wrap; min-height:80px; padding:12px; background:rgba(0,0,0,0.2); border-radius:var(--radius-md); border:1px dashed var(--border-primary);">
-                  <!-- previews rendered here -->
-                </div>
+                <div id="image-preview-strip" style="display:flex; gap:8px; flex-wrap:wrap; min-height:80px; padding:12px; background:rgba(0,0,0,0.2); border-radius:var(--radius-md); border:1px dashed var(--border-primary);"></div>
                 <div class="text-xs text-muted" style="margin-top:6px;">Drag and drop to reorder. The first image is the main cover.</div>
               </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Video Demo URL</label>
-                <input type="url" class="input" id="f-video" placeholder="https://youtube.com/..." />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Page URL</label>
-                <input type="url" class="input" id="f-url" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Source/RuTracker URL</label>
-                <input type="url" class="input" id="f-sourceurl" placeholder="https://rutracker.org/..." />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">MSRP (Original Price $)</label>
-                <input type="number" class="input" id="f-price" min="0" step="0.01" value="0" placeholder="0" />
-              </div>
-              <div>
-                <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (âˆ’<span id="modal-discount-label">${state.discountPct}</span>% OFF)</label>
-                <input type="number" class="input" id="f-saleprice" min="0" step="0.01" value="0" placeholder="0" />
-              </div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Video Demo URL</label><input type="url" class="input" id="f-video" placeholder="https://youtube.com/..." /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Product Page URL</label><input type="url" class="input" id="f-url" /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Source/RuTracker URL</label><input type="url" class="input" id="f-sourceurl" placeholder="https://rutracker.org/..." /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">MSRP (Original Price $)</label><input type="number" class="input" id="f-price" min="0" step="0.01" value="0" placeholder="0" /></div>
+              <div><label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Sale Price (−<span id="modal-discount-label">${state.discountPct}</span>% OFF)</label><input type="number" class="input" id="f-saleprice" min="0" step="0.01" value="0" placeholder="0" /></div>
             </div>
-            
+
             <div style="margin-bottom:var(--space-md);">
               <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Short Description *</label>
               <textarea class="input" id="f-desc" rows="2" required></textarea>
@@ -129,7 +83,7 @@ export   function ensureModal() {
 
             <div style="margin-bottom:var(--space-md);">
               <label class="text-sm text-secondary" style="display:block; margin-bottom:4px;">Key Features (one per line)</label>
-              <textarea class="input" id="f-features" rows="3" placeholder="- Feature 1\\n- Feature 2"></textarea>
+              <textarea class="input" id="f-features" rows="3" placeholder="- Feature 1\n- Feature 2"></textarea>
             </div>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-md); padding:var(--space-md); background:rgba(255,255,255,0.02); border-radius:var(--radius-md); margin-bottom:var(--space-md);">
@@ -608,11 +562,11 @@ export   function ensureModal() {
       const statusEl = document.getElementById('quick-fill-status');
       const btn = document.getElementById('btn-quick-fill');
       try {
-        btn.disabled = true; btn.textContent = 'â³ Loading...';
+        btn.disabled = true; btn.textContent = 'â ³ Loading...';
         statusEl.style.display = 'block';
         const isRuTracker = inputVal.includes('rutracker.org');
         statusEl.textContent = isRuTracker
-          ? 'ðŸŒ Fetching RuTracker page & translating from Russian...'
+          ? 'ðŸŒ  Fetching RuTracker page & translating from Russian...'
           : 'ðŸ¤– AI is analyzing...';
         statusEl.style.color = 'var(--neon-blue)';
         const data = await autoFillPluginData(inputVal);
@@ -637,35 +591,41 @@ export   function ensureModal() {
         
         if (data.price) {
           document.getElementById('f-price').value = data.price;
-          const mult = (100 - state.discountPct) / 100;
-          document.getElementById('f-saleprice').value = (data.price * mult).toFixed(2);
+          document.getElementById('f-saleprice').value = (data.price * (100 - state.discountPct) / 100).toFixed(2);
         }
-        if (data.shortDesc) document.getElementById('f-desc').value = data.shortDesc;
-        if (data.description) document.getElementById('f-fulldesc').value = data.description;
-        if (data.features) document.getElementById('f-features').value = data.features.map(f => '- ' + f).join('\n');
+        const direct = {
+          'f-desc': data.shortDesc,
+          'f-fulldesc': data.description,
+          'f-features': data.features ? data.features.map(f => '- ' + f).join('\n') : null
+        };
+        Object.entries(direct).forEach(([id, val]) => { if (val) document.getElementById(id).value = val; });
         
         if (data.specs) {
-          document.getElementById('f-spec-format').value = data.specs.Format || '';
-          document.getElementById('f-spec-os').value = data.specs.OS || '';
-          document.getElementById('f-spec-cpu').value = data.specs['CPU Usage'] || '';
-          document.getElementById('f-spec-dl').value = data.specs.Download || '';
-          document.getElementById('f-spec-ver').value = data.specs.Version || '';
-          if (data.specs.download_win) document.getElementById('f-dl-win').value = data.specs.download_win;
-          if (data.specs.download_mac) document.getElementById('f-dl-mac').value = data.specs.download_mac;
-          if (data.specs.download_linux) document.getElementById('f-dl-linux').value = data.specs.download_linux;
-          if (data.specs.download_manual) document.getElementById('f-dl-manual').value = data.specs.download_manual;
+          const sps = data.specs;
+          const specFields = {
+            'f-spec-format': sps.Format, 'f-spec-os': sps.OS, 'f-spec-cpu': sps['CPU Usage'],
+            'f-spec-dl': sps.Download, 'f-spec-ver': sps.Version, 'f-dl-win': sps.download_win,
+            'f-dl-mac': sps.download_mac, 'f-dl-linux': sps.download_linux, 'f-dl-manual': sps.download_manual
+          };
+          Object.entries(specFields).forEach(([id, val]) => {
+            if (val !== undefined) {
+              const el = document.getElementById(id);
+              if (el) el.value = val || '';
+            }
+          });
         }
         if (data.systemReqs) {
-          document.getElementById('f-req-os').value = data.systemReqs.os || '';
-          document.getElementById('f-req-ram').value = data.systemReqs.ram || '';
-          document.getElementById('f-req-cpu').value = data.systemReqs.cpu || '';
-          document.getElementById('f-req-disk').value = data.systemReqs.disk || '';
+          const req = data.systemReqs;
+          ['os', 'ram', 'cpu', 'disk'].forEach(k => {
+            const el = document.getElementById('f-req-' + k);
+            if (el) el.value = req[k] || '';
+          });
         }
 
         statusEl.textContent = 'âœ… Done! Review and save.'; statusEl.style.color = 'var(--neon-green)';
         showToast('Data extracted!', 'success');
       } catch (err) {
-        statusEl.textContent = 'âŒ ' + err.message; statusEl.style.color = '#ff4444';
+        statusEl.textContent = 'â Œ ' + err.message; statusEl.style.color = '#ff4444';
         showToast('Auto-fill failed: ' + err.message, 'error');
       } finally {
         btn.disabled = false; btn.textContent = 'âœ¨ Auto-Fill';
@@ -757,7 +717,7 @@ export   function ensureModal() {
         closeModal();
       } catch (err) {
         console.error("Save product UI catch:", err);
-        showToast('âŒ ' + (err.message || 'Failed to save â€” Unknown error'), 'error');
+        showToast('â Œ ' + (err.message || 'Failed to save â€” Unknown error'), 'error');
       } finally {
         // Clear busy flag
         const modalEl = document.getElementById('product-modal');
@@ -774,50 +734,38 @@ export   function ensureModal() {
     return modalEl;
   }
 
-export   function openModal() {
-    const modal = ensureModal();
+export function openModal(state) {
+    const modal = ensureModal(state, () => closeModal(state));
     const title = document.getElementById('modal-title');
     
     if (state.editingProduct) {
-      title.textContent = `Edit: ${state.editingProduct.name}`;
-      document.getElementById('f-name').value = state.editingProduct.name || '';
-      document.getElementById('f-brand').value = state.editingProduct.brand || '';
-      document.getElementById('f-dev').value = state.editingProduct.developer || state.editingProduct.brand || '';
-      document.getElementById('f-category').value = state.editingProduct.category || '';
-      document.getElementById('f-subcat').value = state.editingProduct.subcategory || '';
-      document.getElementById('f-type').value = (state.editingProduct.type || []).join(', ');
-      document.getElementById('f-daw').value = (state.editingProduct.dawCompat || []).join(', ');
-      document.getElementById('f-image').value = (state.editingProduct.images || []).join('\n');
+      const p = state.editingProduct;
+      title.textContent = `Edit: ${p.name}`;
+      const sp = p.specs || {};
+      const req = p.systemReqs || {};
+      const fields = {
+        'f-name': p.name, 'f-brand': p.brand, 'f-dev': p.developer || p.brand,
+        'f-category': p.category, 'f-subcat': p.subcategory,
+        'f-type': (p.type || []).join(', '), 'f-daw': (p.dawCompat || []).join(', '),
+        'f-image': (p.images || []).join('\n'), 'f-video': p.videoDemo,
+        'f-url': p.productPage !== '#' ? p.productPage : '',
+        'f-price': p.price, 'f-saleprice': p.salePrice, 'f-desc': p.shortDesc,
+        'f-fulldesc': p.description, 'f-features': (p.features || []).map(f => '- ' + f).join('\n'),
+        'f-spec-format': sp.Format, 'f-spec-os': sp.OS, 'f-spec-cpu': sp['CPU Usage'],
+        'f-spec-dl': sp.Download, 'f-spec-ver': sp.Version, 'f-sourceurl': sp.source_url,
+        'f-dl-win': sp.download_win, 'f-dl-mac': sp.download_mac, 'f-dl-linux': sp.download_linux,
+        'f-dl-manual': sp.download_manual, 'f-req-os': req.os, 'f-req-ram': req.ram,
+        'f-req-cpu': req.cpu, 'f-req-disk': req.disk
+      };
+      Object.entries(fields).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+      });
       if (window.renderImagePreviewStrip) window.renderImagePreviewStrip();
-      document.getElementById('f-video').value = state.editingProduct.videoDemo || '';
-      document.getElementById('f-url').value = state.editingProduct.productPage !== '#' ? (state.editingProduct.productPage || '') : '';
-      document.getElementById('f-price').value = state.editingProduct.price || '';
-      document.getElementById('f-saleprice').value = state.editingProduct.salePrice || '';
-      document.getElementById('f-desc').value = state.editingProduct.shortDesc || '';
-      document.getElementById('f-fulldesc').value = state.editingProduct.description || '';
-      document.getElementById('f-features').value = (state.editingProduct.features || []).map(f => '- ' + f).join('\n');
-      
-      const sp = state.editingProduct.specs || {};
-      document.getElementById('f-spec-format').value = sp.Format || '';
-      document.getElementById('f-spec-os').value = sp.OS || '';
-      document.getElementById('f-spec-cpu').value = sp['CPU Usage'] || '';
-      document.getElementById('f-spec-dl').value = sp.Download || '';
-      document.getElementById('f-spec-ver').value = sp.Version || '';
-      document.getElementById('f-sourceurl').value = sp.source_url || '';
-      document.getElementById('f-dl-win').value = sp.download_win || '';
-      document.getElementById('f-dl-mac').value = sp.download_mac || '';
-      document.getElementById('f-dl-linux').value = sp.download_linux || '';
-      document.getElementById('f-dl-manual').value = sp.download_manual || '';
 
-      const req = state.editingProduct.systemReqs || {};
-      document.getElementById('f-req-os').value = req.os || '';
-      document.getElementById('f-req-ram').value = req.ram || '';
-      document.getElementById('f-req-cpu').value = req.cpu || '';
-      document.getElementById('f-req-disk').value = req.disk || '';
-
-      document.getElementById('f-isfeatured').checked = !!state.editingProduct.isFeatured;
-      document.getElementById('f-istrending').checked = !!state.editingProduct.isTrending;
-      document.getElementById('f-isnew').checked = !!state.editingProduct.isNew;
+      document.getElementById('f-isfeatured').checked = !!p.isFeatured;
+      document.getElementById('f-istrending').checked = !!p.isTrending;
+      document.getElementById('f-isnew').checked = !!p.isNew;
 
       document.getElementById('f-quick-fill').value = '';
       document.getElementById('quick-fill-status').style.display = 'none';
@@ -835,7 +783,7 @@ export   function openModal() {
     document.body.style.overflow = 'hidden';
   }
 
-  function closeModal() {
+export function closeModal(state) {
     const modal = document.getElementById('product-modal');
     if (modal) modal.style.display = 'none';
     state.editingProduct = null;
