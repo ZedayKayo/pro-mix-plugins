@@ -1,4 +1,4 @@
-﻿// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
 // Afford Plugins — Checkout Page
 // Payment Method Selection: Crypto vs Card (separate premium cards)
 // ═══════════════════════════════════════════════════════
@@ -237,6 +237,31 @@ export function renderCheckoutPage() {
                     </div>
                   </div>
                 </button>
+
+                <!-- ── CARD CARD (Disabled/Blocked) ── -->
+                <div class="co-pm-card" style="opacity: 0.45; cursor: not-allowed; position: relative; border: 1px solid var(--border-primary); border-radius: var(--radius-md); background: rgba(255,255,255,0.02); filter: grayscale(1); pointer-events: none;">
+                  <div class="co-pm-card-inner" style="padding: 16px 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                      <div style="display:flex; align-items:center; gap: 16px;">
+                        <div class="co-pm-icon co-pm-icon-card" style="width:40px; height:40px; margin:0; opacity: 0.6; display:flex; align-items:center; justify-content:center;">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                            <rect x="2" y="5" width="20" height="14" rx="3" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
+                            <rect x="5" y="14" width="4" height="2" rx="1" fill="currentColor"/>
+                          </svg>
+                        </div>
+                        <div style="text-align: left;">
+                          <div class="co-pm-title" style="font-size: 16px; margin-bottom: 2px;">Pay with Card</div>
+                          <div style="font-size: 12px; color: var(--neon-red); font-weight: 600;">Unavailable for now</div>
+                        </div>
+                      </div>
+                      <div style="display:flex; gap: 6px; opacity: 0.5;">
+                        <div class="co-pm-brand-logo" style="padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-primary); border-radius: 4px;"><svg viewBox="0 0 780 500" width="28" height="18"><rect width="780" height="500" rx="40" fill="#1A1F71"/><text x="390" y="320" text-anchor="middle" font-family="Arial" font-size="200" font-weight="900" fill="#fff" letter-spacing="-8">VISA</text></svg></div>
+                        <div class="co-pm-brand-logo" style="padding: 2px 4px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-primary); border-radius: 4px;"><svg viewBox="0 0 131.4 86" width="28" height="18"><rect width="131.4" height="86" rx="8" fill="#252525"/><circle cx="45.7" cy="43" r="27.9" fill="#EB001B"/><circle cx="85.7" cy="43" r="27.9" fill="#F79E1B"/><path d="M65.7 20.8a27.9 27.9 0 0 1 0 44.4 27.9 27.9 0 0 1 0-44.4z" fill="#FF5F00"/></svg></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
               </div>
 
